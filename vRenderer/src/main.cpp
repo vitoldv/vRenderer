@@ -2,7 +2,12 @@
 #include <string>
 
 #include <GLFW/glfw3.h>
+
 #include <glm/glm.hpp>
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #define WINDOW_TITLE		"vRenderer"
 #define WINDOW_WIDTH		1920
