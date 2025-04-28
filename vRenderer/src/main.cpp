@@ -2,6 +2,7 @@
 #include <string>
 
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #define WINDOW_TITLE		"vRenderer"
 #define WINDOW_WIDTH		1920
