@@ -1,0 +1,1 @@
+This is an early version of my single renderer application which I use as a sandbox for studying graphics programming.
