@@ -2,12 +2,10 @@
 #include <string>
 
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include "utils.h"
+#include "Model.h"
 
 #define WINDOW_TITLE		"vRenderer"
 #define WINDOW_WIDTH		1920
@@ -17,12 +15,17 @@
 #define TARGET_FPS			60
 #define TARGET_FRAME_TIME	(1000 / TARGET_FPS)
 
+#define ASSETS_FOLDER "vRenderer\\assets\\"
+#define MODEL_ASSETS(asset) concat(concat(ASSETS_FOLDER, "models\\"), asset)
+
 GLFWwindow* window;
 
 // Frame time control 
 int previousFrameTime = 0;
 int currentFrameTime = 0;
 float deltaTime = 0;
+
+Model* modelToRender;
 
 void initWindow(std::string title, const int width, const int height)
 {
@@ -32,6 +35,16 @@ void initWindow(std::string title, const int width, const int height)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+}
+
+void initApplication()
+{
+	modelToRender = new Model(1, MODEL_ASSETS("SeahawkBlender\\SeahawkBlender.obj"));
+}
+
+void cleanup()
+{
+	free(modelToRender);
 }
 
 void destroyWindow()
@@ -55,6 +68,7 @@ void render()
 int main()
 {
 	initWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
+	initApplication();
 
 	float frameTime = 0;
 	while (!glfwWindowShouldClose(window))
@@ -73,6 +87,8 @@ int main()
 		update();
 		render();
 	}
+
+	cleanup();
 
 	destroyWindow();
 }
