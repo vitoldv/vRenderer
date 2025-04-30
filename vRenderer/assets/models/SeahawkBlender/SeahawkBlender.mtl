@@ -19,7 +19,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_OBC.jpg
+map_Kd Textures/TEX_OBC.jpg
 
 newmtl FlatBlack
 Ns 0.000000
@@ -88,8 +88,8 @@ Ks 0.500000 0.500000 0.500000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_DASH.jpg
-map_Ke D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_DASH.jpg
+map_Kd Textures/TEX_DASH.jpg
+map_Ke Textures/TEX_DASH.jpg
 
 newmtl InteriorGenericSteelPanels
 Ns 0.000000
@@ -108,9 +108,9 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 1
-map_Kd D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_OSCL.jpg
-map_Ks D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_OSSP.jpg
-map_Bump D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_SBMP.jpg
+map_Kd Textures/TEX_OSCL.jpg
+map_Ks Textures/TEX_OSSP.jpg
+map_Bump Textures/TEX_SBMP.jpg
 
 newmtl Mirror
 Ns 0.000000
@@ -130,7 +130,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_CCON.jpg
+map_Kd Textures/TEX_CCON.jpg
 
 newmtl PaintedBlackSteel
 Ns 90.000000
@@ -159,9 +159,9 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 1
-map_Kd D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_OSCR.jpg
-map_Ks D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_OSSP.jpg
-map_Bump D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_SBMP.jpg
+map_Kd Textures/TEX_OSCR.jpg
+map_Ks Textures/TEX_OSSP.jpg
+map_Bump Textures/TEX_SBMP.jpg
 
 newmtl ReflectorRed
 Ns 0.000000
@@ -201,7 +201,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd D:/projekts/VulkanCourseApp/VulkanCourseApp/assets/SeahawkBlender/Textures/TEX_OTC.jpg
+map_Kd Textures/TEX_OTC.jpg
 
 newmtl Trim2
 Ns 90.000000
