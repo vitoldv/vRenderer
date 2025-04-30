@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <map>
 
+#include "display_settings.h"
 #include "VkMesh.h"
 #include "Model.h"
 #include "VulkanUtils.h"

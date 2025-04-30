@@ -32,7 +32,7 @@ int VulkanRenderer::init(GLFWwindow* window)
 		createInputDescriptorSets();
 		createSyncTools();
 
-		this->projectionMat = glm::perspective(glm::radians(75.0f), (float)swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 200.0f);
+		this->projectionMat = glm::perspective(glm::radians((float)FOV_ANGLES), (float)swapChainExtent.width / (float)swapChainExtent.height, Z_NEAR, Z_FAR);
 		this->viewMat = glm::lookAt(glm::vec3(0.0f, 0.0f, 100.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		// Seems like Vulkan flips Y coordinate (which is weird).
