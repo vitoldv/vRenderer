@@ -20,6 +20,7 @@
 #include <array>
 #include <algorithm>
 #include <map>
+#include <functional>
 
 #include "display_settings.h"
 #include "VkMesh.h"
@@ -138,8 +139,7 @@ private:
 	*/
 	ImGuiIO imguiIO;
 	VkDescriptorPool imguiDescriptorPool;
-	bool show_demo_window = true;
-	bool show_another_window = false;
+	std::function<void()> imguiCallback;
 
 public:
 	VulkanRenderer();
@@ -151,6 +151,8 @@ public:
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
 	bool removeFromRenderer(int modelId);	
 	void cleanup();
+
+	void setImguiCallback(std::function<void()> callback);
 
 	~VulkanRenderer();
 
