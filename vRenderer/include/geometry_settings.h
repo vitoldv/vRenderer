@@ -9,4 +9,4 @@ for geometry importing, loading and manipulation.
 // Example: if 0 -> index 0 points to vertex 0; if 1 -> index 1 points to vertex 0
 #define VERTEX_INDEX_OFFSET	1
 
-#define ASSIMP_PREPROCESS_FLAGS aiProcess_Triangulate | aiProcess_JoinIdenticalVertices
+#define ASSIMP_PREPROCESS_FLAGS aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs

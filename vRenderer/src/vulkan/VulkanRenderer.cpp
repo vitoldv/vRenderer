@@ -1335,7 +1335,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage)
 			}
 
 			// execute pipeline
-			vkCmdDrawIndexed(this->vkCommandBuffers[currentImage], static_cast<uint32_t>(mesh.getIndexCount()), 1, 0, -1, 0);
+			vkCmdDrawIndexed(this->vkCommandBuffers[currentImage], static_cast<uint32_t>(mesh.getIndexCount()), 1, 0, -VERTEX_INDEX_OFFSET, 0);
 
 			meshCount++;
 		}
