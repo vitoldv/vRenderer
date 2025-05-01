@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)vRenderer\include\vulkan;$(SolutionDir)vRenderer\include;$(SolutionDir)vRenderer\externals\assimp-5.4.3\include;$(SolutionDir)vRenderer\externals\glm;$(SolutionDir)vRenderer\externals\glfw3\include;C:\VulkanSDK\1.4.309.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)vRenderer\include\vulkan;$(SolutionDir)vRenderer\include;$(SolutionDir)vRenderer\externals\assimp-5.4.3\include;$(SolutionDir)vRenderer\externals\glm;$(SolutionDir)vRenderer\externals\imgui;$(SolutionDir)vRenderer\externals\imgui\backends;$(SolutionDir)vRenderer\externals\glfw3\include;C:\VulkanSDK\1.4.309.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,6 +131,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="vRenderer\externals\imgui\imgui.cpp" />
+    <ClCompile Include="vRenderer\externals\imgui\imgui_demo.cpp" />
+    <ClCompile Include="vRenderer\externals\imgui\imgui_draw.cpp" />
+    <ClCompile Include="vRenderer\externals\imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="vRenderer\externals\imgui\imgui_tables.cpp" />
+    <ClCompile Include="vRenderer\externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="vRenderer\src\main.cpp" />
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />

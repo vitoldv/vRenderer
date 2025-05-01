@@ -38,6 +38,10 @@ int VulkanRenderer::init(GLFWwindow* window)
 		// Seems like Vulkan flips Y coordinate (which is weird).
 		// TODO: Inspect this question
 		this->projectionMat[1][1] *= -1;
+
+		createImguiDescriptorPool();
+		setupImgui();
+
 	}
 	catch (const std::runtime_error &e)
 	{
@@ -52,6 +56,8 @@ void VulkanRenderer::cleanup()
 {
 	// Wait until there is nothing on a queue 
 	vkDeviceWaitIdle(this->vkLogicalDevice);
+
+	cleanupImgui();
 
 	// Destroy VKMesh-es
 	for (auto modelKeyValue : modelsToRender)
@@ -1261,7 +1267,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 //	modelTransferSpace = (UboModel*)_aligned_malloc(modelUniformAlignment * MAX_OBJECTS, modelUniformAlignment);
 //}
 
-void VulkanRenderer::recordCommands(uint32_t currentImage)
+void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData)
 {
 	VkCommandBufferBeginInfo bufferBeginInfo = {};
 	bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1349,6 +1355,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage)
 		0, 1, &this->vkInputDescriptorSets[currentImage], 0, nullptr);
 	vkCmdDraw(this->vkCommandBuffers[currentImage], 3, 1, 0, 0);
 
+	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, this->vkCommandBuffers[currentImage]);
 
 	// End render pass
 	vkCmdEndRenderPass(this->vkCommandBuffers[currentImage]);
@@ -1406,6 +1413,8 @@ VkExtent2D VulkanRenderer::defineSwapChainExtent(const VkSurfaceCapabilitiesKHR&
 
 void VulkanRenderer::draw()
 {
+	ImDrawData* imguiDrawData = drawImgui();
+
 	// 1 Get next available image to draw to and set something to signal when we're finished with the image (a semaphore)
 	// 2 Submit command buffer to queue for execution,  making sure it waits for the image to e signalled as available before drawing
 	// and signals when it ahas finished rendering
@@ -1420,7 +1429,8 @@ void VulkanRenderer::draw()
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(this->vkLogicalDevice, this->vkSwapchain, std::numeric_limits<uint64_t>::max(), this->vkSemImageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	recordCommands(imageIndex);
+	recordCommands(imageIndex, *imguiDrawData);
+	
 	updateUniformBuffers(imageIndex);
 
 	// -- 2
@@ -1741,6 +1751,132 @@ int VulkanRenderer::createTexture(std::string fileName)
 
 	return descriptorIndex;
 }
+
+/*
+	ImGui initialization, creation and cleanup functions 
+*/
+
+/// <summary>
+/// Initializes IMGUI context and required IMGUI implementations
+/// </summary>
+void VulkanRenderer::setupImgui()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	this->imguiIO = ImGui::GetIO(); (void)imguiIO;
+	imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+
+	ImGui::StyleColorsDark();
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplGlfw_InitForVulkan(this->window, true);
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.ApiVersion = VK_API_VERSION_1_4;              // Pass in your value of VkApplicationInfo::apiVersion, otherwise will default to header version.
+	init_info.Instance = this->vkInstance;
+	init_info.PhysicalDevice = this->vkPhysicalDevice;
+	init_info.Device = this->vkLogicalDevice;
+	init_info.QueueFamily = this->getQueueFamilies(vkPhysicalDevice).graphicsFamily;
+	init_info.Queue = this->vkGraphicsQueue;
+	init_info.DescriptorPool = this->imguiDescriptorPool;
+	init_info.RenderPass = this->vkRenderPass;
+	init_info.Subpass = 1;
+	init_info.MinImageCount = 2;
+	init_info.ImageCount = 3;
+	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	init_info.CheckVkResultFn = check_vk_result;
+	ImGui_ImplVulkan_Init(&init_info);
+}
+
+ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+/// <summary>
+/// Prepares new imgui frame. Look for actual Imgui draw call in recordCommands() method.
+/// </summary>
+/// <returns></returns>
+ImDrawData* VulkanRenderer::drawImgui()
+{
+
+	// Start the Dear ImGui frame
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::ShowDemoWindow(&show_demo_window);
+
+	{
+		static float f = 0.0f;
+		static int counter = 0;
+
+		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+		ImGui::Checkbox("Another Window", &show_another_window);
+
+		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			counter++;
+		ImGui::SameLine();
+		ImGui::Text("counter = %d", counter);
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / imguiIO.Framerate, imguiIO.Framerate);
+		ImGui::End();
+	}
+
+	if (show_another_window)
+	{
+		ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+		ImGui::Text("Hello from another window!");
+		if (ImGui::Button("Close Me"))
+			show_another_window = false;
+		ImGui::End();
+	}
+
+	// Rendering
+	ImGui::Render();
+	ImDrawData* draw_data = ImGui::GetDrawData();
+
+	return draw_data;
+}
+
+/// <summary>
+/// Creates descriptor pool required for IMGUI context. Descriptor sets creation is handled by IMGUI itself.
+/// </summary>
+void VulkanRenderer::createImguiDescriptorPool()
+{
+	VkDescriptorPoolSize pool_sizes[] =
+	{
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE },
+	};
+	VkDescriptorPoolCreateInfo pool_info = {};
+	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	pool_info.maxSets = 0;
+	for (VkDescriptorPoolSize& pool_size : pool_sizes)
+		pool_info.maxSets += pool_size.descriptorCount;
+	pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+	pool_info.pPoolSizes = pool_sizes;
+	VkResult result  = vkCreateDescriptorPool(this->vkLogicalDevice, &pool_info, nullptr, &this->imguiDescriptorPool);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create IMGUI Descriptor pool.");
+	}
+}
+
+void VulkanRenderer::cleanupImgui()
+{
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	vkDestroyDescriptorPool(this->vkLogicalDevice, this->imguiDescriptorPool, nullptr);
+}
+
+/*
+	Vulkan helper functions
+*/
 
 bool VulkanRenderer::isDeviceSuitable(VkPhysicalDevice device)
 {
