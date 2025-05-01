@@ -3,17 +3,43 @@
 Model::Model(uint32_t id, std::string filePath)
 {
 	this->id = id;
+	this->folderPath = filePath.substr(0, filePath.find_last_of('\\'));
 	importModel(filePath);
 }
 
-std::vector<Mesh>* Model::getMeshes()
+std::vector<Mesh>& Model::getMeshes()
 {
-	return &this->meshes;
+	return this->meshes;
 }
 
-std::vector<std::string>* Model::getTextures()
+int Model::getMeshesCount()
 {
-	return &this->textures;
+	return this->meshesCount;
+}
+
+std::vector<std::string>& Model::getTextures()
+{
+	return this->textures;
+}
+
+/// <summary>
+/// Returns full path to texture. 
+/// If texture at this index is present, returns this texture.
+/// If there is no texture at this index or index is invalid, returns empty string.
+/// </summary>
+/// <param name="textureIndex"></param>
+/// <returns></returns>
+std::string Model::getFullTexturePath(int textureIndex)
+{
+	std::string path = "";
+	if (textureIndex < this->meshesCount && textureIndex >= 0)
+	{
+		if (!this->textures[textureIndex].empty())
+		{
+			path = this->folderPath + "\\" + this->textures[textureIndex];
+		}
+	}
+	return path;
 }
 
 void Model::importModel(std::string filePath)
@@ -30,8 +56,9 @@ void Model::importModel(std::string filePath)
 		this->name = filePath.substr(start, end - start);
 	}
 
-	this->meshes.resize(scene->mNumMeshes);
-	this->textures.resize(scene->mNumMeshes);
+	this->meshesCount = scene->mNumMeshes;
+	this->meshes.resize(this->meshesCount);
+	this->textures.resize(this->meshesCount);
 
 	// Import meshes and textures
 	for (int i = 0; i < scene->mNumMeshes; i++)
@@ -58,7 +85,7 @@ void Model::importModel(std::string filePath)
 		this->meshes[i] = Mesh(i, meshData->mName.C_Str(), vertices, indices, texCoords, normals);
 
 		// If mesh has a material assigned and this material has a diffuse texture
-		// we save a path to the texture vector at the same index as mesh in corresponding mesh vector
+		// we save a path to the texture std::vector at the same index as mesh in corresponding mesh std::vector
 		if (meshData->mMaterialIndex >= 0)
 		{
 			auto mat = scene->mMaterials[meshData->mMaterialIndex];
@@ -66,7 +93,8 @@ void Model::importModel(std::string filePath)
 			aiString path;
 			if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &path) == aiReturn_SUCCESS)
 			{
-				this->textures[i] = path.C_Str();
+				this->textures[i] = std::string(path.C_Str());
+				std::replace(this->textures[i].begin(), this->textures[i].end(), '/', '\\');
 			}
 		}		
 	}
