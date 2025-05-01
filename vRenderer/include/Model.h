@@ -25,8 +25,8 @@ public:
 	Model(uint32_t id, std::string filePath);
 
 	int getMeshesCount();
-	std::vector<Mesh>* getMeshes();
-	std::vector<std::string>* getTextures();
+	std::vector<Mesh>& getMeshes();
+	std::vector<std::string>& getTextures();
 	std::string getFullTexturePath(int textureIndex);
 
 private:

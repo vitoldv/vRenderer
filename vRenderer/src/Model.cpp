@@ -7,9 +7,9 @@ Model::Model(uint32_t id, std::string filePath)
 	importModel(filePath);
 }
 
-std::vector<Mesh>* Model::getMeshes()
+std::vector<Mesh>& Model::getMeshes()
 {
-	return &this->meshes;
+	return this->meshes;
 }
 
 int Model::getMeshesCount()
@@ -17,9 +17,9 @@ int Model::getMeshesCount()
 	return this->meshesCount;
 }
 
-std::vector<std::string>* Model::getTextures()
+std::vector<std::string>& Model::getTextures()
 {
-	return &this->textures;
+	return this->textures;
 }
 
 /// <summary>

@@ -1470,17 +1470,17 @@ VkMesh VulkanRenderer::createFromGenericMesh(Mesh& mesh)
 	auto meshIndices = mesh.getIndices();
 	auto meshTexCoords = mesh.getTexCoords();
 	auto meshNormals = mesh.getNormals();
-	for (int i = 0; i < meshVertices->size(); i++)
+	for (int i = 0; i < meshVertices.size(); i++)
 	{
 		Vertex vertex = {};
-		vertex.pos = meshVertices->at(i);
-		vertex.normal = meshNormals->at(i);
-		vertex.uv = meshTexCoords->at(i);
+		vertex.pos = meshVertices.at(i);
+		vertex.normal = meshNormals.at(i);
+		vertex.uv = meshTexCoords.at(i);
 		vertices.push_back(vertex);
 	}
 
 	newMesh = VkMesh(this->vkPhysicalDevice, this->vkLogicalDevice,
-		this->vkGraphicsQueue, this->vkGraphicsCommandPool, &vertices, meshIndices, -1);
+		this->vkGraphicsQueue, this->vkGraphicsCommandPool, vertices, meshIndices, -1);
 	newMesh.setTransformMat(glm::identity<glm::mat4>());
 
 	return newMesh;
@@ -1493,8 +1493,8 @@ bool VulkanRenderer::addToRenderer(Model& model, glm::vec3 color)
 	{
 		for (int i = 0; i < model.getMeshesCount(); i++)
 		{
-			Mesh* mesh = &model.getMeshes()->at(i);
-			modelsToRender[model.id][mesh->id] = createFromGenericMesh(*mesh);
+			Mesh& mesh = model.getMeshes()[i];
+			modelsToRender[model.id][mesh.id] = createFromGenericMesh(mesh);
 		}
 
 		return true;
@@ -1510,17 +1510,17 @@ bool VulkanRenderer::addToRendererTextured(Model& model)
 	{
 		for (int i = 0; i < model.getMeshesCount(); i++)
 		{
-			Mesh* mesh = &model.getMeshes()->at(i);
-			VkMesh vkMesh = createFromGenericMesh(*mesh);
+			Mesh& mesh = model.getMeshes()[i];
+			VkMesh vkMesh = createFromGenericMesh(mesh);
 
-			auto textureName = model.getTextures()->at(i);
+			auto textureName = model.getTextures()[i];
 			if (!textureName.empty())
 			{
 				int index = createTexture(model.getFullTexturePath(i));
 				vkMesh.setTextureDescriptorIndex(index);
 			}
 			
-			modelsToRender[model.id][mesh->id] = vkMesh;
+			modelsToRender[model.id][mesh.id] = vkMesh;
 		}
 		return true;
 	}

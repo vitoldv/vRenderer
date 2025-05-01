@@ -19,22 +19,22 @@ Mesh::~Mesh()
 {
 }
 
-std::vector<glm::vec3>* Mesh::getVertices()
+std::vector<glm::vec3>& Mesh::getVertices()
 {
-    return &this->vertices;
+    return this->vertices;
 }
 
-std::vector<glm::vec2>* Mesh::getTexCoords()
+std::vector<glm::vec2>& Mesh::getTexCoords()
 {
-    return &this->texCoords;
+    return this->texCoords;
 }
 
-std::vector<glm::vec3>* Mesh::getNormals()
+std::vector<glm::vec3>& Mesh::getNormals()
 {
-    return &this->normals;
+    return this->normals;
 }
 
-std::vector<uint32_t>* Mesh::getIndices()
+std::vector<uint32_t>& Mesh::getIndices()
 {
-    return &this->indices;
+    return this->indices;
 }

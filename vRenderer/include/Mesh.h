@@ -19,10 +19,10 @@ public:
 		std::vector<glm::vec2> texCoords, std::vector<glm::vec3> normals);
 	~Mesh();
 
-	std::vector<glm::vec3>* getVertices();
-	std::vector<glm::vec2>* getTexCoords();
-	std::vector<glm::vec3>* getNormals();
-	std::vector<uint32_t>* getIndices();
+	std::vector<glm::vec3>& getVertices();
+	std::vector<glm::vec2>& getTexCoords();
+	std::vector<glm::vec3>& getNormals();
+	std::vector<uint32_t>& getIndices();
 
 private:
 	std::vector<glm::vec3> vertices;

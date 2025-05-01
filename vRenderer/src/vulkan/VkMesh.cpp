@@ -13,15 +13,15 @@ VkMesh::VkMesh()
 }
 
 VkMesh::VkMesh(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkQueue transferQueue,
-	VkCommandPool transferCommandPool, std::vector<Vertex>* vertices, std::vector<uint32_t>* indices, int textureIndex)
+	VkCommandPool transferCommandPool, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, int textureIndex)
 {
-	this->indexCount = indices->size();
-	this->vertexCount = vertices->size();
+	this->indexCount = indices.size();
+	this->vertexCount = vertices.size();
 	this->physicalDevice = physicalDevice;
 	this->logicalDevice = logicalDevice;
 	this->textureIndex = textureIndex;
-	createVertexBuffer(transferQueue, transferCommandPool, vertices);
-	createIndexBuffer(transferQueue, transferCommandPool, indices);
+	createVertexBuffer(transferQueue, transferCommandPool, &vertices);
+	createIndexBuffer(transferQueue, transferCommandPool, &indices);
 }
 
 VkMesh::~VkMesh() {}

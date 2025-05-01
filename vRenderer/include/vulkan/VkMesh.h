@@ -21,7 +21,7 @@ class VkMesh
 public:
 	VkMesh();
 	VkMesh(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkQueue transferQueue,
-		VkCommandPool transferCommandPool, std::vector<Vertex>* vertices, std::vector<uint32_t>* indices,
+		VkCommandPool transferCommandPool, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
 		int textureIndex);
 	~VkMesh();
 
