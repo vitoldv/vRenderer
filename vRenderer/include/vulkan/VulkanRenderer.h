@@ -1,6 +1,12 @@
 #pragma once
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
+#define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
+
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <GLFW/glfw3.h>
@@ -14,6 +20,7 @@
 #include <array>
 #include <algorithm>
 #include <map>
+#include <functional>
 
 #include "display_settings.h"
 #include "VkMesh.h"
@@ -127,6 +134,13 @@ private:
 	std::vector<VkDeviceMemory> textureImageMemory;
 	std::vector<VkImageView> textureImageViews;
 
+	/*
+	---- IMGUI fields -----
+	*/
+	ImGuiIO imguiIO;
+	VkDescriptorPool imguiDescriptorPool;
+	std::function<void()> imguiCallback;
+
 public:
 	VulkanRenderer();
 
@@ -137,6 +151,8 @@ public:
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
 	bool removeFromRenderer(int modelId);	
 	void cleanup();
+
+	void setImguiCallback(std::function<void()> callback);
 
 	~VulkanRenderer();
 
@@ -165,6 +181,14 @@ private:
 	int createTextureSamplerDescriptor(VkImageView textureImageView);
 	int createTextureImage(std::string fileName);
 	int createTexture(std::string fileName);
+	
+	/* 
+	---- IMGUI functions -----
+	*/
+	void setupImgui();
+	void createImguiDescriptorPool();
+	ImDrawData* drawImgui();
+	void cleanupImgui();
 
 	void setupDebugMessenger();
 
@@ -176,7 +200,7 @@ private:
 	VkImage createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags userFlags,
 		VkMemoryPropertyFlags propertyFlags, VkDeviceMemory* imageMemory);
 	VkShaderModule createShaderModule(const std::vector<char>& code);
-	void recordCommands(uint32_t currentImage);
+	void recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData);
 	void updateUniformBuffers(uint32_t imageIndex);
 	
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS

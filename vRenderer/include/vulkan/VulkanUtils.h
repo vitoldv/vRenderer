@@ -275,6 +275,15 @@ static void createBuffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice
 	vkBindBufferMemory(logicalDevice, *buffer, *bufferMemory, 0);
 }
 
+static void check_vk_result(VkResult err)
+{
+	if (err == VK_SUCCESS)
+		return;
+	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+	if (err < 0)
+		abort();
+}
+
 static void transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool commandPool, VkImage image,
 	VkImageLayout oldLayout, VkImageLayout newLayout)
 {
