@@ -32,13 +32,6 @@ int VulkanRenderer::init(GLFWwindow* window)
 		createInputDescriptorSets();
 		createSyncTools();
 
-		this->projectionMat = glm::perspective(glm::radians((float)FOV_ANGLES), (float)swapChainExtent.width / (float)swapChainExtent.height, Z_NEAR, Z_FAR);
-		this->viewMat = glm::lookAt(glm::vec3(0.0f, 0.0f, 100.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-		// Seems like Vulkan flips Y coordinate (which is weird).
-		// TODO: Inspect this question
-		this->projectionMat[1][1] *= -1;
-
 		createImguiDescriptorPool();
 		setupImgui();
 
@@ -1238,8 +1231,8 @@ VkSurfaceFormatKHR VulkanRenderer::defineSurfaceFormat(const std::vector<VkSurfa
 void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 {
 	UboProjectionView mvp = {};
-	mvp.projection = this->projectionMat;
-	mvp.view = this->viewMat;
+	mvp.projection = mainCamera->getProjectionMatrix();
+	mvp.view = mainCamera->getViewMatrix();
 
 	// Copy uniform data (view projection matrices)
 	void* data;
@@ -1556,6 +1549,11 @@ bool VulkanRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
 	}
 
 	return false;
+}
+
+void VulkanRenderer::setCamera(Camera* camera)
+{
+	this->mainCamera = camera;
 }
 
 bool VulkanRenderer::removeFromRenderer(int modelId)

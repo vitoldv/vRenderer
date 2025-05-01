@@ -27,6 +27,7 @@
 #include "Model.h"
 #include "VulkanUtils.h"
 #include "stb_image.h"
+#include "Camera.h"
 
 #ifdef NDEBUG
 #define ENABLE_VALIDATION_LAYERS false
@@ -124,8 +125,7 @@ private:
 	std::vector<VkFence> vkDrawFences;
 
 	// Scene
-	glm::mat4 projectionMat;
-	glm::mat4 viewMat;
+	Camera* mainCamera;
 	std::map<uint32_t, std::map<uint32_t, VkMesh>> modelsToRender;
 
 	// Textures
@@ -146,10 +146,14 @@ public:
 
 	int init(GLFWwindow* window);
 	void draw();
+
 	bool addToRenderer(Model& model, glm::vec3 color);
 	bool addToRendererTextured(Model& mesh);
+	bool removeFromRenderer(int modelId);
+	
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
-	bool removeFromRenderer(int modelId);	
+	void setCamera(Camera* camera);
+	
 	void cleanup();
 
 	void setImguiCallback(std::function<void()> callback);

@@ -71,4 +71,20 @@ namespace imgui_helper
 		ShowAdvancedVec3Editor("Scale", scale, syncScale, 0.05f, 0.0f, 100.0f);
 		ImGui::End();
 	}
+
+	/// <summary>
+	/// Editor for tranform values of a mesh/model
+	/// </summary>
+	void ShowCameraEditor(glm::vec3& position, float& fov)
+	{
+		static bool syncPosition = false;
+
+		ImGui::Begin("Camera Editor");
+		ShowAdvancedVec3Editor("Position", position, syncPosition, 0.1f, -100.0f, 100.0f);
+		ImGui::Spacing();
+		ImGui::DragFloat("FOV", &fov, 1.0f, 200.0f);
+		ImGui::Spacing();
+
+		ImGui::End();
+	}
 }

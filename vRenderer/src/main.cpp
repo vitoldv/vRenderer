@@ -32,6 +32,10 @@ int previousFrameTime = 0;
 int currentFrameTime = 0;
 float deltaTime = 0;
 
+Camera camera;
+glm::vec3 cameraPosition = {0, 0, 10.0f};
+float cameraFov = FOV_ANGLES;
+
 Model* modelToRender;
 glm::vec3 position(0.0f, 0.0f, 0.0f);
 glm::vec3 rotation(0.0f, 0.0f, 0.0f);
@@ -40,6 +44,7 @@ glm::vec3 scale(1.0f, 1.0f, 1.0f);
 void imguiMenu()
 {
 	imgui_helper::ShowTransformEditor(position, rotation, scale);
+	imgui_helper::ShowCameraEditor(cameraPosition, cameraFov);
 }
 
 void initWindow(std::string title, const int width, const int height)
@@ -64,6 +69,11 @@ int initApplication()
 		vulkanRenderer.setImguiCallback(imguiMenu);
 	}
 
+	camera = Camera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
+	camera.setPosition(glm::vec3(0, 5.0f, 10.0f));
+	camera.lookAt(glm::vec3(0));
+	vulkanRenderer.setCamera(&camera);
+
 	modelToRender = new Model(1, MODEL_ASSETS("Statue\\Statue.obj"));
 	vulkanRenderer.addToRendererTextured(*modelToRender);
 
@@ -84,6 +94,9 @@ void update()
 	glm::mat4 transform = t * rz * ry * rx * s;
 
 	vulkanRenderer.updateModelTransform(modelToRender->id, transform);
+
+	camera.setFov(cameraFov);
+	camera.setPosition(cameraPosition);
 }
 
 void render()
