@@ -33,8 +33,6 @@ int currentFrameTime = 0;
 float deltaTime = 0;
 
 Camera camera;
-glm::vec3 cameraPosition = {0, 0, 10.0f};
-float cameraFov = FOV_ANGLES;
 
 Model* modelToRender;
 glm::vec3 position(0.0f, 0.0f, 0.0f);
@@ -44,7 +42,11 @@ glm::vec3 scale(1.0f, 1.0f, 1.0f);
 void imguiMenu()
 {
 	imgui_helper::ShowTransformEditor(position, rotation, scale);
-	imgui_helper::ShowCameraEditor(cameraPosition, cameraFov);
+	//imgui_helper::ShowCameraEditor(actualCameraPosition, cameraDistance);
+	ImGui::Begin("Camera rot speed");
+	//ImGui::DragFloat("SPEED", &cameraRotationSpeed, 1.0f, 1.0f, 1000.0f);
+	//imgui_helper::ShowAdvancedVec3Editor("camera rotation vec", cameraRotation, sync);
+	ImGui::End();
 }
 
 void initWindow(std::string title, const int width, const int height)
@@ -52,9 +54,14 @@ void initWindow(std::string title, const int width, const int height)
 	glfwInit();
 	// Set GLFW to NOT work with OpenGL
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);	
 
 	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camera.OnMouseScroll(yoffset);
 }
 
 int initApplication()
@@ -70,8 +77,8 @@ int initApplication()
 	}
 
 	camera = Camera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
-	camera.setPosition(glm::vec3(0, 5.0f, 10.0f));
-	camera.lookAt(glm::vec3(0));
+	glfwSetScrollCallback(window, scroll_callback);
+
 	vulkanRenderer.setCamera(&camera);
 
 	modelToRender = new Model(1, MODEL_ASSETS("Statue\\Statue.obj"));
@@ -82,6 +89,9 @@ int initApplication()
 
 void processInput()
 {
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+	camera.OnMouseMove(xpos, ypos, glfwGetMouseButton(window, 0) == GLFW_PRESS);
 }
 
 void update()
@@ -92,11 +102,9 @@ void update()
 	glm::mat4 rz = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f));
 	glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
 	glm::mat4 transform = t * rz * ry * rx * s;
-
 	vulkanRenderer.updateModelTransform(modelToRender->id, transform);
 
-	camera.setFov(cameraFov);
-	camera.setPosition(cameraPosition);
+	camera.update();
 }
 
 void render()
@@ -134,6 +142,7 @@ int main()
 		if (FPS_LIMIT && frameTime < TARGET_FRAME_TIME) continue;
 
 		deltaTime = frameTime / 1000.0f;
+		camera.deltaTime = deltaTime;
 		previousFrameTime = currentFrameTime;
 
 		processInput();
