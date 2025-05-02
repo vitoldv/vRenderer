@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/vec3.hpp>
 
+#include "editor_settings.h"
+
 class Camera
 {
 public:
@@ -11,9 +13,6 @@ public:
 	Camera();
 	Camera(float fov, float znear, float zfar, int viewportWidth, int viewportHeight, bool flipY = false);
 	~Camera();
-
-	float zoomStep = 2.0f;
-	float rotationSpeed = 120.0f;
 
 	// Temporal
 	float deltaTime = 0;
@@ -59,4 +58,5 @@ private:
 };
 
 // TODO
-// 1. Get rid of redundant direction vectors recalculation (recalculateVectors() calls)
+// 1. Get rid of redundant direction vectors recalculation (recalculateVectors() calls);
+// 2. Remove initialCameraPosition vector and alter corresponding logic;

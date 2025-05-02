@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Camera.h" />
     <ClInclude Include="vRenderer\include\display_settings.h" />
+    <ClInclude Include="vRenderer\include\editor_settings.h" />
     <ClInclude Include="vRenderer\include\geometry_settings.h" />
     <ClInclude Include="vRenderer\include\Mesh.h" />
     <ClInclude Include="vRenderer\include\Model.h" />
