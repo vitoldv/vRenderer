@@ -90,7 +90,7 @@ void Camera::OnMouseScroll(float amount)
 {
 	float currZoom = glm::length((position - target));
 	float newZoom = currZoom - glm::sign(amount) * CAMERA_ZOOM_STEP;
-	if (newZoom < 0.1f) newZoom = 0.1f;
+	if (newZoom < 1.0f) newZoom = 1.0f;
 	position = glm::normalize(position - target) * newZoom;
 	recalculateVectors();
 }
@@ -110,8 +110,8 @@ void Camera::OnMouseMove(int xpos, int ypos, bool pressed)
 
 		if (!glm::isnan(mouseDelta.x) && !glm::isnan(mouseDelta.y))
 		{
-			cameraRotation.y -= glm::sign(mouseDelta.x) * CAMERA_ROTATION_SPEED * deltaTime;
-			cameraRotation.x -= glm::sign(mouseDelta.y) * CAMERA_ROTATION_SPEED * deltaTime;
+			cameraRotation.y -= glm::sign(mouseDelta.x) * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
+			cameraRotation.x -= glm::sign(mouseDelta.y) * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
 		}
 
 		prevMousePos = currMousePos;

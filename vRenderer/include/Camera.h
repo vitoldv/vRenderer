@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/vec3.hpp>
 
+#include "AppContext.h"
+
 #include "editor_settings.h"
 
 class Camera
@@ -13,9 +15,6 @@ public:
 	Camera();
 	Camera(float fov, float znear, float zfar, int viewportWidth, int viewportHeight, bool flipY = false);
 	~Camera();
-
-	// Temporal
-	float deltaTime = 0;
 
 	void lookAt(glm::vec3 target);
 	void setPosition(glm::vec3 position);

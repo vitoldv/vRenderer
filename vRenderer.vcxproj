@@ -139,7 +139,10 @@
     <ClCompile Include="vRenderer\externals\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="vRenderer\externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="vRenderer\externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="vRenderer\src\AppContext.cpp" />
+    <ClCompile Include="vRenderer\src\Application.cpp" />
     <ClCompile Include="vRenderer\src\Camera.cpp" />
+    <ClCompile Include="vRenderer\src\InputManager.cpp" />
     <ClCompile Include="vRenderer\src\main.cpp" />
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />
@@ -147,10 +150,13 @@
     <ClCompile Include="vRenderer\src\vulkan\VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vRenderer\include\AppContext.h" />
+    <ClInclude Include="vRenderer\include\Application.h" />
     <ClInclude Include="vRenderer\include\Camera.h" />
     <ClInclude Include="vRenderer\include\display_settings.h" />
     <ClInclude Include="vRenderer\include\editor_settings.h" />
     <ClInclude Include="vRenderer\include\geometry_settings.h" />
+    <ClInclude Include="vRenderer\include\InputManager.h" />
     <ClInclude Include="vRenderer\include\Mesh.h" />
     <ClInclude Include="vRenderer\include\Model.h" />
     <ClInclude Include="vRenderer\include\stb_image.h" />

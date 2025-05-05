@@ -57,6 +57,15 @@
     <ClCompile Include="vRenderer\src\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vRenderer\src\Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\AppContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\InputManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Mesh.h">
@@ -93,6 +102,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\editor_settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\Application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\AppContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\InputManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
