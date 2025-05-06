@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
-#include "IMouseEventHandler.h"
 #include <functional>
 
 class InputManager
