@@ -30,10 +30,11 @@ public:
 	const std::vector<Mesh>& getMeshes() const;
 	const std::vector<std::string>& getTextures() const;
 	std::string getFullTexturePath(int textureIndex);
-	std::string name;
 
 private:
+
 	uint32_t meshCount;
+	std::string name;
 
 	// Meshes of this model
 	std::vector<Mesh> meshes;
