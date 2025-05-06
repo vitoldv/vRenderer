@@ -1470,14 +1470,13 @@ void VulkanRenderer::draw()
 	currentFrame = (currentFrame + 1) % MAX_FRAME_DRAWS;
 }
 
-VkMesh VulkanRenderer::createFromGenericMesh(Mesh& mesh)
+VkMesh VulkanRenderer::createFromGenericMesh(const Mesh& mesh)
 {
-	VkMesh newMesh;
 	std::vector<Vertex> vertices;
-	auto meshVertices = mesh.getVertices();
-	auto meshIndices = mesh.getIndices();
-	auto meshTexCoords = mesh.getTexCoords();
-	auto meshNormals = mesh.getNormals();
+	const auto& meshVertices = mesh.getVertices();
+	const auto& meshIndices = mesh.getIndices();
+	const auto& meshTexCoords = mesh.getTexCoords();
+	const auto& meshNormals = mesh.getNormals();
 	for (int i = 0; i < meshVertices.size(); i++)
 	{
 		Vertex vertex = {};
@@ -1487,7 +1486,7 @@ VkMesh VulkanRenderer::createFromGenericMesh(Mesh& mesh)
 		vertices.push_back(vertex);
 	}
 
-	newMesh = VkMesh(this->vkPhysicalDevice, this->vkLogicalDevice,
+	VkMesh newMesh = VkMesh(this->vkPhysicalDevice, this->vkLogicalDevice,
 		this->vkGraphicsQueue, this->vkGraphicsCommandPool, vertices, meshIndices, -1);
 	newMesh.setTransformMat(glm::identity<glm::mat4>());
 
@@ -1499,9 +1498,9 @@ bool VulkanRenderer::addToRenderer(Model& model, glm::vec3 color)
 	// If mesh is not in renderer
 	if (modelsToRender.find(model.id) == modelsToRender.end())
 	{
-		for (int i = 0; i < model.getMeshesCount(); i++)
+		for (int i = 0; i < model.getMeshCount(); i++)
 		{
-			Mesh& mesh = model.getMeshes()[i];
+			const Mesh& mesh = model.getMeshes()[i];
 			modelsToRender[model.id][mesh.id] = createFromGenericMesh(mesh);
 		}
 
@@ -1516,9 +1515,9 @@ bool VulkanRenderer::addToRendererTextured(Model& model)
 	// If mesh is not in renderer
 	if (modelsToRender.find(model.id) == modelsToRender.end())
 	{
-		for (int i = 0; i < model.getMeshesCount(); i++)
+		for (int i = 0; i < model.getMeshCount(); i++)
 		{
-			Mesh& mesh = model.getMeshes()[i];
+			const Mesh& mesh = model.getMeshes()[i];
 			VkMesh vkMesh = createFromGenericMesh(mesh);
 
 			auto textureName = model.getTextures()[i];

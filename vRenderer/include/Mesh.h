@@ -11,18 +11,17 @@
 class Mesh
 {
 public:
-	int id;
-	std::string name;
+	const int id;
+	const std::string name;
 
-	Mesh();
 	Mesh(int id, const char* name, std::vector<glm::vec3> vertices, std::vector<uint32_t> indices,
 		std::vector<glm::vec2> texCoords, std::vector<glm::vec3> normals);
-	~Mesh();
+	~Mesh() = default;
 
-	std::vector<glm::vec3>& getVertices();
-	std::vector<glm::vec2>& getTexCoords();
-	std::vector<glm::vec3>& getNormals();
-	std::vector<uint32_t>& getIndices();
+	const std::vector<glm::vec3>& getVertices() const;
+	const std::vector<glm::vec2>& getTexCoords() const;
+	const std::vector<glm::vec3>& getNormals() const;
+	const std::vector<uint32_t>& getIndices() const;
 
 private:
 	std::vector<glm::vec3> vertices;

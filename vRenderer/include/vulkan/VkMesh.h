@@ -21,7 +21,7 @@ class VkMesh
 public:
 	VkMesh();
 	VkMesh(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkQueue transferQueue,
-		VkCommandPool transferCommandPool, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices,
+		VkCommandPool transferCommandPool, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
 		int textureIndex);
 	~VkMesh();
 
@@ -55,7 +55,7 @@ private:
 	// Transform
 	glm::mat4 transformMat;
 
-	void createVertexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, std::vector<Vertex>* vertices);
-	void createIndexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, std::vector<uint32_t>* indices);
+	void createVertexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, const std::vector<Vertex>& vertices);
+	void createIndexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, const std::vector<uint32_t>& indices);
 };
 

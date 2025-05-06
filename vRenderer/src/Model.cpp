@@ -1,23 +1,28 @@
 #include "Model.h"
 
-Model::Model(uint32_t id, std::string filePath)
+Model::Model(uint32_t id, std::string filePath) :
+	id(id),
+	folderPath(filePath.substr(0, filePath.find_last_of('\\')))
 {
-	this->id = id;
-	this->folderPath = filePath.substr(0, filePath.find_last_of('\\'));
 	importModel(filePath);
 }
 
-std::vector<Mesh>& Model::getMeshes()
+uint32_t Model::getMeshCount()
+{
+	return this->meshCount;
+}
+
+std::string Model::getName()
+{
+	return this->name;
+}
+
+const std::vector<Mesh>& Model::getMeshes() const
 {
 	return this->meshes;
 }
 
-int Model::getMeshesCount()
-{
-	return this->meshesCount;
-}
-
-std::vector<std::string>& Model::getTextures()
+const std::vector<std::string>& Model::getTextures() const
 {
 	return this->textures;
 }
@@ -32,7 +37,7 @@ std::vector<std::string>& Model::getTextures()
 std::string Model::getFullTexturePath(int textureIndex)
 {
 	std::string path = "";
-	if (textureIndex < this->meshesCount && textureIndex >= 0)
+	if (textureIndex < this->meshCount && textureIndex >= 0)
 	{
 		if (!this->textures[textureIndex].empty())
 		{
@@ -56,9 +61,7 @@ void Model::importModel(std::string filePath)
 		this->name = filePath.substr(start, end - start);
 	}
 
-	this->meshesCount = scene->mNumMeshes;
-	this->meshes.resize(this->meshesCount);
-	this->textures.resize(this->meshesCount);
+	this->meshCount = scene->mNumMeshes;
 
 	// Import meshes and textures
 	for (int i = 0; i < scene->mNumMeshes; i++)
@@ -82,7 +85,7 @@ void Model::importModel(std::string filePath)
 			indices[j * 3 + 2] = face.mIndices[2] + VERTEX_INDEX_OFFSET;
 		}
 
-		this->meshes[i] = Mesh(i, meshData->mName.C_Str(), vertices, indices, texCoords, normals);
+		this->meshes.push_back(Mesh(i, meshData->mName.C_Str(), vertices, indices, texCoords, normals));
 
 		// If mesh has a material assigned and this material has a diffuse texture
 		// we save a path to the texture std::vector at the same index as mesh in corresponding mesh std::vector
@@ -93,7 +96,7 @@ void Model::importModel(std::string filePath)
 			aiString path;
 			if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &path) == aiReturn_SUCCESS)
 			{
-				this->textures[i] = std::string(path.C_Str());
+				this->textures.push_back(std::string(path.C_Str()));
 				std::replace(this->textures[i].begin(), this->textures[i].end(), '/', '\\');
 			}
 		}		

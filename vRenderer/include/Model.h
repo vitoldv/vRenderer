@@ -18,20 +18,24 @@
 class Model
 {
 public:
-	uint32_t id;
-	std::string name;	
-	std::string folderPath;
+	const uint32_t id;
+	const std::string folderPath;
 
 	Model(uint32_t id, std::string filePath);
+	~Model() = default;
 
-	int getMeshesCount();
-	std::vector<Mesh>& getMeshes();
-	std::vector<std::string>& getTextures();
+	uint32_t getMeshCount();
+	std::string getName();
+
+	const std::vector<Mesh>& getMeshes() const;
+	const std::vector<std::string>& getTextures() const;
 	std::string getFullTexturePath(int textureIndex);
+	std::string name;
 
 private:
+	uint32_t meshCount;
+
 	// Meshes of this model
-	int meshesCount;
 	std::vector<Mesh> meshes;
 	// Texture names applied to meshes of this model. Has a 1:1 relation to meshes std::vector.
 	std::vector<std::string> textures;

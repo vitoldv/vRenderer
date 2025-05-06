@@ -115,7 +115,7 @@ private:
 	//std::vector<VkBuffer> uniformBuffersDynamic;
 	//std::vector<VkDeviceMemory> uniformBuffersMemoryDynamic;
 	
-	VkMesh createFromGenericMesh(Mesh& mesh);
+	VkMesh createFromGenericMesh(const Mesh& mesh);
 
 	// Utility
 	VkFormat swapChainImageFormat;
