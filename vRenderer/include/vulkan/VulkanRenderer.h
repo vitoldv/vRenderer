@@ -60,7 +60,7 @@ private:
 
 	int currentFrame = 0;
 
-	VkContext context;
+	VkUtils::VkContext context;
 
 	// Native Vulkan Components
 	VkInstance vkInstance; 
@@ -70,7 +70,7 @@ private:
 	VkQueue vkPresentationQueue;
 	VkSurfaceKHR vkSurface;
 	VkSwapchainKHR vkSwapchain;
-	std::vector<SwapChainImage> swapchainImages;
+	std::vector<VkUtils::SwapChainImage> swapchainImages;
 
 	// Graphics pipeline
 	VkRenderPass vkRenderPass;
@@ -206,8 +206,8 @@ private:
 	bool isDeviceSupportsRequiredExtensions(VkPhysicalDevice device);
 	bool isDeviceSuitable(VkPhysicalDevice device);
 
-	QueueFamilyIndices getQueueFamilies(VkPhysicalDevice device);
-	SwapChainDetails getSwapChainDetails(VkPhysicalDevice device);
+	VkUtils::QueueFamilyIndices getQueueFamilies(VkPhysicalDevice device);
+	VkUtils::SwapChainDetails getSwapChainDetails(VkPhysicalDevice device);
 	bool checkValidationLayerSupport();
 
 	VkModel* getModel(uint32_t id);

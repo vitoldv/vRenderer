@@ -126,7 +126,7 @@ void VulkanRenderer::cleanup()
 #ifndef NDEBUG
 	if (ENABLE_VALIDATION_LAYERS)
 	{
-		destroyDebugUtilsMessengerEXT(this->vkInstance, this->debugMessenger, nullptr);
+		VkUtils::destroyDebugUtilsMessengerEXT(this->vkInstance, this->debugMessenger, nullptr);
 	}
 #endif
 	vkDestroyDevice(this->vkLogicalDevice, nullptr);
@@ -197,7 +197,7 @@ void VulkanRenderer::createVulkanInstance()
 		
 		// This is the way to enable debug messanger for Vulkan instance creation and destroy functions
 		// (messanger itself is created and destroyed in between those)
-		populateDebugMessengerCreateInfo(debugCreateInfo);
+		VkUtils::populateDebugMessengerCreateInfo(debugCreateInfo);
 		vkInstanceInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
 	else
@@ -240,7 +240,7 @@ void VulkanRenderer::retrievePhysicalDevice()
 void VulkanRenderer::createLogicalDevice()
 {
 	// Get queue family indices for selected physical device
-	QueueFamilyIndices indices = getQueueFamilies(this->vkPhysicalDevice);
+	VkUtils::QueueFamilyIndices indices = getQueueFamilies(this->vkPhysicalDevice);
 
 	// Creating queue family info for queue family creation (considering that some indices may point
 	// out to the same queue family so we create infos for only distinct ones ensuring using set)
@@ -299,7 +299,7 @@ void VulkanRenderer::createSurface()
 void VulkanRenderer::createSwapChain()
 {
 	// Get Swap Chain details so we can pick best settings
-	SwapChainDetails swapChainDetails = getSwapChainDetails(this->vkPhysicalDevice);
+	VkUtils::SwapChainDetails swapChainDetails = getSwapChainDetails(this->vkPhysicalDevice);
 
 	// Find optimal surface values for our swap chain
 	VkSurfaceFormatKHR surfaceFormat = defineSurfaceFormat(swapChainDetails.surfaceFormats);
@@ -333,7 +333,7 @@ void VulkanRenderer::createSwapChain()
 	swapChainCreateInfo.clipped = VK_TRUE;														// Whether to clip parts of image not in view (e.g. behind another window, off screen, etc)
 
 	// Get Queue Family Indices
-	QueueFamilyIndices indices = getQueueFamilies(this->vkPhysicalDevice);
+	VkUtils::QueueFamilyIndices indices = getQueueFamilies(this->vkPhysicalDevice);
 
 	// If Graphics and Presentation families are different, then swapchain must let images be shared between families
 	if (indices.graphicsFamily != indices.presentationFamily)
@@ -378,9 +378,9 @@ void VulkanRenderer::createSwapChain()
 	for (VkImage image : images)
 	{
 		// Store image handle
-		SwapChainImage swapChainImage = {};
+		VkUtils::SwapChainImage swapChainImage = {};
 		swapChainImage.image = image;
-		swapChainImage.imageView = createImageView(image, swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
+		swapChainImage.imageView = VkUtils::createImageView(image, swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
 
 		// Add to swapchain image list
 		this->swapchainImages.push_back(swapChainImage);
@@ -530,8 +530,8 @@ void VulkanRenderer::createGraphicsPipeline()
 	///////////////////////////////////
 	
 	// read SPIR-V shader code
-	auto vertexShaderCode = readFile("vRenderer\\shaders\\first_pass_vert.spv");
-	auto fragmentShaderCode = readFile("vRenderer\\shaders\\first_pass_frag.spv");
+	auto vertexShaderCode = VkUtils::readFile("vRenderer\\shaders\\first_pass_vert.spv");
+	auto fragmentShaderCode = VkUtils::readFile("vRenderer\\shaders\\first_pass_frag.spv");
 
 	// build shader modules to link to graphics pipeline
 	VkShaderModule vertexShaderModule = createShaderModule(vertexShaderCode);
@@ -733,8 +733,8 @@ void VulkanRenderer::createGraphicsPipeline()
 	// ----- SECOND PASS PIPELINE -----
 	///////////////////////////////////
 
-	VkShaderModule secondVertexShaderModule = createShaderModule(readFile("vRenderer\\shaders\\second_pass_vert.spv"));
-	VkShaderModule secondFragmentShaderModule = createShaderModule(readFile("vRenderer\\shaders\\second_pass_frag.spv"));
+	VkShaderModule secondVertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\second_pass_vert.spv"));
+	VkShaderModule secondFragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\second_pass_frag.spv"));
 
 	// reusing shader create infos for previous pipeline
 	vertexShaderStageCreateInfo.module = secondVertexShaderModule;
@@ -797,10 +797,10 @@ void VulkanRenderer::createColorBufferImage()
 	for (int i = 0; i < colorBuffersCount; i++)
 	{
 		// Create color buffer image
-		this->colorBufferImage[i] = createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
+		this->colorBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->colorBufferImageMemory[i], context);
-		this->colorBufferImageView[i] = createImageView(this->colorBufferImage[i], colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
+		this->colorBufferImageView[i] = VkUtils::createImageView(this->colorBufferImage[i], colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
 	}
 }
 
@@ -981,7 +981,7 @@ void VulkanRenderer::createUniformBuffers()
 	//allocateDynamicBufferTransferSpace();
 
 	// Buffer size should be the size of data we pass as uniforms
-	VkDeviceSize bufferSize = sizeof(UboProjectionView);
+	VkDeviceSize bufferSize = sizeof(VkUtils::UboProjectionView);
 
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	// Model Buffer size
@@ -997,7 +997,7 @@ void VulkanRenderer::createUniformBuffers()
 
 	for (int i = 0; i < uniformBuffers.size(); i++)
 	{
-		createBuffer(this->vkPhysicalDevice, this->vkLogicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		VkUtils::createBuffer(this->vkPhysicalDevice, this->vkLogicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformBuffers[i], &uniformBuffersMemory[i]);
 
 		// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
@@ -1023,42 +1023,22 @@ void VulkanRenderer::createDepthBuffer()
 	for (int i = 0; i < depthBuffersCount; i++)
 	{
 		// Create depth buffer image
-		this->depthBufferImage[i] = createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+		this->depthBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->depthBufferImageMemory[i], context);
-		this->depthBufferImageView[i] = createImageView(this->depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, context);
+		this->depthBufferImageView[i] = VkUtils::createImageView(this->depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, context);
 	}
 }   
 
 void VulkanRenderer::createDescriptorPool()
 {
-	VkDescriptorPoolSize poolSize = {};
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = static_cast<uint32_t>(uniformBuffers.size());
-
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	//VkDescriptorPoolSize poolSizeDynamic = {};
 	//poolSizeDynamic.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 	//poolSizeDynamic.descriptorCount = static_cast<uint32_t>(uniformBuffersDynamic.size());
 	//std::vector<VkDescriptorPoolSize> descriptorPoolSizes = {poolSize, poolSizeDynamic};
 
-	VkDescriptorPoolSize samplerPoolsize = {};
-	samplerPoolsize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerPoolsize.descriptorCount = MAX_OBJECTS;
-
-	std::vector<VkDescriptorPoolSize> descriptorPoolSizes = { poolSize, samplerPoolsize };
-
-	VkDescriptorPoolCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	createInfo.maxSets = static_cast<uint32_t>(swapchainImages.size() + MAX_OBJECTS);
-	createInfo.poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size());
-	createInfo.pPoolSizes = descriptorPoolSizes.data();
-	createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-
-	VkResult result = vkCreateDescriptorPool(this->vkLogicalDevice, &createInfo, nullptr, &this->vkDescriptorPool);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create descriptor pools.");
-	}
+	// UNIFORM BUFFERS descriptor pool
+	vkDescriptorPool = VkUtils::createDescriptorPool(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBuffers.size(), VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, context);
 
 	// CREATE INPUT ATTACHMENT DESCRIPTOR POOL
 	VkDescriptorPoolSize colorInputPoolSize = {};
@@ -1076,7 +1056,7 @@ void VulkanRenderer::createDescriptorPool()
 	inputPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(inputPoolSizes.size());
 	inputPoolCreateInfo.pPoolSizes = inputPoolSizes.data();
 
-	result = vkCreateDescriptorPool(this->vkLogicalDevice, &inputPoolCreateInfo, nullptr, &this->vkInputDescriptorPool);
+	VkResult result = vkCreateDescriptorPool(this->vkLogicalDevice, &inputPoolCreateInfo, nullptr, &this->vkInputDescriptorPool);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create Input Descriptor pools.");
@@ -1109,7 +1089,7 @@ void VulkanRenderer::createDescriptorSets()
 		VkDescriptorBufferInfo vpBufferInfo = {};
 		vpBufferInfo.buffer = uniformBuffers[i];
 		vpBufferInfo.offset = 0;
-		vpBufferInfo.range = sizeof(UboProjectionView);
+		vpBufferInfo.range = sizeof(VkUtils::UboProjectionView);
 
 		VkWriteDescriptorSet vpSetWrite = {};
 		vpSetWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1230,14 +1210,14 @@ VkSurfaceFormatKHR VulkanRenderer::defineSurfaceFormat(const std::vector<VkSurfa
 
 void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 {
-	UboProjectionView mvp = {};
+	VkUtils::UboProjectionView mvp = {};
 	mvp.projection = mainCamera->getProjectionMatrix();
 	mvp.view = mainCamera->getViewMatrix();
 
 	// Copy uniform data (view projection matrices)
 	void* data;
-	vkMapMemory(this->vkLogicalDevice, uniformBuffersMemory[imageIndex], 0, sizeof(UboProjectionView), 0, &data);
-	memcpy(data, &mvp, sizeof(UboProjectionView));
+	vkMapMemory(this->vkLogicalDevice, uniformBuffersMemory[imageIndex], 0, sizeof(VkUtils::UboProjectionView), 0, &data);
+	memcpy(data, &mvp, sizeof(VkUtils::UboProjectionView));
 	vkUnmapMemory(this->vkLogicalDevice, uniformBuffersMemory[imageIndex]);
 
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
@@ -1277,7 +1257,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	renderPassBeginInfo.renderArea.offset = { 0,0 };						// start point of render pass
 	renderPassBeginInfo.renderArea.extent = swapChainExtent;
 	
-	auto backgroundColor = getRGBANormalized(BACKGROUND_COLOR);
+	auto backgroundColor = VkUtils::getRGBANormalized(BACKGROUND_COLOR);
 	std::array<VkClearValue, 3> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };		// basically it doesn't matter what will be here
 	clearValues[1].color = {  backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3] };
@@ -1490,7 +1470,7 @@ bool VulkanRenderer::addToRenderer(const Model& model, glm::vec3 color)
 	// If mesh is not in renderer
 	if (!isModelInRenderer(model.id))
 	{
-		VkSamplerDescriptorSetCreateInfo createInfo = {};
+		VkUtils::VkSamplerDescriptorSetCreateInfo createInfo = {};
 		createInfo.descriptorPool = this->vkDescriptorPool;
 		createInfo.sampler = this->vkTextureSampler;
 		createInfo.samplerDescriptorSetLayout = this->vkSamplerDescriptorSetLayout;
@@ -1507,7 +1487,7 @@ bool VulkanRenderer::addToRendererTextured(const Model& model)
 	// If mesh is not in renderer
 	if (!isModelInRenderer(model.id))
 	{
-		VkSamplerDescriptorSetCreateInfo createInfo = {};
+		VkUtils::VkSamplerDescriptorSetCreateInfo createInfo = {};
 		createInfo.descriptorPool = this->vkDescriptorPool;
 		createInfo.sampler = this->vkTextureSampler;
 		createInfo.samplerDescriptorSetLayout = this->vkSamplerDescriptorSetLayout;
@@ -1558,9 +1538,9 @@ void VulkanRenderer::setupDebugMessenger()
 		return;
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
-	populateDebugMessengerCreateInfo(createInfo);
+	VkUtils::populateDebugMessengerCreateInfo(createInfo);
 
-	if (createDebugUtilsMessengerEXT(this->vkInstance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+	if (VkUtils::createDebugUtilsMessengerEXT(this->vkInstance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to set up debug messenger.");
 	}
@@ -1678,7 +1658,7 @@ void VulkanRenderer::setupImgui()
 	init_info.MinImageCount = 2;
 	init_info.ImageCount = 3;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-	init_info.CheckVkResultFn = check_vk_result;
+	init_info.CheckVkResultFn = VkUtils::check_vk_result;
 	ImGui_ImplVulkan_Init(&init_info);
 }
 
@@ -1771,9 +1751,9 @@ VkFormat VulkanRenderer::defineSupportedFormat(const std::vector<VkFormat>& form
 	throw std::runtime_error("Failed to find a matching format.");
 }
 
-QueueFamilyIndices VulkanRenderer::getQueueFamilies(VkPhysicalDevice device)
+VkUtils::QueueFamilyIndices VulkanRenderer::getQueueFamilies(VkPhysicalDevice device)
 {
-	QueueFamilyIndices indices;
+	VkUtils::QueueFamilyIndices indices;
 
 	// Get all Queue Family Properties info for given physical device
 	uint32_t queueFamilyCount = 0;
@@ -1838,9 +1818,9 @@ void VulkanRenderer::createTextureSampler()
 	}
 }
 
-SwapChainDetails VulkanRenderer::getSwapChainDetails(VkPhysicalDevice device)
+VkUtils::SwapChainDetails VulkanRenderer::getSwapChainDetails(VkPhysicalDevice device)
 {
-	SwapChainDetails details = {};
+	VkUtils::SwapChainDetails details = {};
 
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, this->vkSurface, &details.surfaceCapabilities);
 	

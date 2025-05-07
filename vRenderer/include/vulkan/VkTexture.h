@@ -7,6 +7,8 @@
 #include <string>
 #include "VulkanUtils.h"
 
+using namespace VkUtils;
+
 class VkTexture
 {
 public:

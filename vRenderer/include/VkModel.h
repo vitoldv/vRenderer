@@ -11,6 +11,8 @@
 #include "VkMesh.h"
 #include "VkTexture.h"
 
+using namespace VkUtils;
+
 class VkModel
 {
 public:
@@ -36,9 +38,12 @@ private:
 	VkContext context;
 	glm::mat4 transform;
 
-	void createFromGenericModel(const Model& model, VkSamplerDescriptorSetCreateInfo createInfo);
-	void cleanup();
 	std::vector<VkMesh*> meshes;
 	std::vector<VkTexture*> textures;
+
+	VkDescriptorPool samplerDescriptorPool;
 	std::vector<VkDescriptorSet> samplerDescriptorSets;
+
+	void createFromGenericModel(const Model& model, VkSamplerDescriptorSetCreateInfo createInfo);
+	void cleanup();
 };

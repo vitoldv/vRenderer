@@ -12,6 +12,11 @@ uint32_t Model::getMeshCount() const
 	return this->meshCount;
 }
 
+uint32_t Model::getTextureCount() const
+{
+	return this->textureCount;
+}
+
 std::string Model::getName()
 {
 	return this->name;
@@ -100,4 +105,6 @@ void Model::importModel(std::string filePath)
 			}
 		}		
 	}
+
+	this->textureCount = this->textures.size();
 }

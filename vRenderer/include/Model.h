@@ -25,6 +25,7 @@ public:
 	~Model() = default;
 
 	uint32_t getMeshCount() const;
+	uint32_t getTextureCount() const;
 	std::string getName();
 
 	const std::vector<Mesh>& getMeshes() const;
@@ -34,6 +35,7 @@ public:
 private:
 
 	uint32_t meshCount;
+	uint32_t textureCount;
 	std::string name;
 
 	// Meshes of this model

@@ -10,6 +10,8 @@
 #include "VulkanUtils.h"
 #include "Mesh.h"
 
+using namespace VkUtils;
+
 struct Vertex
 {
 	glm::vec3 pos;

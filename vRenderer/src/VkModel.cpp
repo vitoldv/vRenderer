@@ -58,6 +58,14 @@ void VkModel::setTransform(glm::mat4 transform)
 
 void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetCreateInfo createInfo)
 {
+	samplerDescriptorPool = createDescriptorPool(
+		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		model.getTextureCount(),
+		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		context);
+
+	createInfo.descriptorPool = samplerDescriptorPool;
+
 	for (int i = 0; i < model.getMeshCount(); i++)
 	{
 		const Mesh& mesh = model.getMeshes()[i];
@@ -84,6 +92,8 @@ void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetC
 
 void VkModel::cleanup()
 {
+	vkDestroyDescriptorPool(context.logicalDevice, samplerDescriptorPool, nullptr);
+
 	for (auto& texture : textures)
 	{
 		delete texture;
