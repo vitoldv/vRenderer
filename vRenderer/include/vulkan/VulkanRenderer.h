@@ -42,7 +42,6 @@
 #define BACKGROUND_COLOR 0x008B8BFF
 
 #define MAX_FRAME_DRAWS 2
-#define MAX_OBJECTS 100
 
 // Names of extensions required to run the application
 const std::vector<const char*> deviceExtensions = {
@@ -220,8 +219,6 @@ private:
 // 1. Make a generic function for pipeline creation to avoid a lot of duplicated code in createGraphicsPipeline();
 // 2. Create a solution for removing swapChainImages.size() overuse (Create a constant value for images count or 
 // make a wrapper for single swapchain image code);
-// 3. Think of optimal max descriptor sets count other than MAX_OBJECTS (probably also create a separate pool for
-// sampler descriptors).
-// 4. Think of single memory buffer for meshes related to specific model
-// 5. Create solution for instance batching
-// 6. Extract all duplicated "magic" Vulkan flags to single place in code
+// 3. Think of single memory buffer for meshes related to specific model
+// 4. Create solution for instance batching
+// 5. Extract all duplicated "magic" Vulkan flags to single place in code
