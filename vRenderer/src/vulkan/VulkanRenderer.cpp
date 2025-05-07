@@ -1284,43 +1284,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	int meshCount = 0;
 	for (auto& model : modelsToRender)
 	{
-		for (auto& mesh : model->getMeshes())
-		{
-			VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };															// buffers to bind
-			VkBuffer indexBuffer = mesh->getIndexBuffer();
-			VkDeviceSize offsets[] = { 0 };																					// offsets into buffers being bound
-			vkCmdBindVertexBuffers(this->vkCommandBuffers[currentImage], 0, 1, vertexBuffers, offsets);								// Command to bind vertex buffer before deawing with them
-			vkCmdBindIndexBuffer(this->vkCommandBuffers[currentImage], indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-			// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-			//// Dynamic offset amount
-			//uint32_t dynamicOffset = static_cast<uint32_t>(modelUniformAlignment) * meshCount;
-			//vkCmdBindDescriptorSets(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
-			//	0, 1, &this->vkDescriptorSets[currentImage], 1, &dynamicOffset);
-
-			glm::mat4 meshTransform = mesh->getTransformMat();
-			vkCmdPushConstants(this->vkCommandBuffers[currentImage], this->vkPipelineLayout,
-				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &meshTransform);
-
-			if (mesh->hasTexture())
-			{
-				std::array<VkDescriptorSet, 2> descriptorSets = { this->vkDescriptorSets[currentImage],
-					model->getSamplerDescriptorSetForMesh(mesh->id)};
-
-				vkCmdBindDescriptorSets(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
-					0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
-			}
-			else
-			{
-				vkCmdBindDescriptorSets(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
-					0, 1, &this->vkDescriptorSets[currentImage], 0, nullptr);
-			}
-
-			// execute pipeline
-			vkCmdDrawIndexed(this->vkCommandBuffers[currentImage], static_cast<uint32_t>(mesh->getIndexCount()), 1, 0, -VERTEX_INDEX_OFFSET, 0);
-
-			meshCount++;
-		}
+		model->draw(this->vkCommandBuffers[currentImage], this->vkPipelineLayout, this->vkDescriptorSets[currentImage]);
 	}
 
 	// Start second subpass

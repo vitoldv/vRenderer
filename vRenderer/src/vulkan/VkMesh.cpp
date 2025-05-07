@@ -4,18 +4,12 @@ VkMesh::VkMesh(uint32_t id, const Mesh& mesh, VkContext context) :
 	id(id)
 {
 	this->context = context;
-	this->textureIndex = textureIndex;
 	createFromGenericMesh(mesh);
 }
 
 VkMesh::~VkMesh()
 {
 	cleanup();
-}
-
-bool VkMesh::hasTexture()
-{
-	return textureIndex > -1;
 }
 
 int VkMesh::getVertexCount()
@@ -38,11 +32,6 @@ VkBuffer VkMesh::getIndexBuffer()
 	return this->indexBuffer;
 }
 
-int VkMesh::getTextureIndex()
-{
-	return this->textureIndex;
-}
-
 glm::mat4 VkMesh::getTransformMat()
 {
 	return this->transformMat;
@@ -51,11 +40,6 @@ glm::mat4 VkMesh::getTransformMat()
 void VkMesh::setTransformMat(glm::mat4 transform)
 {
 	this->transformMat = transform;
-}
-
-void VkMesh::setTextureDescriptorIndex(int textureDescriptorIndex)
-{
-	this->textureIndex = textureDescriptorIndex;
 }
 
 void VkMesh::createFromGenericMesh(const Mesh& mesh)
