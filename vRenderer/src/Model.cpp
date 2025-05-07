@@ -67,6 +67,8 @@ void Model::importModel(std::string filePath)
 
 	this->meshCount = scene->mNumMeshes;
 
+	this->textures.resize(meshCount);
+
 	// Import meshes and textures
 	for (int i = 0; i < scene->mNumMeshes; i++)
 	{
@@ -100,11 +102,11 @@ void Model::importModel(std::string filePath)
 			aiString path;
 			if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &path) == aiReturn_SUCCESS)
 			{
-				this->textures.push_back(std::string(path.C_Str()));
-				std::replace(this->textures[i].begin(), this->textures[i].end(), '/', '\\');
+				std::string s = path.C_Str();
+				std::replace(s.begin(), s.end(), '/', '\\');
+				this->textures[i] = s;
+				this->textureCount++;
 			}
 		}		
 	}
-
-	this->textureCount = this->textures.size();
 }
