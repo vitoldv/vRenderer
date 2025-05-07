@@ -24,12 +24,12 @@ public:
 	Model(uint32_t id, std::string filePath);
 	~Model() = default;
 
-	uint32_t getMeshCount();
+	uint32_t getMeshCount() const;
 	std::string getName();
 
 	const std::vector<Mesh>& getMeshes() const;
 	const std::vector<std::string>& getTextures() const;
-	std::string getFullTexturePath(int textureIndex);
+	std::string getFullTexturePath(int textureIndex) const;
 
 private:
 

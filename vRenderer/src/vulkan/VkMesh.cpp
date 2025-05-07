@@ -1,30 +1,22 @@
 #include "VkMesh.h"
 
-VkMesh::VkMesh()
+VkMesh::VkMesh(uint32_t id, const Mesh& mesh, VkContext context) : 
+	id(id)
 {
-	this->indexCount = 0;
-	this->vertexCount = 0;
-	this->vertexBuffer = VK_NULL_HANDLE;
-	this->vertexBufferMemory = VK_NULL_HANDLE;
-	this->indexBuffer = VK_NULL_HANDLE;
-	this->indexBufferMemory = VK_NULL_HANDLE;
-	this->physicalDevice = VK_NULL_HANDLE;
-	this->logicalDevice = VK_NULL_HANDLE;
-}
-
-VkMesh::VkMesh(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkQueue transferQueue,
-	VkCommandPool transferCommandPool, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, int textureIndex)
-{
-	this->indexCount = indices.size();
-	this->vertexCount = vertices.size();
-	this->physicalDevice = physicalDevice;
-	this->logicalDevice = logicalDevice;
+	this->context = context;
 	this->textureIndex = textureIndex;
-	createVertexBuffer(transferQueue, transferCommandPool, vertices);
-	createIndexBuffer(transferQueue, transferCommandPool, indices);
+	createFromGenericMesh(mesh);
 }
 
-VkMesh::~VkMesh() {}
+VkMesh::~VkMesh()
+{
+	cleanup();
+}
+
+bool VkMesh::hasTexture()
+{
+	return textureIndex > -1;
+}
 
 int VkMesh::getVertexCount()
 {
@@ -51,16 +43,6 @@ int VkMesh::getTextureIndex()
 	return this->textureIndex;
 }
 
-
-void VkMesh::destroyDataBuffers()
-{
-	vkDestroyBuffer(this->logicalDevice, this->indexBuffer, nullptr);
-	vkFreeMemory(this->logicalDevice, this->indexBufferMemory, nullptr);
-
-	vkDestroyBuffer(this->logicalDevice, this->vertexBuffer, nullptr);
-	vkFreeMemory(this->logicalDevice, this->vertexBufferMemory, nullptr);
-}
-
 glm::mat4 VkMesh::getTransformMat()
 {
 	return this->transformMat;
@@ -76,7 +58,32 @@ void VkMesh::setTextureDescriptorIndex(int textureDescriptorIndex)
 	this->textureIndex = textureDescriptorIndex;
 }
 
-void VkMesh::createVertexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, const std::vector<Vertex>& vertices)
+void VkMesh::createFromGenericMesh(const Mesh& mesh)
+{
+	std::vector<Vertex> vertices;
+	const auto& meshVertices = mesh.getVertices();
+	const auto& meshIndices = mesh.getIndices();
+	const auto& meshTexCoords = mesh.getTexCoords();
+	const auto& meshNormals = mesh.getNormals();
+	for (int i = 0; i < meshVertices.size(); i++)
+	{
+		Vertex vertex = {};
+		vertex.pos = meshVertices.at(i);
+		vertex.normal = meshNormals.at(i);
+		vertex.uv = meshTexCoords.at(i);
+		vertices.push_back(vertex);
+	}
+
+	this->indexCount = meshIndices.size();
+	this->vertexCount = vertices.size();
+
+	setTransformMat(glm::identity<glm::mat4>());
+
+	createVertexBuffer(vertices, context);
+	createIndexBuffer(meshIndices, context);
+}
+
+void VkMesh::createVertexBuffer(const std::vector<Vertex>& vertices, VkContext context)
 {
 	// Size of buffer needed for vertices
 	VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
@@ -84,28 +91,28 @@ void VkMesh::createVertexBuffer(VkQueue transferQueue, VkCommandPool transferCom
 	// Temporary buffer to stage vertex data before transferring to GPU
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	createBuffer(physicalDevice, logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&stagingBuffer, &stagingBufferMemory);
 
 	// MAP MEMORY TO STAGE BUFFER
 	void* data;
-	vkMapMemory(this->logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);		// "map" the vertex buffer memory to some point
+	vkMapMemory(context.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);		// "map" the vertex buffer memory to some point
 	memcpy(data, vertices.data(), (size_t)(bufferSize));									// copy memory from vertices std::vector to the point
-	vkUnmapMemory(this->logicalDevice, stagingBufferMemory);										// unmap the vertex buffer memory
+	vkUnmapMemory(context.logicalDevice, stagingBufferMemory);										// unmap the vertex buffer memory
 
 	// Create buffer with TRANSFER_DST_BIT to mark as recipient of transfer data (also vertex buffer
 	// Buffer memory is to be DEVICE_LOCAL_BIT meaning memory is on the GPU and only accessible by it and not CPU (host))
-	createBuffer(physicalDevice, logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vertexBuffer, &vertexBufferMemory);
 
-	copyBuffer(logicalDevice, transferQueue, transferCommandPool, stagingBuffer, vertexBuffer, bufferSize);
+	copyBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, stagingBuffer, vertexBuffer, bufferSize);
 
-	vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
-	vkFreeMemory(logicalDevice, stagingBufferMemory, nullptr);
+	vkDestroyBuffer(context.logicalDevice, stagingBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, stagingBufferMemory, nullptr);
 }
 
-void VkMesh::createIndexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, const std::vector<uint32_t>& indices)
+void VkMesh::createIndexBuffer(const std::vector<uint32_t>& indices, VkContext context)
 {
 	// Size of buffer needed for indices
 	VkDeviceSize bufferSize = sizeof(uint32_t) * indices.size();
@@ -113,23 +120,32 @@ void VkMesh::createIndexBuffer(VkQueue transferQueue, VkCommandPool transferComm
 	// Temporary buffer to stage indices data before transferring to GPU
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	createBuffer(physicalDevice, logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&stagingBuffer, &stagingBufferMemory);
 
 	// MAP MEMORY TO STAGE BUFFER
 	void* data;
-	vkMapMemory(this->logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);			// "map" the indices buffer memory to some point
+	vkMapMemory(context.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);			// "map" the indices buffer memory to some point
 	memcpy(data, indices.data(), (size_t)(bufferSize));									// copy memory from indices std::vector to the point
-	vkUnmapMemory(this->logicalDevice, stagingBufferMemory);								// unmap the indices buffer memory
+	vkUnmapMemory(context.logicalDevice, stagingBufferMemory);								// unmap the indices buffer memory
 
 	// Create buffer with TRANSFER_DST_BIT to mark as recipient of transfer data (also indices buffer
 	// Buffer memory is to be DEVICE_LOCAL_BIT meaning memory is on the GPU and only accessible by it and not CPU (host))
-	createBuffer(physicalDevice, logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->indexBuffer, &this->indexBufferMemory);
 
-	copyBuffer(logicalDevice, transferQueue, transferCommandPool, stagingBuffer, this->indexBuffer, bufferSize);
+	copyBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, stagingBuffer, this->indexBuffer, bufferSize);
 
-	vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
-	vkFreeMemory(logicalDevice, stagingBufferMemory, nullptr);
+	vkDestroyBuffer(context.logicalDevice, stagingBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, stagingBufferMemory, nullptr);
+}
+
+void VkMesh::cleanup()
+{
+	vkDestroyBuffer(context.logicalDevice, this->indexBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, this->indexBufferMemory, nullptr);
+
+	vkDestroyBuffer(context.logicalDevice, this->vertexBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, this->vertexBufferMemory, nullptr);
 }

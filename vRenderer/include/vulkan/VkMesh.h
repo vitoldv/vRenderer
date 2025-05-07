@@ -4,8 +4,11 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <vector>
 #include "VulkanUtils.h"
+#include "Mesh.h"
 
 struct Vertex
 {
@@ -19,12 +22,13 @@ class VkMesh
 {
 
 public:
-	VkMesh();
-	VkMesh(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkQueue transferQueue,
-		VkCommandPool transferCommandPool, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
-		int textureIndex);
+
+	const uint32_t id;
+
+	VkMesh(uint32_t id, const Mesh& mesh, VkContext context);
 	~VkMesh();
 
+	bool hasTexture();
 	int getVertexCount();
 	VkBuffer getVertexBuffer();
 	int getIndexCount();
@@ -35,10 +39,8 @@ public:
 	void setTransformMat(glm::mat4 transform);
 	void setTextureDescriptorIndex(int textureDescriptorIndex);
 
-	void destroyDataBuffers();
-
-
 private:
+
 	int vertexCount;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
@@ -49,13 +51,15 @@ private:
 
 	int textureIndex;
 
-	VkPhysicalDevice physicalDevice;
-	VkDevice logicalDevice;
+	VkContext context;
 
 	// Transform
 	glm::mat4 transformMat;
 
-	void createVertexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, const std::vector<Vertex>& vertices);
-	void createIndexBuffer(VkQueue transferQueue, VkCommandPool transferCommandPool, const std::vector<uint32_t>& indices);
+	void createFromGenericMesh(const Mesh& mesh);
+	void createVertexBuffer(const std::vector<Vertex>& vertices, VkContext context);
+	void createIndexBuffer(const std::vector<uint32_t>& indices, VkContext context);
+
+	void cleanup();
 };
 

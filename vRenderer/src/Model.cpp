@@ -7,7 +7,7 @@ Model::Model(uint32_t id, std::string filePath) :
 	importModel(filePath);
 }
 
-uint32_t Model::getMeshCount()
+uint32_t Model::getMeshCount() const
 {
 	return this->meshCount;
 }
@@ -34,7 +34,7 @@ const std::vector<std::string>& Model::getTextures() const
 /// </summary>
 /// <param name="textureIndex"></param>
 /// <returns></returns>
-std::string Model::getFullTexturePath(int textureIndex)
+std::string Model::getFullTexturePath(int textureIndex) const
 {
 	std::string path = "";
 	if (textureIndex < this->meshCount && textureIndex >= 0)
@@ -53,7 +53,6 @@ void Model::importModel(std::string filePath)
 	const aiScene* scene = importer.ReadFile(filePath, ASSIMP_PREPROCESS_FLAGS);
 	
 	// Take a name from scene, if it's empty - extract it from model file path
-	this->name = scene->mName.C_Str();
 	if (this->name.empty())
 	{
 		int start = filePath.find_last_of('\\') + 1;

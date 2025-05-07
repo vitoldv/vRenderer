@@ -2,6 +2,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -47,6 +48,26 @@ struct QueueFamilyIndices
 	{
 		return graphicsFamily >= 0 && presentationFamily >= 0;
 	}
+};
+
+struct VkContext
+{
+	// General
+	VkPhysicalDevice physicalDevice;
+	VkDevice logicalDevice;
+	VkQueue graphicsQueue;
+	VkCommandPool graphicsCommandPool;
+
+	//// Texturing
+	//VkSampler vkTextureSampler;
+	//VkDescriptorSetLayout samplerDescriptorSetLayout;
+};
+
+struct VkSamplerDescriptorSetCreateInfo
+{
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSetLayout samplerDescriptorSetLayout;
+	VkSampler sampler;
 };
 
 struct SwapChainDetails
@@ -333,3 +354,83 @@ static void transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool 
 
 	endAndSubmitCommandBuffer(device, commandPool, queue, commandBuffer);
 }
+
+static VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkContext context)
+{
+	VkImageViewCreateInfo imageViewCreateInfo = {};
+	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	imageViewCreateInfo.image = image;
+	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	imageViewCreateInfo.format = format;
+	imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;	// Allows remapping of rgba components to other rgba values
+	imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+	imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+	// subresources allow to view only selected part of an image
+	imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;		// which aspect of image to view (COLOR_BIT for color)
+	imageViewCreateInfo.subresourceRange.baseMipLevel = 0;				// Start mipmap level to view from
+	imageViewCreateInfo.subresourceRange.levelCount = 1;				// number of mipmap levels to view
+	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;			// start array level to view from
+	imageViewCreateInfo.subresourceRange.layerCount = 1;				// number of array layers to view
+
+	VkImageView imageView;
+	VkResult result = vkCreateImageView(context.logicalDevice, &imageViewCreateInfo, nullptr, &imageView);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create an ImageView.");
+	}
+
+	return imageView;
+}
+
+static VkImage createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags userFlags, VkMemoryPropertyFlags propertyFlags, VkDeviceMemory* imageMemory,
+	VkContext context)
+{
+	// Create the image
+	VkImageCreateInfo imageCreateInfo = {};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.extent.width = width;
+	imageCreateInfo.extent.height = height;
+	imageCreateInfo.extent.depth = 1;								// 1 because there is no 3D aspect
+	imageCreateInfo.mipLevels = 1;
+	imageCreateInfo.arrayLayers = 1;
+	imageCreateInfo.format = format;
+	imageCreateInfo.tiling = tiling;
+	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;		// layout of image data on creation
+	imageCreateInfo.usage = userFlags;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;				// number of samples for multisampling
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;		// whether image can be shared between queues
+
+	VkImage image;
+	VkResult result = vkCreateImage(context.logicalDevice, &imageCreateInfo, nullptr, &image);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create an image.");
+	}
+
+	// Create memory for the image
+
+	// Get memory requirements 
+	VkMemoryRequirements memReq;
+	vkGetImageMemoryRequirements(context.logicalDevice, image, &memReq);
+
+	VkMemoryAllocateInfo memAllocInfo = {};
+	memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memAllocInfo.allocationSize = memReq.size;
+	memAllocInfo.memoryTypeIndex = findMemoryTypeIndex(context.physicalDevice, memReq.memoryTypeBits, propertyFlags);
+
+	result = vkAllocateMemory(context.logicalDevice, &memAllocInfo, nullptr, imageMemory);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to allocate memory for an image.");
+	}
+
+	// connect memory to image
+	vkBindImageMemory(context.logicalDevice, image, *imageMemory, 0);
+
+	return image;
+}
+
+

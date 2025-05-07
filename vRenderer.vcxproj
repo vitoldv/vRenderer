@@ -146,7 +146,9 @@
     <ClCompile Include="vRenderer\src\main.cpp" />
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />
+    <ClCompile Include="vRenderer\src\VkModel.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkTexture.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -161,7 +163,9 @@
     <ClInclude Include="vRenderer\include\Model.h" />
     <ClInclude Include="vRenderer\include\stb_image.h" />
     <ClInclude Include="vRenderer\include\utils.h" />
+    <ClInclude Include="vRenderer\include\VkModel.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMesh.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkTexture.h" />
     <ClInclude Include="vRenderer\include\vulkan\VulkanRenderer.h" />
     <ClInclude Include="vRenderer\include\vulkan\VulkanUtils.h" />
     <ClInclude Include="vRenderer\src\imgui\imgui_helper.h" />

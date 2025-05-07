@@ -23,10 +23,9 @@
 #include <functional>
 
 #include "display_settings.h"
-#include "VkMesh.h"
 #include "Model.h"
+#include "VkModel.h"
 #include "VulkanUtils.h"
-#include "stb_image.h"
 #include "Camera.h"
 
 #ifdef NDEBUG
@@ -60,6 +59,8 @@ private:
 	GLFWwindow* window;
 
 	int currentFrame = 0;
+
+	VkContext context;
 
 	// Native Vulkan Components
 	VkInstance vkInstance; 
@@ -102,7 +103,6 @@ private:
 	VkDescriptorPool vkDescriptorPool;
 	VkDescriptorPool vkInputDescriptorPool;
 	std::vector<VkDescriptorSet> vkDescriptorSets;
-	std::vector<VkDescriptorSet> vkSamplerDescriptorSets;
 	std::vector<VkDescriptorSet> vkInputDescriptorSets;
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -114,8 +114,6 @@ private:
 	// size_t modelUniformAlignment;
 	//std::vector<VkBuffer> uniformBuffersDynamic;
 	//std::vector<VkDeviceMemory> uniformBuffersMemoryDynamic;
-	
-	VkMesh createFromGenericMesh(const Mesh& mesh);
 
 	// Utility
 	VkFormat swapChainImageFormat;
@@ -126,13 +124,11 @@ private:
 
 	// Scene
 	Camera* mainCamera;
-	std::map<uint32_t, std::map<uint32_t, VkMesh>> modelsToRender;
+	std::vector<VkModel*> modelsToRender;
+	std::vector<VkModel*> modelsToDestroy;
 
 	// Textures
 	VkSampler vkTextureSampler;
-	std::vector<VkImage> textureImages;
-	std::vector<VkDeviceMemory> textureImageMemory;
-	std::vector<VkImageView> textureImageViews;
 
 	/*
 	---- IMGUI fields -----
@@ -147,10 +143,11 @@ public:
 	int init(GLFWwindow* window);
 	void draw();
 
-	bool addToRenderer(Model& model, glm::vec3 color);
-	bool addToRendererTextured(Model& mesh);
+	bool addToRenderer(const Model& model, glm::vec3 color);
+	bool addToRendererTextured(const Model& model);
 	bool removeFromRenderer(int modelId);
-	
+	bool isModelInRenderer(uint32_t id);
+
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
 	void setCamera(Camera* camera);
 	
@@ -182,10 +179,7 @@ private:
 	void createInputDescriptorSets();
 	void createPushConstantRange();
 	void createTextureSampler();
-	int createTextureSamplerDescriptor(VkImageView textureImageView);
-	int createTextureImage(std::string fileName);
-	int createTexture(std::string fileName);
-	
+
 	/* 
 	---- IMGUI functions -----
 	*/
@@ -200,9 +194,7 @@ private:
 	VkPresentModeKHR definePresentationMode(const std::vector<VkPresentModeKHR> presentationModes);
 	VkExtent2D defineSwapChainExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities);
 	VkFormat defineSupportedFormat(const std::vector<VkFormat>& formats, VkImageTiling tiling, VkFormatFeatureFlags featureFlags);
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-	VkImage createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags userFlags,
-		VkMemoryPropertyFlags propertyFlags, VkDeviceMemory* imageMemory);
+
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	void recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData);
 	void updateUniformBuffers(uint32_t imageIndex);
@@ -218,7 +210,7 @@ private:
 	SwapChainDetails getSwapChainDetails(VkPhysicalDevice device);
 	bool checkValidationLayerSupport();
 
-	stbi_uc* loadTexture(std::string fileName, int* width, int* height, VkDeviceSize* imageSize);
+	VkModel* getModel(uint32_t id);
 
 	void printPhysicalDeviceInfo(VkPhysicalDevice device, bool printPropertiesFull = false, bool printFeaturesFull = false);
 };
