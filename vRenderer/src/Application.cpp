@@ -29,9 +29,9 @@ int Application::initApplication()
 		vulkanRenderer.setImguiCallback(std::bind(&Application::imguiMenu, this));
 	}
 
-	camera = Camera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
-	inputManager->subscribeToMouseScroll(std::bind(&Camera::OnMouseScroll, &camera, std::placeholders::_1));
-	vulkanRenderer.setCamera(&camera);
+	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
+	inputManager->subscribeToMouseScroll(std::bind(&BaseCamera::onMouseScroll, camera, std::placeholders::_1));
+	vulkanRenderer.setCamera(camera);
 
 	return 0;
 }
@@ -42,7 +42,7 @@ void Application::processInput()
 	{
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
-		camera.OnMouseMove(xpos, ypos, glfwGetMouseButton(window, 0) == GLFW_PRESS);
+		camera->onMouseMove(xpos, ypos, glfwGetMouseButton(window, 0) == GLFW_PRESS);
 	}
 }
 
@@ -76,7 +76,7 @@ void Application::update()
 	}
 
 
-	camera.update();
+	camera->update();
 }
 
 void Application::render()
@@ -86,7 +86,12 @@ void Application::render()
 
 void Application::cleanup()
 {
-	free(modelToRender);
+	delete camera;
+	camera = nullptr;
+
+	delete modelToRender;
+	modelToRender = nullptr;
+
 	vulkanRenderer.cleanup();
 }
 

@@ -1,16 +1,12 @@
-#include "Camera.h"
+#include "BaseCamera.h"
 
-Camera::Camera()
-{
-}
-
-Camera::Camera(float fov, float znear, float zfar, int viewportWidth, int viewportHeight, bool flipY)
+BaseCamera::BaseCamera(float fov, float znear, float zfar, int viewportWidth, int viewportHeight, bool flipY)
 {
 	this->target = glm::vec3(0);
 	this->position = glm::vec3(0, 0, 10.0f);
 	this->initialCameraPosition = glm::normalize(this->position);
 	recalculateVectors();
-	
+
 	this->fovAngles = fov;
 	this->zfar = zfar;
 	this->znear = znear;
@@ -20,34 +16,30 @@ Camera::Camera(float fov, float znear, float zfar, int viewportWidth, int viewpo
 	this->flipY = flipY;
 }
 
-Camera::~Camera()
-{
-}
-
-void Camera::lookAt(glm::vec3 target)
+void BaseCamera::lookAt(glm::vec3 target)
 {
 	this->target = target;
 	recalculateVectors();
 }
 
-void Camera::setPosition(glm::vec3 position)
+void BaseCamera::setPosition(glm::vec3 position)
 {
 	this->position = position;
 	recalculateVectors();
 }
 
-void Camera::setFov(float fov)
+void BaseCamera::setFov(float fov)
 {
 	this->fovAngles = fov;
 }
 
-void Camera::setUp(glm::vec3 up)
+void BaseCamera::setUp(glm::vec3 up)
 {
 	this->up = up;
 	recalculateVectors();
 }
 
-glm::mat4 Camera::getProjectionMatrix()
+glm::mat4 BaseCamera::getProjectionMatrix()
 {
 	glm::mat4 projectionMat = glm::perspective(glm::radians((float)fovAngles), (float)viewportWidth / (float)viewportHeight, znear, zfar);
 	if (flipY)
@@ -55,12 +47,12 @@ glm::mat4 Camera::getProjectionMatrix()
 	return projectionMat;
 }
 
-glm::mat4 Camera::getViewMatrix()
+glm::mat4 BaseCamera::getViewMatrix()
 {
 	return glm::lookAt(position, target, up);
 }
 
-void Camera::update()
+void BaseCamera::update()
 {
 	// Camera rotation
 	{
@@ -86,7 +78,7 @@ void Camera::update()
 	recalculateVectors();
 }
 
-void Camera::OnMouseScroll(float amount)
+void BaseCamera::onMouseScroll(float amount)
 {
 	float currZoom = glm::length((position - target));
 	float newZoom = currZoom - glm::sign(amount) * CAMERA_ZOOM_STEP;
@@ -95,7 +87,7 @@ void Camera::OnMouseScroll(float amount)
 	recalculateVectors();
 }
 
-void Camera::OnMouseMove(int xpos, int ypos, bool pressed)
+void BaseCamera::onMouseMove(int xpos, int ypos, bool pressed)
 {
 	if (!pressed)
 	{
@@ -119,7 +111,7 @@ void Camera::OnMouseMove(int xpos, int ypos, bool pressed)
 }
 
 
-void Camera::recalculateVectors()
+void BaseCamera::recalculateVectors()
 {
 	forward = glm::normalize(target - position);
 	// At this point up vector should point either straight to up or down.

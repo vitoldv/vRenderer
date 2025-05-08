@@ -26,7 +26,7 @@
 #include "Model.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
-#include "Camera.h"
+#include "BaseCamera.h"
 
 #ifdef NDEBUG
 #define ENABLE_VALIDATION_LAYERS false
@@ -122,7 +122,7 @@ private:
 	std::vector<VkFence> vkDrawFences;
 
 	// Scene
-	Camera* mainCamera;
+	BaseCamera* mainCamera;
 	std::vector<VkModel*> modelsToRender;
 	std::vector<VkModel*> modelsToDestroy;
 
@@ -148,7 +148,7 @@ public:
 	bool isModelInRenderer(uint32_t id);
 
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
-	void setCamera(Camera* camera);
+	void setCamera(BaseCamera* camera);
 	
 	void cleanup();
 

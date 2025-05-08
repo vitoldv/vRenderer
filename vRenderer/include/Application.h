@@ -12,6 +12,7 @@
 #include "Model.h"
 #include "utils.h"
 #include "editor_settings.h"
+#include "OrbitCamera.h"
 
 class Application
 {
@@ -36,7 +37,7 @@ private:
 	std::string selectedModelName;
 	bool newSelection;
 
-	Camera camera;
+	BaseCamera* camera;
 	Model* modelToRender;
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);

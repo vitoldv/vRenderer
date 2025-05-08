@@ -1476,7 +1476,7 @@ bool VulkanRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
 	return model != nullptr;
 }
 
-void VulkanRenderer::setCamera(Camera* camera)
+void VulkanRenderer::setCamera(BaseCamera* camera)
 {
 	this->mainCamera = camera;
 }
