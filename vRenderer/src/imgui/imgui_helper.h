@@ -51,13 +51,7 @@ namespace imgui_helper
 	{
 		ImGui::Begin("Asset Browser");
 
-		// UI: trigger to rescan models
-		if (ImGui::Button("Scan Folder"))
-		{
-			ScanForModels(assetsFolderPath, supportedExtensions, modelNames);
-			selectedModelIndex = -1;
-			selectedModelName = "";
-		}
+		ScanForModels(assetsFolderPath, supportedExtensions, modelNames);
 
 		ImGui::Separator();
 		ImGui::Text("Supported Extensions:");

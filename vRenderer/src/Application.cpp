@@ -67,8 +67,6 @@ void Application::update()
 {
 	if (this->newSelection)
 	{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
 		if (modelToRender != nullptr)
 		{
 			vulkanRenderer.removeFromRenderer(modelToRender->id);

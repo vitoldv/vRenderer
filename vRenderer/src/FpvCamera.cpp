@@ -45,7 +45,6 @@ void FpvCamera::onMouseMove(int xpos, int ypos, bool pressed)
 
 		if (!glm::isnan(mouseDelta.x) && !glm::isnan(mouseDelta.y))
 		{
-			std::cout << AppContext::instance().deltaTime << std::endl;
 			cameraRotation.y -= mouseDelta.x * CAMERA_FPV_SENSETIVITY_HORIZONTAL * AppContext::instance().deltaTime;
 			cameraRotation.x -= mouseDelta.y * CAMERA_FPV_SENSETIVITY_VERTICAL * AppContext::instance().deltaTime;
 		}
