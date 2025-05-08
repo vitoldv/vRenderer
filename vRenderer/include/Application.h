@@ -12,7 +12,9 @@
 #include "Model.h"
 #include "utils.h"
 #include "editor_settings.h"
+
 #include "OrbitCamera.h"
+#include "FpvCamera.h"
 
 class Application
 {

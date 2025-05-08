@@ -7,8 +7,6 @@
 #include "AppContext.h"
 #include "BaseCamera.h"
 
-#include "editor_settings.h"
-
 /// <summary>
 /// Orbiting camera implementation.
 /// </summary>
@@ -23,8 +21,13 @@ public:
 	void update() override;
 	void onMouseScroll(float amount) override;
 	void onMouseMove(int xpos, int ypos, bool pressed) override;
-};
 
-// TODO
-// 1. Get rid of redundant direction vectors recalculation (recalculateVectors() calls);
-// 2. Remove initialCameraPosition vector and alter corresponding logic;
+private:
+
+	glm::vec2 prevMousePos = { 0, 0 };
+	glm::vec2 currMousePos = { 0, 0 };
+
+	glm::vec3 initialCameraPosition;
+	// Rotation around camera target point (orbiting point)
+	glm::vec3 cameraRotation = { 0, 0, 0 };
+};

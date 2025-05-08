@@ -29,7 +29,7 @@ int Application::initApplication()
 		vulkanRenderer.setImguiCallback(std::bind(&Application::imguiMenu, this));
 	}
 
-	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
+	camera = new FpvCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
 	inputManager->subscribeToMouseScroll(std::bind(&BaseCamera::onMouseScroll, camera, std::placeholders::_1));
 	vulkanRenderer.setCamera(camera);
 
@@ -42,6 +42,23 @@ void Application::processInput()
 	{
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
+
+		float cameraSpeed = CAMERA_FPV_SPEED * AppContext::instance().deltaTime;
+		glm::vec3 newCameraPos = camera->getPosition();
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			newCameraPos += cameraSpeed * camera->getForward();
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			newCameraPos -= cameraSpeed * camera->getForward();
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			newCameraPos -= cameraSpeed * camera->getRight();
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			newCameraPos += cameraSpeed * camera->getRight();
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+			newCameraPos += cameraSpeed * camera->getUp();
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+			newCameraPos -= cameraSpeed * camera->getUp();
+		camera->setPosition(newCameraPos);
+
 		camera->onMouseMove(xpos, ypos, glfwGetMouseButton(window, 0) == GLFW_PRESS);
 	}
 }
@@ -50,6 +67,8 @@ void Application::update()
 {
 	if (this->newSelection)
 	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 		if (modelToRender != nullptr)
 		{
 			vulkanRenderer.removeFromRenderer(modelToRender->id);
@@ -74,7 +93,6 @@ void Application::update()
 		glm::mat4 transform = t * rz * ry * rx * s;
 		vulkanRenderer.updateModelTransform(modelToRender->id, transform);
 	}
-
 
 	camera->update();
 }

@@ -8,5 +8,10 @@
 
 #define CAMERA_ZOOM_STEP 2.0f
 #define CAMERA_ROTATION_SPEED 120.0f
+#define CAMERA_FPV_SENSETIVITY_HORIZONTAL 50.0f
+#define CAMERA_FPV_SENSETIVITY_VERTICAL 40.0f
+#define CAMERA_FPV_SPEED 8.0f
+#define CAMERA_FPV_INCREASED_SPEED 16.0f
+#define CAMERA_INITIAL_POSITION { 0, 0, 10.f}
 
 const std::vector<const char*> c_supportedFormats = { ".obj" };

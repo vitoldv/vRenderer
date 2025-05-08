@@ -22,10 +22,14 @@ public:
 	void lookAt(glm::vec3 target);
 	void setPosition(glm::vec3 position);
 	void setFov(float fov);
-	void setUp(glm::vec3 up);
 	
-	glm::mat4 getProjectionMatrix();
-	glm::mat4 getViewMatrix();
+	glm::vec3 getForward() const;
+	glm::vec3 getRight() const;
+	glm::vec3 getUp() const;
+	glm::vec3 getPosition() const;
+
+	glm::mat4 getProjectionMatrix() const;
+	glm::mat4 getViewMatrix() const;
 
 	virtual void update() = 0;
 	virtual void onMouseScroll(float amount) = 0;
@@ -35,13 +39,6 @@ protected:
 
 	bool flipY;
 
-	glm::vec3 position;
-	glm::vec3 target;
-
-	glm::vec3 up;
-	glm::vec3 forward;
-	glm::vec3 right;
-
 	float fovAngles;
 	float znear;
 	float zfar;
@@ -49,13 +46,14 @@ protected:
 	int viewportWidth;
 	int viewportHeight;
 
-	glm::vec2 prevMousePos;
-	glm::vec2 currMousePos;
+	glm::vec3 position;
+	glm::vec3 target;
 
-	glm::vec3 initialCameraPosition;
-	glm::vec3 cameraRotation = { 0, 0, 0 };
+	glm::vec3 up;
+	glm::vec3 forward;
+	glm::vec3 right;
 
-	void recalculateVectors();
+	virtual void recalculateDirectionVectors();
 };
 
 // TODO

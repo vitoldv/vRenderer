@@ -2,11 +2,6 @@
 
 BaseCamera::BaseCamera(float fov, float znear, float zfar, int viewportWidth, int viewportHeight, bool flipY)
 {
-	this->target = glm::vec3(0);
-	this->position = glm::vec3(0, 0, 10.0f);
-	this->initialCameraPosition = glm::normalize(this->position);
-	recalculateVectors();
-
 	this->fovAngles = fov;
 	this->zfar = zfar;
 	this->znear = znear;
@@ -19,13 +14,13 @@ BaseCamera::BaseCamera(float fov, float znear, float zfar, int viewportWidth, in
 void BaseCamera::lookAt(glm::vec3 target)
 {
 	this->target = target;
-	recalculateVectors();
+	recalculateDirectionVectors();
 }
 
 void BaseCamera::setPosition(glm::vec3 position)
 {
 	this->position = position;
-	recalculateVectors();
+	recalculateDirectionVectors();
 }
 
 void BaseCamera::setFov(float fov)
@@ -33,13 +28,27 @@ void BaseCamera::setFov(float fov)
 	this->fovAngles = fov;
 }
 
-void BaseCamera::setUp(glm::vec3 up)
+glm::vec3 BaseCamera::getForward() const
 {
-	this->up = up;
-	recalculateVectors();
+	return forward;
 }
 
-glm::mat4 BaseCamera::getProjectionMatrix()
+glm::vec3 BaseCamera::getRight() const
+{
+	return right;
+}
+
+glm::vec3 BaseCamera::getUp() const
+{
+	return up;
+}
+
+glm::vec3 BaseCamera::getPosition() const
+{
+	return position;
+}
+
+glm::mat4 BaseCamera::getProjectionMatrix() const
 {
 	glm::mat4 projectionMat = glm::perspective(glm::radians((float)fovAngles), (float)viewportWidth / (float)viewportHeight, znear, zfar);
 	if (flipY)
@@ -47,71 +56,12 @@ glm::mat4 BaseCamera::getProjectionMatrix()
 	return projectionMat;
 }
 
-glm::mat4 BaseCamera::getViewMatrix()
+glm::mat4 BaseCamera::getViewMatrix() const
 {
 	return glm::lookAt(position, target, up);
 }
 
-void BaseCamera::update()
-{
-	// Camera rotation
-	{
-		// If [0, 360] y axis angle is in range from 180 to 270 degrees, up vector should point down so picture wasn't accidentally flipped
-		auto val = (abs(cameraRotation.x) + 90) / 180;
-		if ((int)val % 2 == 1)
-		{
-			setUp(glm::vec3(0, -1.0f, 0));
-		}
-		else
-		{
-			setUp(glm::vec3(0, 1.0f, 0));
-		}
-
-		glm::mat4 rx = glm::rotate(glm::mat4(1.0f), glm::radians(cameraRotation.x), glm::vec3(1.0f, 0, 0));
-		glm::mat4 ry = glm::rotate(glm::mat4(1.0f), glm::radians(cameraRotation.y), glm::vec3(0, 1.0f, 0));
-
-		float distanceToTarget = glm::length(position - target);
-
-		position = ry * rx * glm::vec4(initialCameraPosition, 1.0f);
-		position *= distanceToTarget;
-	}
-	recalculateVectors();
-}
-
-void BaseCamera::onMouseScroll(float amount)
-{
-	float currZoom = glm::length((position - target));
-	float newZoom = currZoom - glm::sign(amount) * CAMERA_ZOOM_STEP;
-	if (newZoom < 1.0f) newZoom = 1.0f;
-	position = glm::normalize(position - target) * newZoom;
-	recalculateVectors();
-}
-
-void BaseCamera::onMouseMove(int xpos, int ypos, bool pressed)
-{
-	if (!pressed)
-	{
-		return;
-	}
-
-	// Orbiting camera implementation
-	{
-		currMousePos = glm::vec2(xpos, ypos);
-
-		glm::vec2 mouseDelta = glm::normalize(currMousePos - prevMousePos);
-
-		if (!glm::isnan(mouseDelta.x) && !glm::isnan(mouseDelta.y))
-		{
-			cameraRotation.y -= glm::sign(mouseDelta.x) * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
-			cameraRotation.x -= glm::sign(mouseDelta.y) * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
-		}
-
-		prevMousePos = currMousePos;
-	}
-}
-
-
-void BaseCamera::recalculateVectors()
+void BaseCamera::recalculateDirectionVectors()
 {
 	forward = glm::normalize(target - position);
 	// At this point up vector should point either straight to up or down.

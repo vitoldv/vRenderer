@@ -3,6 +3,11 @@
 OrbitCamera::OrbitCamera(float fov, float znear, float zfar, int viewportWidth, int viewportHeight, bool flipY)
 	: BaseCamera(fov, znear, zfar, viewportWidth, viewportHeight, flipY) 
 {
+	this->position = CAMERA_INITIAL_POSITION;
+	this->target = glm::vec3(0);
+
+	this->initialCameraPosition = glm::normalize(this->position);
+	recalculateDirectionVectors();
 }
 
 void OrbitCamera::update()
@@ -13,11 +18,11 @@ void OrbitCamera::update()
 		auto val = (abs(cameraRotation.x) + 90) / 180;
 		if ((int)val % 2 == 1)
 		{
-			setUp(glm::vec3(0, -1.0f, 0));
+			up = { 0, -1.0f, 0 };
 		}
 		else
 		{
-			setUp(glm::vec3(0, 1.0f, 0));
+			up = { 0, 1.0f, 0 };
 		}
 
 		glm::mat4 rx = glm::rotate(glm::mat4(1.0f), glm::radians(cameraRotation.x), glm::vec3(1.0f, 0, 0));
@@ -28,7 +33,8 @@ void OrbitCamera::update()
 		position = ry * rx * glm::vec4(initialCameraPosition, 1.0f);
 		position *= distanceToTarget;
 	}
-	recalculateVectors();
+
+	recalculateDirectionVectors();
 }
 
 void OrbitCamera::onMouseScroll(float amount)
@@ -37,7 +43,7 @@ void OrbitCamera::onMouseScroll(float amount)
 	float newZoom = currZoom - glm::sign(amount) * CAMERA_ZOOM_STEP;
 	if (newZoom < 1.0f) newZoom = 1.0f;
 	position = glm::normalize(position - target) * newZoom;
-	recalculateVectors();
+	recalculateDirectionVectors();
 }
 
 void OrbitCamera::onMouseMove(int xpos, int ypos, bool pressed)
