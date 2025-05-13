@@ -23,6 +23,7 @@
 #include <functional>
 
 #include "display_settings.h"
+#include "IRenderer.h"
 #include "Model.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
@@ -52,7 +53,7 @@ const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
-class VulkanRenderer
+class VulkanRenderer : public IRenderer
 {
 private:
 	GLFWwindow* window;

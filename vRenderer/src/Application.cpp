@@ -15,14 +15,16 @@ int Application::initApplication()
 {
 	context = &AppContext::instance();
 
+	renderer = new VulkanRenderer();
+
 	// Create and initialize Vulkan Renderer Instance
-	if (vulkanRenderer.init(window) == EXIT_FAILURE)
+	if (renderer->init(window) == EXIT_FAILURE)
 	{
 		return EXIT_FAILURE;
 	}
 	else
 	{
-		vulkanRenderer.setImguiCallback(std::bind(&Application::imguiMenu, this));
+		renderer->setImguiCallback(std::bind(&Application::imguiMenu, this));
 	}   
 
 	initInput(window);
@@ -33,7 +35,7 @@ int Application::initApplication()
 	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
 	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);
 
-	vulkanRenderer.setCamera(camera);
+	renderer->setCamera(camera);
 
 	return 0;
 }
@@ -49,14 +51,14 @@ void Application::update()
 	{
 		if (modelToRender != nullptr)
 		{
-			vulkanRenderer.removeFromRenderer(modelToRender->id);
+			renderer->removeFromRenderer(modelToRender->id);
 			delete modelToRender;
 			modelToRender = nullptr;
 		}
 		
 		std::string model = this->selectedModelName + "\\" + this->selectedModelName + ".obj";
 		modelToRender = new Model(1, MODEL_ASSETS(model.c_str()));
-		vulkanRenderer.addToRendererTextured(*modelToRender);
+		renderer->addToRendererTextured(*modelToRender);
 
 		newSelection = false;
 	}
@@ -69,7 +71,7 @@ void Application::update()
 		glm::mat4 rz = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f));
 		glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
 		glm::mat4 transform = t * rz * ry * rx * s;
-		vulkanRenderer.updateModelTransform(modelToRender->id, transform);
+		renderer->updateModelTransform(modelToRender->id, transform);
 	}
 
 	camera->update();
@@ -77,7 +79,7 @@ void Application::update()
 
 void Application::render()
 {
-	vulkanRenderer.draw();
+	renderer->draw();
 }
 
 void Application::cleanup()
@@ -88,7 +90,7 @@ void Application::cleanup()
 	delete modelToRender;
 	modelToRender = nullptr;
 
-	vulkanRenderer.cleanup();
+	renderer->cleanup();
 }
 
 void Application::destroyWindow()

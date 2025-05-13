@@ -26,7 +26,7 @@ public:
 private:
 
 	GLFWwindow* window;
-	VulkanRenderer vulkanRenderer;
+	IRenderer* renderer;
 	AppContext* context;
 
 	// Frame time control 

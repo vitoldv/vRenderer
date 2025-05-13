@@ -159,6 +159,7 @@
     <ClInclude Include="vRenderer\include\Event.h" />
     <ClInclude Include="vRenderer\include\FpvCamera.h" />
     <ClInclude Include="vRenderer\include\input_handler.h" />
+    <ClInclude Include="vRenderer\include\IRenderer.h" />
     <ClInclude Include="vRenderer\include\OrbitCamera.h" />
     <ClInclude Include="vRenderer\include\display_settings.h" />
     <ClInclude Include="vRenderer\include\editor_settings.h" />
