@@ -19,8 +19,9 @@ public:
 	~OrbitCamera() = default;
 
 	void update() override;
-	void onMouseScroll(float amount) override;
-	void onMouseMove(int xpos, int ypos, bool pressed) override;
+	void onMouseScroll(float amount, InputState input) override;
+	void onMouseMove(int xpos, int ypos, InputState input) override;
+	void onKey(InputState input) override;
 
 private:
 

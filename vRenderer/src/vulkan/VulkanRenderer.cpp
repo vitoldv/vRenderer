@@ -1226,7 +1226,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 	//for (auto pair : meshesToRender)
 	//{
 	//	VkMesh mesh = pair.second;
-	//	UboModel* thisModel = (UboModel*)((uint64_t)modelTransferSpace + (modelCount * modelUniformAlignment));
+	//	UboModel* thisModel = (UboModel*)((InputState)modelTransferSpace + (modelCount * modelUniformAlignment));
 	//	*thisModel = mesh.getModelMatrix();
 	//	modelCount++;
 	//}
@@ -1361,7 +1361,7 @@ void VulkanRenderer::draw()
 	// 3 Present image to screen when it has signalled finished rendering
 
 	// Wait for given fence to signal open from last draw before continuing
-	vkWaitForFences(this->vkLogicalDevice, 1, &vkDrawFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkWaitForFences(this->vkLogicalDevice, 1, &vkDrawFences[currentFrame], VK_TRUE, std::numeric_limits<InputState>::max());
 	// Reset fence
 	vkResetFences(this->vkLogicalDevice, 1, &vkDrawFences[currentFrame]);
 
@@ -1377,7 +1377,7 @@ void VulkanRenderer::draw()
 
 	// -- 1
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(this->vkLogicalDevice, this->vkSwapchain, std::numeric_limits<uint64_t>::max(), this->vkSemImageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	vkAcquireNextImageKHR(this->vkLogicalDevice, this->vkSwapchain, std::numeric_limits<InputState>::max(), this->vkSemImageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 	recordCommands(imageIndex, *imguiDrawData);
 	

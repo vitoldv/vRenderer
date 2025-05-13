@@ -65,7 +65,7 @@ void BaseCamera::recalculateDirectionVectors()
 {
 	forward = glm::normalize(target - position);
 	// At this point up vector should point either straight to up or down.
-	right = glm::cross(up, forward);
+	right = glm::cross(forward, up);
 	// Here the correct up vector is calculated.
 	up = glm::cross(right, forward);
 }

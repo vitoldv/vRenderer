@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 
 #include "AppContext.h"
-#include "InputManager.h"
 #include "VulkanRenderer.h"
 #include "Model.h"
 #include "utils.h"
@@ -29,7 +28,6 @@ private:
 	GLFWwindow* window;
 	VulkanRenderer vulkanRenderer;
 	AppContext* context;
-	InputManager* inputManager;
 
 	// Frame time control 
 	int previousFrameTime = 0;

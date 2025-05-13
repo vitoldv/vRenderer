@@ -5,6 +5,7 @@ OrbitCamera::OrbitCamera(float fov, float znear, float zfar, int viewportWidth, 
 {
 	this->position = CAMERA_INITIAL_POSITION;
 	this->target = glm::vec3(0);
+	this->up = { 0.0f, 1.0, 0.0f };
 
 	this->initialCameraPosition = glm::normalize(this->position);
 	recalculateDirectionVectors();
@@ -37,7 +38,7 @@ void OrbitCamera::update()
 	recalculateDirectionVectors();
 }
 
-void OrbitCamera::onMouseScroll(float amount)
+void OrbitCamera::onMouseScroll(float amount, InputState input)
 {
 	float currZoom = glm::length((position - target));
 	float newZoom = currZoom - glm::sign(amount) * CAMERA_ZOOM_STEP;
@@ -46,9 +47,9 @@ void OrbitCamera::onMouseScroll(float amount)
 	recalculateDirectionVectors();
 }
 
-void OrbitCamera::onMouseMove(int xpos, int ypos, bool pressed)
+void OrbitCamera::onMouseMove(int xpos, int ypos, InputState input)
 {
-	if (!pressed)
+	if (!isPressed(input, InputKeys::MOUSE_LEFT))
 	{
 		return;
 	}
@@ -61,12 +62,17 @@ void OrbitCamera::onMouseMove(int xpos, int ypos, bool pressed)
 
 		if (!glm::isnan(mouseDelta.x) && !glm::isnan(mouseDelta.y))
 		{
-			cameraRotation.y -= glm::sign(mouseDelta.x) * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
-			cameraRotation.x -= glm::sign(mouseDelta.y) * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
+			cameraRotation.y -= mouseDelta.x * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
+			cameraRotation.x -= mouseDelta.y * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
 		}
 
 		prevMousePos = currMousePos;
 	}
+}
+
+void OrbitCamera::onKey(InputState input)
+{
+
 }
 
 

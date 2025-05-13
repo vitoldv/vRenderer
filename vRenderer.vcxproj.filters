@@ -63,9 +63,6 @@
     <ClCompile Include="vRenderer\src\AppContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\src\InputManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="vRenderer\src\VkModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -76,6 +73,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vRenderer\src\FpvCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\input_handler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -122,9 +122,6 @@
     <ClInclude Include="vRenderer\include\AppContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\InputManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\VkModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -135,6 +132,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\FpvCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\input_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\Event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
