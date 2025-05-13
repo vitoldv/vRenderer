@@ -1,5 +1,4 @@
 #define STB_IMAGE_IMPLEMENTATION
-#define GLFW_INCLUDE_VULKAN
 
 #include "Application.h"
 

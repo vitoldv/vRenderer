@@ -4,20 +4,45 @@
 void Application::initWindow(std::string title, const int width, const int height)
 {
 	glfwInit();
-	// Set GLFW to NOT work with OpenGL
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	if (api == VULKAN)
+	{
+		// Set GLFW to NOT work with OpenGL
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	}
+	else if (api == OPENGL)
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	}
 
 	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+
+	if (api == OPENGL)
+	{
+		glfwMakeContextCurrent(window);
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		{
+			throw std::runtime_error("Failed to initialize GLAD");
+		}
+	}
 }
 
 int Application::initApplication()
 {
 	context = &AppContext::instance();
 
-	renderer = new VulkanRenderer();
+	if (api == VULKAN)
+	{
+		renderer = new VulkanRenderer();
+	}
+	else if (api == OPENGL)
+	{
+		renderer = new OpenGLRenderer();
+	}
 
-	// Create and initialize Vulkan Renderer Instance
+	// Create and initialize Renderer Instance
 	if (renderer->init(window) == EXIT_FAILURE)
 	{
 		return EXIT_FAILURE;
@@ -107,6 +132,8 @@ void Application::imguiMenu()
 
 int Application::run()
 {
+	this->api = CURRENT_API;
+
 	initWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	if (initApplication() == EXIT_FAILURE)
@@ -116,6 +143,9 @@ int Application::run()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+
+		if (api == OPENGL)
+			glfwSwapBuffers(window);
 
 		currentFrameTime = glfwGetTime() * 1000.0f;
 		frameTime = currentFrameTime - previousFrameTime;

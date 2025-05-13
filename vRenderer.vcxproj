@@ -143,7 +143,9 @@
     <ClCompile Include="vRenderer\src\Application.cpp" />
     <ClCompile Include="vRenderer\src\BaseCamera.cpp" />
     <ClCompile Include="vRenderer\src\FpvCamera.cpp" />
+    <ClCompile Include="vRenderer\src\glad.c" />
     <ClCompile Include="vRenderer\src\input_handler.cpp" />
+    <ClCompile Include="vRenderer\src\OpenGLRenderer.cpp" />
     <ClCompile Include="vRenderer\src\OrbitCamera.cpp" />
     <ClCompile Include="vRenderer\src\main.cpp" />
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
@@ -160,6 +162,7 @@
     <ClInclude Include="vRenderer\include\FpvCamera.h" />
     <ClInclude Include="vRenderer\include\input_handler.h" />
     <ClInclude Include="vRenderer\include\IRenderer.h" />
+    <ClInclude Include="vRenderer\include\OpenGLRenderer.h" />
     <ClInclude Include="vRenderer\include\OrbitCamera.h" />
     <ClInclude Include="vRenderer\include\display_settings.h" />
     <ClInclude Include="vRenderer\include\editor_settings.h" />
