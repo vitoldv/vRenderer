@@ -11,13 +11,9 @@ void Application::initWindow(std::string title, const int width, const int heigh
 	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 }
 
-
 int Application::initApplication()
 {
 	context = &AppContext::instance();
-
-	InputManager::init(window);
-	inputManager = &InputManager::instance();
 
 	// Create and initialize Vulkan Renderer Instance
 	if (vulkanRenderer.init(window) == EXIT_FAILURE)
@@ -27,10 +23,16 @@ int Application::initApplication()
 	else
 	{
 		vulkanRenderer.setImguiCallback(std::bind(&Application::imguiMenu, this));
-	}
+	}   
 
-	camera = new FpvCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
-	inputManager->subscribeToMouseScroll(std::bind(&BaseCamera::onMouseScroll, camera, std::placeholders::_1));
+	initInput(window);
+
+	// Camera initilization
+	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
+	EventBinder::Bind(&BaseCamera::onMouseMove, camera, inp::onMouseMove);
+	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
+	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);
+
 	vulkanRenderer.setCamera(camera);
 
 	return 0;
@@ -38,29 +40,7 @@ int Application::initApplication()
 
 void Application::processInput()
 {
-	// TODO: Get rid of it. As there is an InputManager class, it should handle this in any way. 
-	{
-		double xpos, ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
-
-		float cameraSpeed = CAMERA_FPV_SPEED * AppContext::instance().deltaTime;
-		glm::vec3 newCameraPos = camera->getPosition();
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			newCameraPos += cameraSpeed * camera->getForward();
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			newCameraPos -= cameraSpeed * camera->getForward();
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			newCameraPos -= cameraSpeed * camera->getRight();
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			newCameraPos += cameraSpeed * camera->getRight();
-		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-			newCameraPos += cameraSpeed * camera->getUp();
-		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-			newCameraPos -= cameraSpeed * camera->getUp();
-		camera->setPosition(newCameraPos);
-
-		camera->onMouseMove(xpos, ypos, glfwGetMouseButton(window, 0) == GLFW_PRESS);
-	}
+	process(window);
 }
 
 void Application::update()

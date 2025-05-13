@@ -7,6 +7,9 @@
 #include "AppContext.h"
 
 #include "editor_settings.h"
+#include "input_handler.h"
+
+using namespace inp;
 
 /// <summary>
 /// Base camera abstract class.
@@ -32,8 +35,9 @@ public:
 	glm::mat4 getViewMatrix() const;
 
 	virtual void update() = 0;
-	virtual void onMouseScroll(float amount) = 0;
-	virtual void onMouseMove(int xpos, int ypos, bool pressed) = 0;
+	virtual void onMouseScroll(float amount, InputState input) = 0;
+	virtual void onMouseMove(int xpos, int ypos, InputState input) = 0;
+	virtual void onKey(InputState input) = 0;
 
 protected:
 

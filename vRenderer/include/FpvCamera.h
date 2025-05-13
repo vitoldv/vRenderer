@@ -1,7 +1,10 @@
 #pragma once
 
-#include <BaseCamera.h>
 #include <iostream>
+
+#include "BaseCamera.h"
+
+
 class FpvCamera : public BaseCamera
 {
 public:
@@ -11,8 +14,9 @@ public:
 	~FpvCamera() = default;
 
 	void update() override;
-	void onMouseScroll(float amount) override;
-	void onMouseMove(int xpos, int ypos, bool pressed) override;
+	void onMouseScroll(float amount, InputState inputState) override;
+	void onMouseMove(int xpos, int ypos, InputState inputState) override;
+	void onKey(InputState input) override;
 
 protected:
 

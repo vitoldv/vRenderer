@@ -15,13 +15,12 @@ void FpvCamera::update()
 	// empty
 }
 
-void FpvCamera::onMouseScroll(float amount)
+void FpvCamera::onMouseScroll(float amount, InputState input)
 {
 	// empty
 }
 
-
-void FpvCamera::onMouseMove(int xpos, int ypos, bool pressed)
+void FpvCamera::onMouseMove(int xpos, int ypos, InputState input)
 {
 	// FPV camera implementation
 	{
@@ -38,6 +37,7 @@ void FpvCamera::onMouseMove(int xpos, int ypos, bool pressed)
 		glm::vec2 mouseDelta = currMousePos - prevMousePos;
 		prevMousePos = currMousePos;
 
+		bool pressed = input & InputKeys::MOUSE_LEFT;
 		if (!pressed)
 		{
 			return;
@@ -65,6 +65,24 @@ void FpvCamera::onMouseMove(int xpos, int ypos, bool pressed)
 	}
 	
 	recalculateDirectionVectors();
+}
+
+void FpvCamera::onKey(InputState input)
+{
+	float cameraSpeed = isPressed(input, InputKeys::KEY_SHIFT) ? CAMERA_FPV_INCREASED_SPEED :  CAMERA_FPV_SPEED;
+	cameraSpeed *= AppContext::instance().deltaTime;
+	if (isPressed(input, InputKeys::KEY_W))
+		position += cameraSpeed * forward;
+	if (isPressed(input, InputKeys::KEY_S))
+		position -= cameraSpeed * forward;
+	if (isPressed(input, InputKeys::KEY_A))
+		position -= cameraSpeed * right;
+	if (isPressed(input, InputKeys::KEY_D))
+		position += cameraSpeed * right;
+	if (isPressed(input, InputKeys::KEY_E))
+		position += cameraSpeed * up;
+	if (isPressed(input, InputKeys::KEY_Q))
+		position -= cameraSpeed * up;
 }
 
 void FpvCamera::recalculateDirectionVectors()
