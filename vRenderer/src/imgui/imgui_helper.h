@@ -49,8 +49,6 @@ namespace imgui_helper
 
 	void DrawAssetBrowser(const std::string& assetsFolderPath, const std::vector<const char *>& supportedExtensions, std::string& selectedModelName, bool& newSelection)
 	{
-		ImGui::Begin("Asset Browser");
-
 		ScanForModels(assetsFolderPath, supportedExtensions, modelNames);
 
 		ImGui::Separator();
@@ -80,8 +78,6 @@ namespace imgui_helper
 
 		ImGui::Separator();
 		ImGui::Text("Selected Model: %s", selectedModelName.empty() ? "<none>" : selectedModelName.c_str());
-
-		ImGui::End();
 	}
 
 
@@ -137,7 +133,6 @@ namespace imgui_helper
 		static bool syncRotation = false;
 		static bool syncScale = false;
 
-		ImGui::Begin("Transform Editor");
 		// Position (with wider range and default speed)
 		ShowAdvancedVec3Editor("Position", position, syncPosition, 0.1f, -100.0f, 100.0f);
 		ImGui::Spacing();
@@ -146,7 +141,6 @@ namespace imgui_helper
 		ImGui::Spacing();
 		// Scale (positive values only, slower speed)
 		ShowAdvancedVec3Editor("Scale", scale, syncScale, 0.05f, 0.0f, 100.0f);
-		ImGui::End();
 	}
 
 	/// <summary>
@@ -156,16 +150,14 @@ namespace imgui_helper
 	{
 		static bool syncPosition = false;
 
-		ImGui::Begin("Camera Editor");
 		ShowAdvancedVec3Editor("Position", position, syncPosition, 0.1f, -100.0f, 100.0f);
 		ImGui::Spacing();
 		ImGui::DragFloat("FOV", &fov, 1.0f, 200.0f);
 		ImGui::Spacing();
 
-		ImGui::End();
 	}
 
-	void DrawFPSOverlay() {
+	void DrawFPSOverlay(const char* info = "") {
 		// Set the position to the top-left corner (with a small offset for padding)
 		const float DISTANCE = 10.0f;
 		ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
@@ -187,6 +179,7 @@ namespace imgui_helper
 		if (ImGui::Begin("FPS Overlay", nullptr, flags)) {
 			// Just display the FPS number
 			ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+			ImGui::Text(info);
 		}
 		ImGui::End();
 	}

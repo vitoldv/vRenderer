@@ -131,9 +131,24 @@ void Application::destroyWindow()
 
 void Application::imguiMenu()
 {	
-	imgui_helper::DrawFPSOverlay();
-	imgui_helper::ShowTransformEditor(position, rotation, scale);
-	imgui_helper::DrawAssetBrowser(MODEL_ASSETS_FOLDER, c_supportedFormats, selectedModelName, this->newSelection);
+	// SETTINGS EDITOR WINDOW
+	{
+		ImGui::Begin("vRenderer Settings", nullptr, ImGuiWindowFlags_None);
+		if (ImGui::BeginTabBar("Menus")) {
+			if (ImGui::BeginTabItem("Asset Browser")) {
+				imgui_helper::DrawAssetBrowser(MODEL_ASSETS_FOLDER, c_supportedFormats, selectedModelName, this->newSelection);
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Transform Editor")) {
+				imgui_helper::ShowTransformEditor(position, rotation, scale); // Renamed!
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+		ImGui::End();
+	}
+
+	imgui_helper::DrawFPSOverlay(api == API::VULKAN ? "Vulkan" : "OpenGL");
 }
 
 int Application::run()
