@@ -1,3 +1,8 @@
+//--- do not remove, it's here for the God's sake
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+//-------------------------------------------------
+
 #include "Application.h"
 #include "imgui/imgui_helper.h"
 
@@ -23,7 +28,7 @@ void Application::initWindow(std::string title, const int width, const int heigh
 	{
 		glfwMakeContextCurrent(window);
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-		{
+		{		
 			throw std::runtime_error("Failed to initialize GLAD");
 		}
 	}
@@ -55,7 +60,7 @@ int Application::initApplication()
 	initInput(window);
 
 	// Camera initilization
-	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
+	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, api == API::VULKAN);
 	EventBinder::Bind(&BaseCamera::onMouseMove, camera, inp::onMouseMove);
 	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
 	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);

@@ -2,7 +2,6 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include "stb_image.h"
 
 #include <string>
 #include "VulkanUtils.h"
@@ -30,7 +29,6 @@ private:
 
 	void createTexture(std::string fileName, VkContext context);
 	void createTextureImage(std::string fileName, VkContext context);
-	stbi_uc* loadTexture(std::string fileName, int* width, int* height, VkDeviceSize* imageSize);
 
 	void cleanup();
 };

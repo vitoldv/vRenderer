@@ -1,4 +1,5 @@
 #include "VkTexture.h"
+#include "stb_image.h"
 
 VkTexture::VkTexture(std::string fileName, VkContext context) :
 	name(fileName.c_str())
@@ -24,6 +25,22 @@ void VkTexture::createTexture(std::string fileName, VkContext context)
 	imageView = createImageView(image,
 		VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, context);
 }
+
+stbi_uc* loadTexture(std::string fileName, int* width, int* height, VkDeviceSize* imageSize)
+{
+	int channels;
+	stbi_uc* image = stbi_load(fileName.c_str(), width, height, &channels, STBI_rgb_alpha);
+	if (!image)
+	{
+		throw std::runtime_error("Failed to load texture \"" + fileName + "\".");
+	}
+
+	// calculate image size
+	*imageSize = *width * *height * 4;
+
+	return image;
+}
+
 
  void VkTexture::createTextureImage(std::string fileName, VkContext context)
  {
@@ -107,17 +124,3 @@ VkDescriptorSet VkTexture::createTextureSamplerDescriptor(VkSamplerDescriptorSet
 	 vkFreeMemory(context.logicalDevice, imageMemory, nullptr);
  }
 
- stbi_uc* VkTexture::loadTexture(std::string fileName, int* width, int* height, VkDeviceSize* imageSize)
- {
-	 int channels;
-	 stbi_uc* image = stbi_load(fileName.c_str(), width, height, &channels, STBI_rgb_alpha);
-	 if (!image)
-	 {
-		 throw std::runtime_error("Failed to load texture \"" + fileName + "\".");
-	 }
-
-	 // calculate image size
-	 *imageSize = *width * *height * 4;
-
-	 return image;
- }

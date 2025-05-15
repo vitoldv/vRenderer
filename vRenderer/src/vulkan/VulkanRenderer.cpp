@@ -530,8 +530,8 @@ void VulkanRenderer::createGraphicsPipeline()
 	///////////////////////////////////
 	
 	// read SPIR-V shader code
-	auto vertexShaderCode = VkUtils::readFile("vRenderer\\shaders\\first_pass_vert.spv");
-	auto fragmentShaderCode = VkUtils::readFile("vRenderer\\shaders\\first_pass_frag.spv");
+	auto vertexShaderCode = VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_vert.spv");
+	auto fragmentShaderCode = VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_frag.spv");
 
 	// build shader modules to link to graphics pipeline
 	VkShaderModule vertexShaderModule = createShaderModule(vertexShaderCode);
@@ -733,8 +733,8 @@ void VulkanRenderer::createGraphicsPipeline()
 	// ----- SECOND PASS PIPELINE -----
 	///////////////////////////////////
 
-	VkShaderModule secondVertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\second_pass_vert.spv"));
-	VkShaderModule secondFragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\second_pass_frag.spv"));
+	VkShaderModule secondVertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_vert.spv"));
+	VkShaderModule secondFragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_frag.spv"));
 
 	// reusing shader create infos for previous pipeline
 	vertexShaderStageCreateInfo.module = secondVertexShaderModule;
@@ -1431,18 +1431,7 @@ bool VulkanRenderer::isModelInRenderer(uint32_t id)
 
 bool VulkanRenderer::addToRenderer(const Model& model, glm::vec3 color)
 {
-	// If mesh is not in renderer
-	if (!isModelInRenderer(model.id))
-	{
-		VkUtils::VkSamplerDescriptorSetCreateInfo createInfo = {};
-		createInfo.descriptorPool = this->vkDescriptorPool;
-		createInfo.sampler = this->vkTextureSampler;
-		createInfo.samplerDescriptorSetLayout = this->vkSamplerDescriptorSetLayout;
-
-		VkModel* vkModel = new VkModel(model.id, model, context, createInfo);
-		return true;
-	}
-
+	// NOT IMPLEMENTED
 	return false;
 }
 
@@ -1772,7 +1761,7 @@ void VulkanRenderer::createTextureSampler()
 	createInfo.mipLodBias = 0.0f;
 	createInfo.maxLod = 0.0f;
 	createInfo.minLod = 0.0f;
-	createInfo.anisotropyEnable = VK_TRUE;
+	createInfo.anisotropyEnable = VK_FALSE;
 	createInfo.maxAnisotropy = 16;
 
 	VkResult result = vkCreateSampler(this->vkLogicalDevice, &createInfo, nullptr, &this->vkTextureSampler);

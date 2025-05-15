@@ -14,7 +14,7 @@ void main() {
     float depth = gl_FragCoord.z;
     
     outColor = texture(textureSampler, fragUv);
-    //outColor = vec4(fragCol, 1.0f);
+    //outColor = vec4(fragUv, 0.0f, 1.0f);
 
     // // Hard-coded light values
     // vec3 lightDir = normalize(vec3(0.0, 0.0, 1.0));
