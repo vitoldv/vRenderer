@@ -80,6 +80,31 @@ namespace imgui_helper
 		ImGui::Text("Selected Model: %s", selectedModelName.empty() ? "<none>" : selectedModelName.c_str());
 	}
 
+	template<typename Enum>
+	void EnumButtonGroup(const char* labels[], int count, Enum& value) {
+		ImGui::BeginGroup();
+		for (int i = 0; i < count; i++) {
+			bool isActive = (static_cast<int>(value) == i);
+			if (isActive) {
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
+			}
+
+			if (ImGui::Button(labels[i], ImVec2(80, 0))) {
+				value = static_cast<Enum>(i);
+			}
+
+			if (isActive) ImGui::PopStyleColor(2);
+			if (i < count - 1) ImGui::SameLine();
+		}
+		ImGui::EndGroup();
+	}
+
+	const char* apiLabels[] = { "Vulkan", "OpenGL" };
+	void ShowRendererSettingsTab(RenderSettings& renderSettings) 
+	{
+		EnumButtonGroup<RenderSettings::API>(apiLabels, 2, renderSettings.api);
+	}
 
 	/// <summary>
 	/// Editor for a glm::vec3. Allows simultaneous edit of all components at once via sync flag.

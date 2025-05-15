@@ -9,13 +9,13 @@
 void Application::initWindow(std::string title, const int width, const int height)
 {
 	glfwInit();
-	if (api == VULKAN)
+	if (currentApi == RenderSettings::API::VULKAN)
 	{
 		// Set GLFW to NOT work with OpenGL
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	}
-	else if (api == OPENGL)
+	else if (currentApi == RenderSettings::API::OPENGL)
 	{
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -24,7 +24,7 @@ void Application::initWindow(std::string title, const int width, const int heigh
 
 	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 
-	if (api == OPENGL)
+	if (currentApi == RenderSettings::API::OPENGL)
 	{
 		glfwMakeContextCurrent(window);
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -38,11 +38,11 @@ int Application::initApplication()
 {
 	context = &AppContext::instance();
 
-	if (api == VULKAN)
+	if (currentApi == RenderSettings::API::VULKAN)
 	{
 		renderer = new VulkanRenderer();
 	}
-	else if (api == OPENGL)
+	else if (currentApi == RenderSettings::API::OPENGL)
 	{
 		renderer = new OpenGLRenderer();
 	}
@@ -60,7 +60,7 @@ int Application::initApplication()
 	initInput(window);
 
 	// Camera initilization
-	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, api == API::VULKAN);
+	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, currentApi == RenderSettings::API::VULKAN);
 	EventBinder::Bind(&BaseCamera::onMouseMove, camera, inp::onMouseMove);
 	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
 	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);
@@ -68,6 +68,24 @@ int Application::initApplication()
 	renderer->setCamera(camera);
 
 	return 0;
+}
+
+void Application::loadUserPrefs()
+{
+	RenderSettings::API api;
+	if (GetPrefs("API", api))
+	{
+		this->renderSettings.api = api;
+	}
+	else
+	{
+		this->renderSettings.api = RenderSettings::API::VULKAN;
+	}
+}
+
+void Application::saveUserPrefs()
+{
+	SavePrefs("API", this->renderSettings.api);
 }
 
 void Application::processInput()
@@ -140,6 +158,11 @@ void Application::imguiMenu()
 				imgui_helper::DrawAssetBrowser(MODEL_ASSETS_FOLDER, c_supportedFormats, selectedModelName, this->newSelection);
 				ImGui::EndTabItem();
 			}
+			if (ImGui::BeginTabItem("Renderer"))
+			{
+				imgui_helper::ShowRendererSettingsTab(renderSettings);
+				ImGui::EndTabItem();
+			}
 			if (ImGui::BeginTabItem("Transform Editor")) {
 				imgui_helper::ShowTransformEditor(position, rotation, scale); // Renamed!
 				ImGui::EndTabItem();
@@ -149,12 +172,13 @@ void Application::imguiMenu()
 		ImGui::End();
 	}
 
-	imgui_helper::DrawFPSOverlay(api == API::VULKAN ? "Vulkan" : "OpenGL");
+	imgui_helper::DrawFPSOverlay(currentApi == RenderSettings::API::VULKAN ? "Vulkan" : "OpenGL");
 }
 
 int Application::run()
 {
-	this->api = CURRENT_API;
+	loadUserPrefs();
+	currentApi = renderSettings.api;
 
 	initWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -166,7 +190,7 @@ int Application::run()
 	{
 		glfwPollEvents();
 
-		if (api == OPENGL)
+		if (currentApi == RenderSettings::API::OPENGL)
 			glfwSwapBuffers(window);
 
 		currentFrameTime = glfwGetTime() * 1000.0f;
@@ -183,6 +207,6 @@ int Application::run()
 	}
 
 	cleanup();
-
+	saveUserPrefs();
 	destroyWindow();
 }

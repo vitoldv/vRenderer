@@ -168,6 +168,7 @@
     <ClInclude Include="vRenderer\include\FpvCamera.h" />
     <ClInclude Include="vRenderer\include\input_handler.h" />
     <ClInclude Include="vRenderer\include\IRenderer.h" />
+    <ClInclude Include="vRenderer\include\json.hpp" />
     <ClInclude Include="vRenderer\include\OpenGLRenderer.h" />
     <ClInclude Include="vRenderer\include\opengl\GLMesh.h" />
     <ClInclude Include="vRenderer\include\opengl\GLTexture.h" />
@@ -178,6 +179,7 @@
     <ClInclude Include="vRenderer\include\geometry_settings.h" />
     <ClInclude Include="vRenderer\include\Mesh.h" />
     <ClInclude Include="vRenderer\include\Model.h" />
+    <ClInclude Include="vRenderer\include\RenderSettings.h" />
     <ClInclude Include="vRenderer\include\stb_image.h" />
     <ClInclude Include="vRenderer\include\utils.h" />
     <ClInclude Include="vRenderer\include\VkModel.h" />

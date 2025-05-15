@@ -9,7 +9,7 @@
 
 #include "GLMesh.h"
 #include "GLTexture.h"
-#include "opengl//GLUtils.h"
+#include "GLUtils.h"
 #include "Model.h"
 
 class GLModel

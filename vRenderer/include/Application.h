@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 
+#include "RenderSettings.h"
 #include "OpenGLRenderer.h"
 #include "VulkanRenderer.h"
 
@@ -18,29 +19,22 @@
 #include "OrbitCamera.h"
 #include "FpvCamera.h"
 
-//#define CURRENT_API API::VULKAN
-#define CURRENT_API API::OPENGL
-
 class Application
 {
 public:
-
-	enum API
-	{
-		VULKAN,
-		OPENGL
-	};
-
 	Application() = default;
 
 	int run();
 
 private:
 
-	API api;
 	GLFWwindow* window;
 	IRenderer* renderer;
+	RenderSettings renderSettings;
 	AppContext* context;
+
+	// Currently utilized graphics api. The one in renderSettings is one selected by user and will be applied after app restart.
+	RenderSettings::API currentApi;
 
 	// Frame time control 
 	int previousFrameTime = 0;
@@ -59,6 +53,8 @@ private:
 
 	void initWindow(std::string title, const int width, const int height);
 	int initApplication();
+	void loadUserPrefs();
+	void saveUserPrefs();
 	void processInput();
 	void update();
 	void render();
