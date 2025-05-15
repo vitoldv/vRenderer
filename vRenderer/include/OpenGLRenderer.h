@@ -17,6 +17,8 @@
 #include "GLTexture.h"
 #include "BaseCamera.h"
 
+#define BACKGROUND_COLOR 0x888800FF
+
 class OpenGLRenderer : public IRenderer
 {
 public:

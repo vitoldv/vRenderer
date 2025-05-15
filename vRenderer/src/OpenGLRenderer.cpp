@@ -93,7 +93,8 @@ void OpenGLRenderer::draw()
 		ImGui::Render();
 	}
 
-	glClearColor(0.6f, 0.6f, 0.0f, 1.0f);
+	auto clearColor = GLUtils::getRGBANormalized(BACKGROUND_COLOR);
+	glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Attach shader program

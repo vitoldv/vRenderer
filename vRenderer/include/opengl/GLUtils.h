@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
+#include <array>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -40,5 +41,16 @@ namespace GLUtils
 		file.close();
 
 		return str;
+	}
+
+	static std::array<float, 4> getRGBANormalized(uint32_t color) 
+	{
+		return 
+		{
+			((color >> 24) & 0xFF) / 255.0f,  // R
+			((color >> 16) & 0xFF) / 255.0f,  // G
+			((color >> 8) & 0xFF) / 255.0f,   // B
+			(color & 0xFF) / 255.0f           // A
+		};
 	}
 }
