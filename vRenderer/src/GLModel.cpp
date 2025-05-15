@@ -33,6 +33,9 @@ void GLModel::draw(uint32_t shaderProgram)
 			glBindTexture(GL_TEXTURE_2D, textures[i]->glId);
 			glUniform1i(glGetUniformLocation(shaderProgram, SAMPLER_UNIFORM_NAME), 0);
 		}
+			
+		glUniform1i(glGetUniformLocation(shaderProgram, USE_TEXTURE_UNIFORM_NAME), textures[i] != nullptr ? GL_TRUE : GL_FALSE);
+
 		meshes[i]->draw();
 	}
 }

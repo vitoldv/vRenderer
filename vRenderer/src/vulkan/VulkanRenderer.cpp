@@ -1183,7 +1183,7 @@ void VulkanRenderer::createPushConstantRange()
 	// Defines push constant values
 	this->vkPushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	this->vkPushConstantRange.offset = 0;
-	this->vkPushConstantRange.size = sizeof(glm::mat4);
+	this->vkPushConstantRange.size = sizeof(PushConstant);
 }
 	
 

@@ -27,6 +27,7 @@ private:
 	
 	const char* TRANSFORM_UNIFORM_NAME = "transform";
 	const char* SAMPLER_UNIFORM_NAME = "outTexture";
+	const char* USE_TEXTURE_UNIFORM_NAME = "useTexture";
 
 	uint32_t meshCount;
 	uint32_t textureCount;

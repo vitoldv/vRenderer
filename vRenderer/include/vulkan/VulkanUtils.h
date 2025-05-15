@@ -28,6 +28,17 @@ namespace VkUtils
 		glm::mat4 view;
 	};
 
+	/*
+	* Push Constants provide:
+	* 1. Model matrix (transform matrix)
+	* 2. UseTexture flag (indicates whether mesh should be textured)
+	*/
+	struct PushConstant
+	{
+		glm::mat4 model;
+		uint8_t useTexture;
+	};
+
 	const std::vector<glm::vec3> meshVertices = {
 		{-1, -1, 0.0},
 		{1,  -1, 0.0},

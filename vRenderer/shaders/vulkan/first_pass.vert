@@ -17,11 +17,13 @@ layout(set = 0, binding = 0) uniform UboProjectionView {
 
 layout(push_constant) uniform PushModel {
     mat4 model;
+    uint textured;
 } pushModel;
 
 layout(location = 0) out vec3 fragCol;
 layout(location = 1) out vec2 fragUv;
 layout(location = 2) out vec3 fragNormal;
+layout(location = 3) flat out uint fragTextured;
 
 void main() {
     gl_Position = uboProjectionView.projection * uboProjectionView.view * pushModel.model * vec4(pos, 1.0);
@@ -29,4 +31,5 @@ void main() {
     fragUv = uv;
     vec4 n = pushModel.model * vec4(normal, 1.0);
     fragNormal = vec3(n.x, n.y, n.z);
+    fragTextured = pushModel.textured;
 }

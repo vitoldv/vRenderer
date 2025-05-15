@@ -54,12 +54,17 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
 		//	0, 1, &this->vkDescriptorSets[currentImage], 1, &dynamicOffset);
 
-		glm::mat4 meshTransform = mesh->getTransformMat();
-		vkCmdPushConstants(commandBuffer, pipelineLayout,
-			VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &meshTransform);
-
 		uint32_t descriptorIndex = meshSamplerDescriptorMap[mesh->id];
-		if (descriptorIndex != NO_TEXTURE_INDEX)
+
+		bool textured = descriptorIndex != NO_TEXTURE_INDEX;
+
+		PushConstant push = {};
+		push.model = mesh->getTransformMat();
+		push.useTexture = textured;
+		vkCmdPushConstants(commandBuffer, pipelineLayout,
+			VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
+
+		if (textured)
 		{
 			std::array<VkDescriptorSet, 2> descriptorSets = { descriptorSet, samplerDescriptorSets[descriptorIndex]};
 
