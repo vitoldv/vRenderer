@@ -8,7 +8,7 @@
 #include "Mesh.h"
 #include "geometry_settings.h"
 
-#include "opengl/GLUtils.h"
+#include "GLUtils.h"
 
 using namespace GLUtils;
 

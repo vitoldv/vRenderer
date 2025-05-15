@@ -12,7 +12,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include "IRenderer.h"
-#include "opengl/GLUtils.h"
+#include "GLUtils.h"
 #include "GLModel.h"
 #include "GLTexture.h"
 #include "BaseCamera.h"
