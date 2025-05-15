@@ -131,6 +131,7 @@ void Application::destroyWindow()
 
 void Application::imguiMenu()
 {	
+	imgui_helper::DrawFPSOverlay();
 	imgui_helper::ShowTransformEditor(position, rotation, scale);
 	imgui_helper::DrawAssetBrowser(MODEL_ASSETS_FOLDER, c_supportedFormats, selectedModelName, this->newSelection);
 }

@@ -164,4 +164,30 @@ namespace imgui_helper
 
 		ImGui::End();
 	}
+
+	void DrawFPSOverlay() {
+		// Set the position to the top-left corner (with a small offset for padding)
+		const float DISTANCE = 10.0f;
+		ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
+		ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+
+		// Use a transparent, borderless, non-interactive window
+		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+		ImGui::SetNextWindowBgAlpha(0.0f); // Transparent background
+
+		ImGuiWindowFlags flags =
+			ImGuiWindowFlags_NoDecoration |      // No title bar, resize, etc.
+			ImGuiWindowFlags_AlwaysAutoResize |  // Auto-resize to fit content
+			ImGuiWindowFlags_NoSavedSettings |   // Don't remember position/size
+			ImGuiWindowFlags_NoFocusOnAppearing |// Don't steal focus
+			ImGuiWindowFlags_NoNav |             // No keyboard/gamepad nav
+			ImGuiWindowFlags_NoMove;             // Lock position
+
+		// Begin the overlay
+		if (ImGui::Begin("FPS Overlay", nullptr, flags)) {
+			// Just display the FPS number
+			ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+		}
+		ImGui::End();
+	}
 }

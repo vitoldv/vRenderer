@@ -223,3 +223,4 @@ private:
 // 3. Think of single memory buffer for meshes related to specific model
 // 4. Create solution for instance batching
 // 5. Extract all duplicated "magic" Vulkan flags to single place in code
+// 6. Add mipmap generation for textures
