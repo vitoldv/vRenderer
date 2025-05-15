@@ -5,6 +5,7 @@ namespace inp
     Event<InputState> onKey;
     Event<uint32_t, uint32_t, InputState> onMouseMove;
     Event<int32_t, InputState> onMouseScroll;
+    bool IsUIFocused;
 
     // Current keyboard input state
     InputState inputState;
@@ -25,7 +26,10 @@ namespace inp
 
     void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     {
-        onMouseScroll.invoke(yoffset, inputState);
+        if (!IsUIFocused)
+        {
+            onMouseScroll.invoke(yoffset, inputState);
+        }        
     }
 
     void initInput(GLFWwindow* window)
@@ -157,6 +161,9 @@ namespace inp
         if (glfwGetKey(window, GLFW_KEY_KP_9) == GLFW_PRESS)
             inputState |= KEY_NUMPAD_9;
 
-        invokeEvents(window);
+        if (!IsUIFocused)
+        {
+            invokeEvents(window);
+        }
     }
 }

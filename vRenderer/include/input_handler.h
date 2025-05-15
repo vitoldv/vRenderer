@@ -77,6 +77,8 @@ namespace inp
     extern Event<uint32_t, uint32_t, InputState> onMouseMove;
     extern Event<int32_t, InputState> onMouseScroll;
 
+    extern bool IsUIFocused;
+
     // Test if a specific input key is pressed
     inline bool isPressed(InputState inputState, InputKeys key) 
     {

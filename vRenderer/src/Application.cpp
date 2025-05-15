@@ -72,6 +72,7 @@ int Application::initApplication()
 
 void Application::processInput()
 {
+	IsUIFocused = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
 	process(window);
 }
 
