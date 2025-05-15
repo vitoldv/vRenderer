@@ -23,6 +23,7 @@
 #include <functional>
 
 #include "display_settings.h"
+#include "IRenderer.h"
 #include "Model.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
@@ -52,7 +53,7 @@ const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
-class VulkanRenderer
+class VulkanRenderer : public IRenderer
 {
 private:
 	GLFWwindow* window;
@@ -222,3 +223,4 @@ private:
 // 3. Think of single memory buffer for meshes related to specific model
 // 4. Create solution for instance batching
 // 5. Extract all duplicated "magic" Vulkan flags to single place in code
+// 6. Add mipmap generation for textures

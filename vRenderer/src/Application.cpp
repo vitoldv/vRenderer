@@ -1,39 +1,71 @@
+//--- do not remove, it's here for the God's sake
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+//-------------------------------------------------
+
 #include "Application.h"
 #include "imgui/imgui_helper.h"
 
 void Application::initWindow(std::string title, const int width, const int height)
 {
 	glfwInit();
-	// Set GLFW to NOT work with OpenGL
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	if (api == VULKAN)
+	{
+		// Set GLFW to NOT work with OpenGL
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	}
+	else if (api == OPENGL)
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	}
 
 	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+
+	if (api == OPENGL)
+	{
+		glfwMakeContextCurrent(window);
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		{		
+			throw std::runtime_error("Failed to initialize GLAD");
+		}
+	}
 }
 
 int Application::initApplication()
 {
 	context = &AppContext::instance();
 
-	// Create and initialize Vulkan Renderer Instance
-	if (vulkanRenderer.init(window) == EXIT_FAILURE)
+	if (api == VULKAN)
+	{
+		renderer = new VulkanRenderer();
+	}
+	else if (api == OPENGL)
+	{
+		renderer = new OpenGLRenderer();
+	}
+
+	// Create and initialize Renderer Instance
+	if (renderer->init(window) == EXIT_FAILURE)
 	{
 		return EXIT_FAILURE;
 	}
 	else
 	{
-		vulkanRenderer.setImguiCallback(std::bind(&Application::imguiMenu, this));
+		renderer->setImguiCallback(std::bind(&Application::imguiMenu, this));
 	}   
 
 	initInput(window);
 
 	// Camera initilization
-	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, true);
+	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, api == API::VULKAN);
 	EventBinder::Bind(&BaseCamera::onMouseMove, camera, inp::onMouseMove);
 	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
 	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);
 
-	vulkanRenderer.setCamera(camera);
+	renderer->setCamera(camera);
 
 	return 0;
 }
@@ -49,14 +81,14 @@ void Application::update()
 	{
 		if (modelToRender != nullptr)
 		{
-			vulkanRenderer.removeFromRenderer(modelToRender->id);
+			renderer->removeFromRenderer(modelToRender->id);
 			delete modelToRender;
 			modelToRender = nullptr;
 		}
 		
 		std::string model = this->selectedModelName + "\\" + this->selectedModelName + ".obj";
 		modelToRender = new Model(1, MODEL_ASSETS(model.c_str()));
-		vulkanRenderer.addToRendererTextured(*modelToRender);
+		renderer->addToRendererTextured(*modelToRender);
 
 		newSelection = false;
 	}
@@ -69,7 +101,7 @@ void Application::update()
 		glm::mat4 rz = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f));
 		glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
 		glm::mat4 transform = t * rz * ry * rx * s;
-		vulkanRenderer.updateModelTransform(modelToRender->id, transform);
+		renderer->updateModelTransform(modelToRender->id, transform);
 	}
 
 	camera->update();
@@ -77,7 +109,7 @@ void Application::update()
 
 void Application::render()
 {
-	vulkanRenderer.draw();
+	renderer->draw();
 }
 
 void Application::cleanup()
@@ -88,7 +120,7 @@ void Application::cleanup()
 	delete modelToRender;
 	modelToRender = nullptr;
 
-	vulkanRenderer.cleanup();
+	renderer->cleanup();
 }
 
 void Application::destroyWindow()
@@ -99,12 +131,15 @@ void Application::destroyWindow()
 
 void Application::imguiMenu()
 {	
+	imgui_helper::DrawFPSOverlay();
 	imgui_helper::ShowTransformEditor(position, rotation, scale);
 	imgui_helper::DrawAssetBrowser(MODEL_ASSETS_FOLDER, c_supportedFormats, selectedModelName, this->newSelection);
 }
 
 int Application::run()
 {
+	this->api = CURRENT_API;
+
 	initWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	if (initApplication() == EXIT_FAILURE)
@@ -114,6 +149,9 @@ int Application::run()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+
+		if (api == OPENGL)
+			glfwSwapBuffers(window);
 
 		currentFrameTime = glfwGetTime() * 1000.0f;
 		frameTime = currentFrameTime - previousFrameTime;

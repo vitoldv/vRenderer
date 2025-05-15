@@ -3,11 +3,14 @@
 #include <iostream>
 #include <string>
 
+#include "OpenGLRenderer.h"
+#include "VulkanRenderer.h"
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 #include "AppContext.h"
-#include "VulkanRenderer.h"
+
 #include "Model.h"
 #include "utils.h"
 #include "editor_settings.h"
@@ -15,9 +18,18 @@
 #include "OrbitCamera.h"
 #include "FpvCamera.h"
 
+//#define CURRENT_API API::VULKAN
+#define CURRENT_API API::OPENGL
+
 class Application
 {
 public:
+
+	enum API
+	{
+		VULKAN,
+		OPENGL
+	};
 
 	Application() = default;
 
@@ -25,8 +37,9 @@ public:
 
 private:
 
+	API api;
 	GLFWwindow* window;
-	VulkanRenderer vulkanRenderer;
+	IRenderer* renderer;
 	AppContext* context;
 
 	// Frame time control 
