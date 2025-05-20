@@ -24,7 +24,6 @@ void FpvCamera::onMouseMove(int xpos, int ypos, InputState input)
 {
 	// FPV camera implementation
 	{
-
 		currMousePos = { static_cast<float>(xpos), static_cast<float>(ypos) };
 
 		if (firstTime)
@@ -60,8 +59,7 @@ void FpvCamera::onMouseMove(int xpos, int ypos, InputState input)
 
 		// rotation should be applied to initial forward vector state
 		forward = { 0, 0, -1.0f };
-		forward = glm::normalize(ry * rx * glm::vec4(forward, 1.0f));
-		
+		forward = glm::normalize(ry * rx * glm::vec4(forward, 1.0f));		
 	}
 	
 	recalculateDirectionVectors();
@@ -83,6 +81,8 @@ void FpvCamera::onKey(InputState input)
 		position += cameraSpeed * up;
 	if (isPressed(input, InputKeys::KEY_Q))
 		position -= cameraSpeed * up;
+
+	recalculateDirectionVectors();
 }
 
 void FpvCamera::recalculateDirectionVectors()
@@ -90,5 +90,6 @@ void FpvCamera::recalculateDirectionVectors()
 	target = position + forward;
 	// forward vector is defined in mouse handler
 	// up vector always remains the same and points up
+	up = { 0, 1.0f, 0 };
 	right = glm::normalize(glm::cross(forward, up));
 }

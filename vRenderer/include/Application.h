@@ -40,6 +40,9 @@ private:
 	int previousFrameTime = 0;
 	int currentFrameTime = 0;
 
+	CameraType cameraType;
+	int cameraFov = 70;
+
 	// Scene
 	std::string selectedModelName;
 	bool newSelection;
@@ -61,4 +64,8 @@ private:
 	void cleanup();
 	void destroyWindow();
 	void imguiMenu();
+
+	void onCameraTypeChanged(CameraType cameraType);
+	void onCameraSettingsChanged();
+	void setSceneCamera(CameraType cameraType);
 };

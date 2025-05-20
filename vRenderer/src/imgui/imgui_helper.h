@@ -81,7 +81,8 @@ namespace imgui_helper
 	}
 
 	template<typename Enum>
-	void EnumButtonGroup(const char* labels[], int count, Enum& value) {
+	void EnumButtonGroup(const char* labels[], int count, Enum& value, bool& changed)
+	{
 		ImGui::BeginGroup();
 		for (int i = 0; i < count; i++) {
 			bool isActive = (static_cast<int>(value) == i);
@@ -90,7 +91,9 @@ namespace imgui_helper
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
 			}
 
-			if (ImGui::Button(labels[i], ImVec2(80, 0))) {
+			if (ImGui::Button(labels[i], ImVec2(80, 0)))
+			{
+				changed = true;
 				value = static_cast<Enum>(i);
 			}
 
@@ -103,7 +106,22 @@ namespace imgui_helper
 	const char* apiLabels[] = { "Vulkan", "OpenGL" };
 	void ShowRendererSettingsTab(RenderSettings& renderSettings) 
 	{
-		EnumButtonGroup<RenderSettings::API>(apiLabels, 2, renderSettings.api);
+		ImGui::Text("API	");
+		bool changed;
+		EnumButtonGroup<RenderSettings::API>(apiLabels, 2, renderSettings.api, changed);
+
+		ImGui::Text("General");
+		ImGui::Checkbox("FPS limit", &renderSettings.fpsLimit);
+		ImGui::SliderInt("FPS target", &renderSettings.targetFps, 1, 165);
+	}
+
+	const char* cameraTypeLabels[] = { "Orbit", "FPV" };
+	void ShowCameraSettingsTab(CameraType& cameraType, int& fov, bool& typeChanged, bool& settingsChanged)
+	{
+		typeChanged = false;
+		settingsChanged = false;
+		EnumButtonGroup<CameraType>(cameraTypeLabels, 2, cameraType, typeChanged);
+		settingsChanged = ImGui::SliderInt("FOV", &fov, 1, 150);
 	}
 
 	/// <summary>
@@ -166,20 +184,6 @@ namespace imgui_helper
 		ImGui::Spacing();
 		// Scale (positive values only, slower speed)
 		ShowAdvancedVec3Editor("Scale", scale, syncScale, 0.05f, 0.0f, 100.0f);
-	}
-
-	/// <summary>
-	/// Editor for tranform values of a mesh/model
-	/// </summary>
-	void ShowCameraEditor(glm::vec3& position, float& fov)
-	{
-		static bool syncPosition = false;
-
-		ShowAdvancedVec3Editor("Position", position, syncPosition, 0.1f, -100.0f, 100.0f);
-		ImGui::Spacing();
-		ImGui::DragFloat("FOV", &fov, 1.0f, 200.0f);
-		ImGui::Spacing();
-
 	}
 
 	void DrawFPSOverlay(const char* info = "") {

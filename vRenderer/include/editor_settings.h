@@ -14,4 +14,10 @@
 #define CAMERA_FPV_INCREASED_SPEED 16.0f
 #define CAMERA_INITIAL_POSITION { 0, 0, 10.f}
 
+enum CameraType
+{
+    ORBIT,
+    FPV
+};
+
 const std::vector<const char*> c_supportedFormats = { ".obj" };

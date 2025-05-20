@@ -59,33 +59,19 @@ int Application::initApplication()
 
 	initInput(window);
 
-	// Camera initilization
-	camera = new OrbitCamera(FOV_ANGLES, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, currentApi == RenderSettings::API::VULKAN);
-	EventBinder::Bind(&BaseCamera::onMouseMove, camera, inp::onMouseMove);
-	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
-	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);
-
-	renderer->setCamera(camera);
+	setSceneCamera(CameraType::ORBIT);
 
 	return 0;
 }
 
 void Application::loadUserPrefs()
 {
-	RenderSettings::API api;
-	if (GetPrefs("API", api))
-	{
-		this->renderSettings.api = api;
-	}
-	else
-	{
-		this->renderSettings.api = RenderSettings::API::VULKAN;
-	}
+	GetPrefs("Render_settings", this->renderSettings);
 }
 
 void Application::saveUserPrefs()
 {
-	SavePrefs("API", this->renderSettings.api);
+	SavePrefs("Render_settings", this->renderSettings);
 }
 
 void Application::processInput()
@@ -148,6 +134,54 @@ void Application::destroyWindow()
 	glfwTerminate();
 }
 
+void Application::onCameraTypeChanged(CameraType newCameraType)
+{
+	setSceneCamera(cameraType);
+}
+
+void Application::onCameraSettingsChanged()
+{
+	this->camera->setFov(cameraFov);
+}
+
+void Application::setSceneCamera(CameraType cameraType)
+{
+	BaseCamera* oldCamera = nullptr;
+	if (this->camera != nullptr)
+	{
+		oldCamera = this->camera;
+	}
+
+	bool flipY = currentApi == RenderSettings::API::VULKAN;
+
+	switch (this->cameraType)
+	{
+	case CameraType::ORBIT:
+ 		this->camera = new OrbitCamera(cameraFov, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, flipY);
+		break;
+	case CameraType::FPV:
+		this->camera = new FpvCamera(cameraFov, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, flipY);
+		break;
+	}
+
+	// Copy previous camera state and delete it
+	if (oldCamera != nullptr)
+	{
+		EventBinder::Unbind(&BaseCamera::onMouseMove, oldCamera, inp::onMouseMove);
+		EventBinder::Unbind(&BaseCamera::onMouseScroll, oldCamera, inp::onMouseScroll);
+		EventBinder::Unbind(&BaseCamera::onKey, oldCamera, inp::onKey);
+
+		delete oldCamera;
+		oldCamera = nullptr;
+	}
+
+	EventBinder::Bind(&BaseCamera::onMouseMove, camera, inp::onMouseMove);
+	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
+	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);
+
+	renderer->setCamera(camera);
+}
+
 void Application::imguiMenu()
 {	
 	// SETTINGS EDITOR WINDOW
@@ -161,6 +195,20 @@ void Application::imguiMenu()
 			if (ImGui::BeginTabItem("Renderer"))
 			{
 				imgui_helper::ShowRendererSettingsTab(renderSettings);
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Camera"))
+			{
+				bool typeChanged, settingsChanged;
+				imgui_helper::ShowCameraSettingsTab(cameraType, cameraFov, typeChanged, settingsChanged);
+				if (typeChanged)
+				{
+					onCameraTypeChanged(cameraType);
+				}
+				if (settingsChanged)
+				{
+					onCameraSettingsChanged();
+				}
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Transform Editor")) {
@@ -196,7 +244,8 @@ int Application::run()
 		currentFrameTime = glfwGetTime() * 1000.0f;
 		frameTime = currentFrameTime - previousFrameTime;
 
-		if (FPS_LIMIT && frameTime < TARGET_FRAME_TIME) continue;
+		float TARGET_FRAME_TIME = 1000 / renderSettings.targetFps;
+		if (renderSettings.fpsLimit && frameTime < TARGET_FRAME_TIME) continue;
 
 		context->deltaTime = frameTime / 1000.0f;
 		previousFrameTime = currentFrameTime;
