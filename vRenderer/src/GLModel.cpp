@@ -21,8 +21,12 @@ void GLModel::setTransform(glm::mat4 transform)
 
 void GLModel::draw(GLShader& shader)
 {
+	// Calculate Normal matrix (required for proper normals transformation)
+	glm::mat3 normalMat = glm::transpose(glm::inverse(this->transform));
+
 	// Setting uniforms
-	shader.setUniform(TRANSFORM_UNIFORM_NAME, this->transform);
+	shader.setUniform(MODEL_UNIFORM_NAME, this->transform);
+	shader.setUniform(NORMAL_MATRIX_UNIFORM_NAME, normalMat);
 
 	for (int i = 0; i < meshes.size(); i++)
 	{
@@ -32,6 +36,10 @@ void GLModel::draw(GLShader& shader)
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textures[i]->glId);
 			shader.setUniform(SAMPLER_UNIFORM_NAME, 0);
+		}
+		else
+		{
+			shader.setUniform(AMBIENT_COLOR_UNIFORM_NAME, ambientColor);
 		}
 		
 		shader.setUniform(USE_TEXTURE_UNIFORM_NAME, textures[i] != nullptr ? GL_TRUE : GL_FALSE);

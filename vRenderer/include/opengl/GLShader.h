@@ -50,6 +50,10 @@ bool GLShader::setUniform(const char* name, T value)
 	{
 		glUniform1i(uniformLocation, static_cast<int>(value));
 	}
+	else if constexpr (std::is_same<T, glm::mat3>::value)
+	{
+		glUniformMatrix3fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(value));
+	}
 	else if constexpr (std::is_same<T, glm::mat4>::value)
 	{
 		glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(value));

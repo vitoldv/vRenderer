@@ -124,6 +124,17 @@ namespace imgui_helper
 		settingsChanged = ImGui::SliderInt("FOV", &fov, 1, 150);
 	}
 
+	void ShowLightSettingsTab(LightSource& light, bool& settingsChanged)
+	{
+		settingsChanged = false;
+		settingsChanged |= ImGui::DragFloat3("Position", static_cast<float*>(&light.position[0]), 0.1f, -100.0f, 100.0f);
+		settingsChanged |= ImGui::DragFloat("Ambient", &light.ambientStrength, 0.05f, 0, 1.0f);
+		settingsChanged |= ImGui::DragFloat("Specular", &light.specularStrength, 0.05f, 0, 1.0f);
+		settingsChanged |= ImGui::DragInt("Shininess", &light.shininess, 1, 0, 256);
+		ImGui::NewLine();
+		settingsChanged |= ImGui::ColorPicker3("Color", static_cast<float*>(&light.color[0]));
+	}
+
 	/// <summary>
 	/// Editor for a glm::vec3. Allows simultaneous edit of all components at once via sync flag.
 	/// </summary>

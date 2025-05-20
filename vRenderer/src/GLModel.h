@@ -26,9 +26,14 @@ public:
 
 private:
 	
-	const char* TRANSFORM_UNIFORM_NAME = "transform";
+	const char* MODEL_UNIFORM_NAME = "model";
+	const char* NORMAL_MATRIX_UNIFORM_NAME = "normalMatrix";
 	const char* SAMPLER_UNIFORM_NAME = "outTexture";
 	const char* USE_TEXTURE_UNIFORM_NAME = "useTexture";
+	const char* AMBIENT_COLOR_UNIFORM_NAME = "ambientColor";
+
+	const glm::vec3 ambientColor = { 1.0f, 0.5f, 0.31f };
+	const glm::vec3 diffuseColor = { 1.0f, 0.5f, 0.31f };
 
 	uint32_t meshCount;
 	uint32_t textureCount;

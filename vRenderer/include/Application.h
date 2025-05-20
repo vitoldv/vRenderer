@@ -48,6 +48,7 @@ private:
 	bool newSelection;
 
 	BaseCamera* camera;
+	LightSource light;
 	Model* modelToRender;
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -67,5 +68,7 @@ private:
 
 	void onCameraTypeChanged(CameraType cameraType);
 	void onCameraSettingsChanged();
+	void onLightSettingsChanged();
+
 	void setSceneCamera(CameraType cameraType);
 };

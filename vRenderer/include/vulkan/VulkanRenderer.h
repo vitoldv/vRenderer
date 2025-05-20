@@ -24,6 +24,7 @@
 
 #include "display_settings.h"
 #include "IRenderer.h"
+#include "Lighting.h"
 #include "Model.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
@@ -150,7 +151,8 @@ public:
 
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
 	void setCamera(BaseCamera* camera);
-	
+	void setLight(LightSource* lightSource);
+
 	void cleanup();
 
 	void setImguiCallback(std::function<void()> callback);

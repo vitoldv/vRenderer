@@ -53,6 +53,14 @@ void OpenGLRenderer::draw()
 	shader->setUniform("view", this->camera->getViewMatrix());
 	shader->setUniform("projection", this->camera->getProjectionMatrix());
 
+	shader->setUniform("lightColor", light->color);
+	shader->setUniform("lightPos", light->position);
+	shader->setUniform("ambientStrength", light->ambientStrength);
+	shader->setUniform("specularStrength", light->specularStrength);
+	shader->setUniform("shininess", light->shininess);
+
+	shader->setUniform("viewPos", this->camera->getPosition());
+
 	for (auto* model : modelsToRender)
 	{
 		model->draw(*shader);
@@ -124,6 +132,11 @@ bool OpenGLRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
 void OpenGLRenderer::setCamera(BaseCamera* camera)
 {
 	this->camera = camera;
+}
+
+void OpenGLRenderer::setLight(LightSource* lightSource)
+{
+	this->light = lightSource;
 }
 
 void OpenGLRenderer::cleanup()

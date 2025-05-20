@@ -12,6 +12,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include "IRenderer.h"
+#include "Lighting.h"
 #include "GLUtils.h"
 #include "GLShader.h"
 #include "GLModel.h"
@@ -32,14 +33,17 @@ public:
 	bool isModelInRenderer(uint32_t id) override;
 	bool updateModelTransform(int modelId, glm::mat4 newTransform) override;
 	void setCamera(BaseCamera* camera) override;
+	void setLight(LightSource* lightSource);
 	void cleanup() override;
 	void setImguiCallback(std::function<void()> callback) override;
 
 private:
 
+	GLShader* shader;
+
 	BaseCamera* camera;
 	std::vector<GLModel*> modelsToRender;
-	GLShader* shader;
+	LightSource* light;
 
 	GLModel* getModel(uint32_t id);
 

@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <functional>
 
+#include "Lighting.h"
 #include "Model.h"
 #include "BaseCamera.h"
 
@@ -22,6 +23,7 @@ public:
 
 	virtual bool updateModelTransform(int modelId, glm::mat4 newTransform) = 0;
 	virtual void setCamera(BaseCamera* camera) = 0;
+	virtual void setLight(LightSource* lightSource) = 0;
 
 	virtual void cleanup() = 0;
 

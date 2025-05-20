@@ -61,6 +61,13 @@ int Application::initApplication()
 
 	setSceneCamera(CameraType::ORBIT);
 
+	light.color = { 1.0f, 1.0f, 1.0f };
+	light.position = { 10.0f, 1.0f, 2.0f };
+	light.ambientStrength = 0.1f;
+	light.specularStrength = 0.5f;
+	light.shininess = 32;
+	renderer->setLight(&light);
+
 	return 0;
 }
 
@@ -144,6 +151,11 @@ void Application::onCameraSettingsChanged()
 	this->camera->setFov(cameraFov);
 }
 
+void Application::onLightSettingsChanged()
+{
+	// nothing for now
+}
+
 void Application::setSceneCamera(CameraType cameraType)
 {
 	BaseCamera* oldCamera = nullptr;
@@ -208,6 +220,16 @@ void Application::imguiMenu()
 				if (settingsChanged)
 				{
 					onCameraSettingsChanged();
+				}
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Light"))
+			{
+				bool settingsChanged;
+				imgui_helper::ShowLightSettingsTab(light, settingsChanged);
+				if (settingsChanged)
+				{
+					onLightSettingsChanged();
 				}
 				ImGui::EndTabItem();
 			}

@@ -1470,6 +1470,11 @@ void VulkanRenderer::setCamera(BaseCamera* camera)
 	this->mainCamera = camera;
 }
 
+void VulkanRenderer::setLight(LightSource* lightSource)
+{
+	// NOT IMPLEMENTED
+}
+
 bool VulkanRenderer::removeFromRenderer(int modelId)
 {
 	auto it = std::find_if(modelsToRender.begin(), modelsToRender.end(),
