@@ -13,6 +13,7 @@
 
 #include "IRenderer.h"
 #include "GLUtils.h"
+#include "GLShader.h"
 #include "GLModel.h"
 #include "GLTexture.h"
 #include "BaseCamera.h"
@@ -38,6 +39,7 @@ private:
 
 	BaseCamera* camera;
 	std::vector<GLModel*> modelsToRender;
+	GLShader* shader;
 
 	GLModel* getModel(uint32_t id);
 

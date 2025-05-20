@@ -1,9 +1,5 @@
 #include "OpenGLRenderer.h"
 
-uint32_t shaderProgram;
-GLMesh* mesh;
-GLTexture* texture;
-
 int OpenGLRenderer::init(GLFWwindow* window)
 {
 	int width, height;
@@ -29,54 +25,7 @@ int OpenGLRenderer::init(GLFWwindow* window)
 	}
 
 	// SHADERS
-	{
-		int  success;
-		char infoLog[512];
-
-		// Compile vertex shader
-		unsigned int vertexShader;
-		vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		std::string str = GLUtils::readFile("vRenderer\\shaders\\opengl\\shader.vert").c_str();
-		const char* vertexShaderSource = str.c_str();
-		glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-		glCompileShader(vertexShader);
-		glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-		if (!success)
-		{
-			glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-		}
-
-		// Compile fragment shader
-		unsigned int fragmentShader;
-		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-		str = GLUtils::readFile("vRenderer\\shaders\\opengl\\shader.frag").c_str();
-		const char* fragmentShaderSource = str.c_str();
-		glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-		glCompileShader(fragmentShader);
-		glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-		if (!success)
-		{
-			glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-		}
-
-		// Create shader program
-		shaderProgram = glCreateProgram();
-		glAttachShader(shaderProgram, vertexShader);
-		glAttachShader(shaderProgram, fragmentShader);
-		glLinkProgram(shaderProgram);
-		glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-		if (!success) {
-			glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER PROGRAM COMPILATION FAILED\n" << infoLog << std::endl;
-		}
-
-		// Deleting shaders
-		glDeleteShader(vertexShader);
-		glDeleteShader(fragmentShader);
-
-	}
+	shader = new GLShader("vRenderer\\shaders\\opengl\\shader.vert", "vRenderer\\shaders\\opengl\\shader.frag");
 
 	return 0;
 }
@@ -98,15 +47,15 @@ void OpenGLRenderer::draw()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Attach shader program
-	glUseProgram(shaderProgram);
+	shader->enable();
 	
 	// Setting uniforms
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(this->camera->getViewMatrix()));
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(this->camera->getProjectionMatrix()));
+	shader->setUniform("view", this->camera->getViewMatrix());
+	shader->setUniform("projection", this->camera->getProjectionMatrix());
 
 	for (auto* model : modelsToRender)
 	{
-		model->draw(shaderProgram);
+		model->draw(*shader);
 	}
 
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

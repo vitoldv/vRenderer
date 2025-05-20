@@ -19,10 +19,10 @@ void GLModel::setTransform(glm::mat4 transform)
 	}
 }
 
-void GLModel::draw(uint32_t shaderProgram)
+void GLModel::draw(GLShader& shader)
 {
 	// Setting uniforms
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, TRANSFORM_UNIFORM_NAME), 1, GL_FALSE, glm::value_ptr(this->transform));
+	shader.setUniform(TRANSFORM_UNIFORM_NAME, this->transform);
 
 	for (int i = 0; i < meshes.size(); i++)
 	{
@@ -31,10 +31,10 @@ void GLModel::draw(uint32_t shaderProgram)
 			// Attach texture
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textures[i]->glId);
-			glUniform1i(glGetUniformLocation(shaderProgram, SAMPLER_UNIFORM_NAME), 0);
+			shader.setUniform(SAMPLER_UNIFORM_NAME, 0);
 		}
-			
-		glUniform1i(glGetUniformLocation(shaderProgram, USE_TEXTURE_UNIFORM_NAME), textures[i] != nullptr ? GL_TRUE : GL_FALSE);
+		
+		shader.setUniform(USE_TEXTURE_UNIFORM_NAME, textures[i] != nullptr ? GL_TRUE : GL_FALSE);
 
 		meshes[i]->draw();
 	}

@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "GLMesh.h"
+#include "GLShader.h"
 #include "GLTexture.h"
 #include "GLUtils.h"
 #include "Model.h"
@@ -20,7 +21,7 @@ public:
 	GLModel(uint32_t id, const Model& model);
 	~GLModel();
 
-	void draw(uint32_t shaderProgram);
+	void draw(GLShader& shader);
 	void setTransform(glm::mat4 transform);
 
 private:
