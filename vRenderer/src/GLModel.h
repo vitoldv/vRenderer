@@ -12,6 +12,7 @@
 #include "GLTexture.h"
 #include "GLUtils.h"
 #include "Model.h"
+#include "BaseCamera.h"
 
 class GLModel
 {
@@ -21,7 +22,7 @@ public:
 	GLModel(uint32_t id, const Model& model);
 	~GLModel();
 
-	void draw(GLShader& shader);
+	void draw(GLShader& shader, BaseCamera& camera);
 	void setTransform(glm::mat4 transform);
 
 private:

@@ -63,7 +63,7 @@ void OpenGLRenderer::draw()
 
 	for (auto* model : modelsToRender)
 	{
-		model->draw(*shader);
+		model->draw(*shader, *camera);
 	}
 
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

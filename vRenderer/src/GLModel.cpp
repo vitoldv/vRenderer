@@ -19,15 +19,15 @@ void GLModel::setTransform(glm::mat4 transform)
 	}
 }
 
-void GLModel::draw(GLShader& shader)
+void GLModel::draw(GLShader& shader, BaseCamera& camera)
 {
 	// Calculate Normal matrix (required for proper normals transformation)
-	glm::mat3 normalMat = glm::transpose(glm::inverse(this->transform));
+	glm::mat3 normalMat = glm::transpose(glm::inverse(camera.getViewMatrix() * this->transform));
 
 	// Setting uniforms
 	shader.setUniform(MODEL_UNIFORM_NAME, this->transform);
 	shader.setUniform(NORMAL_MATRIX_UNIFORM_NAME, normalMat);
-
+	
 	for (int i = 0; i < meshes.size(); i++)
 	{
 		if (textures[i] != nullptr)
