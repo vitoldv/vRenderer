@@ -34,7 +34,7 @@ void main()
     vec3 diffuse = diff * lightColor;
 
     // Specular calculation
-    vec3 viewDir = normalize(outFragPos);
+    vec3 viewDir = normalize(-outFragPos);
     vec3 reflectDir = reflect(-lightDir, norm);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec3 specular = specularStrength * spec * lightColor;  
