@@ -59,8 +59,6 @@ void OpenGLRenderer::draw()
 	shader->setUniform("specularStrength", light->specularStrength);
 	shader->setUniform("shininess", light->shininess);
 
-	shader->setUniform("viewPos", this->camera->getPosition());
-
 	for (auto* model : modelsToRender)
 	{
 		model->draw(*shader, *camera);

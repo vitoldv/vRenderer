@@ -8,14 +8,12 @@ out vec3 outColor; // output a color to the fragment shader
 out vec2 outTexCoord;
 out vec3 outNormal;
 out vec3 outFragPos;
-
-out vec3 LightPos;
+out vec3 outLightPos;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat3 normalMatrix;
-
 uniform vec3 lightPos;
 
 void main()
@@ -25,7 +23,7 @@ void main()
     outNormal = normalMatrix * aNormal;
     outTexCoord = aTexCoord;
 
-    // world space position of a fragment
+    // view space position of a fragment
     outFragPos = vec3(view * model * vec4(aPos, 1.0));
-    LightPos = vec3(view * vec4(lightPos, 1.0));
+    outLightPos = vec3(view * vec4(lightPos, 1.0));
 }
