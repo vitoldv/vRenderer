@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "GLShader.h"
 #include "GLTexture.h"
 
@@ -7,7 +9,7 @@ class GLMaterial
 {
 public:
 	
-	const char* name;
+	const std::string name;
 
 	GLTexture* diffuse;
 	GLTexture* specular;

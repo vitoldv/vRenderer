@@ -9,7 +9,7 @@ class Material
 {
 public:
 
-	const char* name;
+	const std::string name;
 	std::string diffuseTexture = {};
 	std::string specularTexture = {};
 

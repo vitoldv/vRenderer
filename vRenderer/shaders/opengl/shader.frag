@@ -49,7 +49,7 @@ void main()
     vec3 result = vec3(1.0);
     if(useMaterial && !useDiffuseColor)
     {
-        result = texture(material.diffuse, outTexCoord).xyz;
+        result = texture(material.diffuseMap, outTexCoord).xyz;
     }
     else
     {

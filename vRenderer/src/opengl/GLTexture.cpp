@@ -2,7 +2,7 @@
 #include "stb_image.h"
 
 GLTexture::GLTexture(std::string fileName) : 
-	name(fileName.c_str())
+	name(fileName)
 {
 	createTexture(fileName);
 }
