@@ -30,19 +30,12 @@ void GLModel::draw(GLShader& shader, BaseCamera& camera)
 	
 	for (int i = 0; i < meshes.size(); i++)
 	{
-		if (textures[i] != nullptr)
+		bool useMaterial = materials[i] != nullptr;
+		if (useMaterial)
 		{
-			// Attach texture
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, textures[i]->glId);
-			shader.setUniform(SAMPLER_UNIFORM_NAME, 0);
+			materials[i]->apply(shader);
 		}
-		else
-		{
-			shader.setUniform(AMBIENT_COLOR_UNIFORM_NAME, ambientColor);
-		}
-		
-		shader.setUniform(USE_TEXTURE_UNIFORM_NAME, textures[i] != nullptr ? GL_TRUE : GL_FALSE);
+		shader.setUniform(USE_MATERIAL_UNIFORM_NAME, useMaterial ? GL_TRUE : GL_FALSE);
 
 		meshes[i]->draw();
 	}
@@ -52,7 +45,7 @@ void GLModel::createFromGenericModel(const Model& model)
 {
 	meshCount = model.getMeshCount();
 	meshes.resize(meshCount);
-	textures.resize(meshCount);
+	materials.resize(meshCount);
 
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -61,25 +54,34 @@ void GLModel::createFromGenericModel(const Model& model)
 		uint32_t newMeshId = i;
 		GLMesh* glMesh = new GLMesh(newMeshId, mesh);
 
-		auto textureName = model.getTextures()[i];
-		GLTexture* glTexture = nullptr;
-		if (!textureName.empty())
+		auto material = model.getMaterials()[i];
+		if (material != nullptr)
 		{
-			textureCount++;
-			glTexture = new GLTexture(model.getFullTexturePath(i));
+			materialCount++;
+			GLMaterial* glMaterial = new GLMaterial(material->name);
+
+			if (!material->diffuseTexture.empty())
+			{
+				glMaterial->diffuse = new GLTexture(material->diffuseTexture);
+			}
+			if (!material->specularTexture.empty())
+			{
+				glMaterial->specular = new GLTexture(material->specularTexture);
+			}
+
+			materials[i] = glMaterial;
 		}
 
 		meshes[i] = glMesh;
-		textures[i] = glTexture;
 	}
 }
 
 void GLModel::cleanup()
 {
-	for (auto& texture : textures)
+	for (auto& material : materials)
 	{
-		delete texture;
-		texture = nullptr;
+		delete material;
+		material = nullptr;
 	}
 	for (auto& mesh : meshes)
 	{

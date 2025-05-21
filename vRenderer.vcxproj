@@ -144,6 +144,8 @@
     <ClCompile Include="vRenderer\externals\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="vRenderer\externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="vRenderer\externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="vRenderer\include\GLMaterial.cpp" />
+    <ClCompile Include="vRenderer\include\Material.cpp" />
     <ClCompile Include="vRenderer\include\opengl\GLShader.cpp" />
     <ClCompile Include="vRenderer\src\AppContext.cpp" />
     <ClCompile Include="vRenderer\src\Application.cpp" />
@@ -171,10 +173,12 @@
     <ClInclude Include="vRenderer\include\Application.h" />
     <ClInclude Include="vRenderer\include\Event.h" />
     <ClInclude Include="vRenderer\include\FpvCamera.h" />
+    <ClInclude Include="vRenderer\include\GLMaterial.h" />
     <ClInclude Include="vRenderer\include\input_handler.h" />
     <ClInclude Include="vRenderer\include\IRenderer.h" />
     <ClInclude Include="vRenderer\include\json.hpp" />
     <ClInclude Include="vRenderer\include\Lighting.h" />
+    <ClInclude Include="vRenderer\include\Material.h" />
     <ClInclude Include="vRenderer\include\OpenGLRenderer.h" />
     <ClInclude Include="vRenderer\include\opengl\GLMesh.h" />
     <ClInclude Include="vRenderer\include\opengl\GLShader.h" />

@@ -9,7 +9,7 @@
 
 #include "GLMesh.h"
 #include "GLShader.h"
-#include "GLTexture.h"
+#include "GLMaterial.h"
 #include "GLUtils.h"
 #include "Model.h"
 #include "BaseCamera.h"
@@ -29,20 +29,15 @@ private:
 	
 	const char* MODEL_UNIFORM_NAME = "model";
 	const char* NORMAL_MATRIX_UNIFORM_NAME = "normalMatrix";
-	const char* SAMPLER_UNIFORM_NAME = "outTexture";
-	const char* USE_TEXTURE_UNIFORM_NAME = "useTexture";
-	const char* AMBIENT_COLOR_UNIFORM_NAME = "ambientColor";
-
-	const glm::vec3 ambientColor = { 1.0f, 0.5f, 0.31f };
-	const glm::vec3 diffuseColor = { 1.0f, 0.5f, 0.31f };
+	const char* USE_MATERIAL_UNIFORM_NAME = "useMaterial";
 
 	uint32_t meshCount;
-	uint32_t textureCount;
+	uint32_t materialCount;
 
 	glm::mat4 transform;
 
 	std::vector<GLMesh*> meshes;
-	std::vector<GLTexture*> textures;
+	std::vector<GLMaterial*> materials;
 
 	void createFromGenericModel(const Model& model);
 

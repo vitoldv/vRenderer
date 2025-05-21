@@ -1,4 +1,5 @@
 #include "Model.h"
+#include <iostream>
 
 Model::Model(uint32_t id, std::string filePath) :
 	id(id),
@@ -12,9 +13,9 @@ uint32_t Model::getMeshCount() const
 	return this->meshCount;
 }
 
-uint32_t Model::getTextureCount() const
+uint32_t Model::getMaterialCount() const
 {
-	return this->textureCount;
+	return this->materialsCount;
 }
 
 std::string Model::getName()
@@ -27,29 +28,9 @@ const std::vector<Mesh>& Model::getMeshes() const
 	return this->meshes;
 }
 
-const std::vector<std::string>& Model::getTextures() const
+const std::vector<Material*>& Model::getMaterials() const
 {
-	return this->textures;
-}
-
-/// <summary>
-/// Returns full path to texture. 
-/// If texture at this index is present, returns this texture.
-/// If there is no texture at this index or index is invalid, returns empty string.
-/// </summary>
-/// <param name="textureIndex"></param>
-/// <returns></returns>
-std::string Model::getFullTexturePath(int textureIndex) const
-{
-	std::string path = "";
-	if (textureIndex < this->meshCount && textureIndex >= 0)
-	{
-		if (!this->textures[textureIndex].empty())
-		{
-			path = this->folderPath + "\\" + this->textures[textureIndex];
-		}
-	}
-	return path;
+	return this->materials;
 }
 
 void Model::importModel(std::string filePath)
@@ -67,7 +48,7 @@ void Model::importModel(std::string filePath)
 
 	this->meshCount = scene->mNumMeshes;
 
-	this->textures.resize(meshCount);
+	this->materials.resize(meshCount);
 
 	// Import meshes and textures
 	for (int i = 0; i < scene->mNumMeshes; i++)
@@ -93,20 +74,42 @@ void Model::importModel(std::string filePath)
 
 		this->meshes.push_back(Mesh(i, meshData->mName.C_Str(), vertices, indices, texCoords, normals));
 
-		// If mesh has a material assigned and this material has a diffuse texture
-		// we save a path to the texture std::vector at the same index as mesh in corresponding mesh std::vector
+		// Create a material if one is assigned to the mesh
 		if (meshData->mMaterialIndex >= 0)
 		{
 			auto mat = scene->mMaterials[meshData->mMaterialIndex];
+			std::string folderPath = this->folderPath;
+			auto getTexture = [mat, folderPath](aiTextureType type) {
+				aiString path;
+				if (mat->GetTexture(type, 0, &path) == aiReturn_SUCCESS)
+				{
+					std::string s = path.C_Str();
+					std::replace(s.begin(), s.end(), '/', '\\');
+					s = folderPath + "\\" + s;
+					return s;
+				}
+				return std::string("");
+			};
 
-			aiString path;
-			if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &path) == aiReturn_SUCCESS)
-			{
-				std::string s = path.C_Str();
-				std::replace(s.begin(), s.end(), '/', '\\');
-				this->textures[i] = s;
-				this->textureCount++;
-			}
+			Material* material = new Material(mat->GetName().C_Str());
+			material->diffuseTexture = getTexture(aiTextureType_DIFFUSE);
+			material->specularTexture = getTexture(aiTextureType_SPECULAR);
+
+			this->materials[i] = material;
+			this->materialsCount++;
 		}		
+	}
+
+	for (int i = 0; i < scene->mNumMaterials; i++)
+	{
+		auto mat = scene->mMaterials[i];
+		for (int j = 0; j <= 25; j++)
+		{
+			aiString path;
+			if (mat->GetTexture(static_cast<aiTextureType>(j), 0, &path) == aiReturn_SUCCESS)
+			{
+				std::cout << aiTextureTypeToString(static_cast<aiTextureType>(j)) << " " << path.C_Str() << " found in mat " << mat->GetName().C_Str() << std::endl;
+			}
+		}
 	}
 }

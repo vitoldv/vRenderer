@@ -96,7 +96,7 @@ void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetC
 {
 	samplerDescriptorPool = createDescriptorPool(
 		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		model.getTextureCount(),
+		model.getMaterialCount(),
 		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
 		context);
 
@@ -109,12 +109,12 @@ void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetC
 		uint32_t newMeshId = i;
 		VkMesh* vkMesh = new VkMesh(newMeshId, mesh, context);
 		
-		auto textureName = model.getTextures()[i];
+		auto material = model.getMaterials()[i];
 		VkTexture* vkTexture = nullptr;
-		if (!textureName.empty())
+		if (material != nullptr && !material->diffuseTexture.empty())
 		{
 			textureCount++;
-			vkTexture = new VkTexture(model.getFullTexturePath(i), context);
+			vkTexture = new VkTexture(material->diffuseTexture, context);
 			
 			VkDescriptorSet descriptorSet = vkTexture->createTextureSamplerDescriptor(createInfo);
 			samplerDescriptorSets.push_back(descriptorSet);
