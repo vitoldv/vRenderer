@@ -1470,9 +1470,10 @@ void VulkanRenderer::setCamera(BaseCamera* camera)
 	this->mainCamera = camera;
 }
 
-void VulkanRenderer::setLight(LightSource* lightSource)
+bool VulkanRenderer::addLightSource(Light* light)
 {
 	// NOT IMPLEMENTED
+	return false;
 }
 
 bool VulkanRenderer::removeFromRenderer(int modelId)

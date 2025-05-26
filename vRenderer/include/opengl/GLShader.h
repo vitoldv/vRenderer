@@ -44,7 +44,7 @@ bool GLShader::setUniform(const char* name, T value)
 	}
 	else if constexpr (std::is_same<T, unsigned int>::value)
 	{
-		glUniform1ui(uniformLocation, value);
+		glUniform1ui(uniformLocation, value);		
 	}
 	else if constexpr (std::is_same<T, float>::value)
 	{

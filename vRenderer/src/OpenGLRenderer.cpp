@@ -53,11 +53,7 @@ void OpenGLRenderer::draw()
 	shader->setUniform("view", this->camera->getViewMatrix());
 	shader->setUniform("projection", this->camera->getProjectionMatrix());
 
-	shader->setUniform("lightColor", light->color);
-	shader->setUniform("lightPos", light->position);
-	shader->setUniform("ambientStrength", light->ambientStrength);
-	shader->setUniform("specularStrength", light->specularStrength);
-	shader->setUniform("shininess", light->shininess);
+	applyLighting();
 
 	for (auto* model : modelsToRender)
 	{
@@ -132,9 +128,14 @@ void OpenGLRenderer::setCamera(BaseCamera* camera)
 	this->camera = camera;
 }
 
-void OpenGLRenderer::setLight(LightSource* lightSource)
+bool OpenGLRenderer::addLightSource(Light* light)
 {
-	this->light = lightSource;
+	if (lightSources.size() < MAX_LIGHT_SOURCES)
+	{
+		lightSources.push_back(light);
+		return true;
+	}
+	return false;
 }
 
 void OpenGLRenderer::cleanup()
@@ -149,4 +150,37 @@ void OpenGLRenderer::cleanup()
 void OpenGLRenderer::setImguiCallback(std::function<void()> callback)
 {
 	this->imguiCallback = callback;
+}
+
+void OpenGLRenderer::applyLighting()
+{
+	for (int i = 0; i < lightSources.size(); i++)
+	{	
+		auto& light = *lightSources[i];
+		std::string uniformBase = "lightSources[" + std::to_string(i) + "].";
+
+		shader->setUniform((uniformBase + "type").c_str(), static_cast<int>(light.type));
+		shader->setUniform((uniformBase + "color").c_str(), light.color);
+		shader->setUniform((uniformBase + "ambientStrength").c_str(), light.ambientStrength);
+		shader->setUniform((uniformBase + "specularStrength").c_str(), light.specularStrength);
+		shader->setUniform((uniformBase + "shininess").c_str(), light.shininess);
+		shader->setUniform((uniformBase + "constant").c_str(), light.constant);
+		shader->setUniform((uniformBase + "linear").c_str(), light.linear);
+		shader->setUniform((uniformBase + "quadratic").c_str(), light.quadratic);
+
+		if (light.type == Light::Type::DIRECTIONAL || light.type == Light::Type::SPOT)
+		{
+			shader->setUniform(("lightDir[" + std::to_string(i) + "]").c_str(), light.direction);
+		}
+		if (light.type == Light::Type::POINT || light.type == Light::Type::SPOT)
+		{
+			// NOTE: light's position is set separately in vertex stage to be transformed into view space
+			shader->setUniform(("lightPos[" + std::to_string(i) + "]").c_str(), light.position);
+		}
+		if (light.type == Light::Type::SPOT)
+		{
+			shader->setUniform((uniformBase + "cutOff").c_str(), glm::cos(glm::radians(light.cutOff)));
+			shader->setUniform((uniformBase + "outerCutOff").c_str(), glm::cos(glm::radians(light.outerCutOff)));
+		}
+	}
 }

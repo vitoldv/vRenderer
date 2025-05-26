@@ -21,6 +21,8 @@
 
 #define BACKGROUND_COLOR 0x888800FF
 
+#define MAX_LIGHT_SOURCES 10
+
 class OpenGLRenderer : public IRenderer
 {
 public:
@@ -33,7 +35,7 @@ public:
 	bool isModelInRenderer(uint32_t id) override;
 	bool updateModelTransform(int modelId, glm::mat4 newTransform) override;
 	void setCamera(BaseCamera* camera) override;
-	void setLight(LightSource* lightSource);
+	bool addLightSource(Light* light) override;
 	void cleanup() override;
 	void setImguiCallback(std::function<void()> callback) override;
 
@@ -43,9 +45,11 @@ private:
 
 	BaseCamera* camera;
 	std::vector<GLModel*> modelsToRender;
-	LightSource* light;
+	std::vector<Light*> lightSources;
 
 	GLModel* getModel(uint32_t id);
+
+	void applyLighting();
 
 	/*
 	---- IMGUI fields -----

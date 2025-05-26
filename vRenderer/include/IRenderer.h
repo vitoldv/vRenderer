@@ -23,7 +23,7 @@ public:
 
 	virtual bool updateModelTransform(int modelId, glm::mat4 newTransform) = 0;
 	virtual void setCamera(BaseCamera* camera) = 0;
-	virtual void setLight(LightSource* lightSource) = 0;
+	virtual bool addLightSource(Light* light) = 0;
 
 	virtual void cleanup() = 0;
 

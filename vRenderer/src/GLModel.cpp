@@ -58,7 +58,7 @@ void GLModel::createFromGenericModel(const Model& model)
 		if (material != nullptr)
 		{
 			materialCount++;
-			GLMaterial* glMaterial = new GLMaterial(material->name);
+			GLMaterial* glMaterial = new GLMaterial(material->name.c_str());
 
 			if (!material->diffuseTexture.empty())
 			{

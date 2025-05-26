@@ -32,7 +32,7 @@ void GLShader::compileShader()
 	if (!success)
 	{
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+		std::cout << "VERTEX SHADER COMPILATION FAILED\n" << infoLog << std::endl;
 	}
 
 	// Compile fragment shader
@@ -46,7 +46,7 @@ void GLShader::compileShader()
 	if (!success)
 	{
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+		std::cout << "FRAGMENT SHADER COMPILATION FAILED\n" << infoLog << std::endl;
 	}
 
 	// Create shader program
@@ -57,7 +57,7 @@ void GLShader::compileShader()
 	glGetProgramiv(this->glId, GL_LINK_STATUS, &success);
 	if (!success) {
 		glGetProgramInfoLog(this->glId, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER PROGRAM COMPILATION FAILED\n" << infoLog << std::endl;
+		std::cout << "SHADER PROGRAM COMPILATION FAILED\n" << infoLog << std::endl;
 	}
 
 	// Deleting shaders (no need of them now)

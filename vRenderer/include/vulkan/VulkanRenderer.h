@@ -151,7 +151,7 @@ public:
 
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
 	void setCamera(BaseCamera* camera);
-	void setLight(LightSource* lightSource);
+	bool addLightSource(Light* light);
 
 	void cleanup();
 
