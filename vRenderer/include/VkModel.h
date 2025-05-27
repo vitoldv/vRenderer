@@ -10,7 +10,7 @@
 
 #include "Model.h"
 #include "VkMesh.h"
-#include "VkTexture.h"
+#include "VkMaterial.h"
 
 using namespace VkUtils;
 
@@ -24,7 +24,7 @@ public:
 	~VkModel();
 
 	int getMeshCount() const;
-	int getTextureCount() const;
+	int getMaterialCount() const;
 
 	const VkMesh* getMesh(uint32_t id) const;
 	const std::vector<VkMesh*>& getMeshes() const;
@@ -35,22 +35,16 @@ public:
 
 private:
 
-	const uint32_t NO_TEXTURE_INDEX = -1;
+	const uint32_t NO_MATERIAL_INDEX = -1;
 
 	int meshCount;
-	int textureCount;
+	int materialCount;
 	VkContext context;
 	glm::mat4 transform;
 
+	// 1:1 relation
 	std::vector<VkMesh*> meshes;
-	std::vector<VkTexture*> textures;
-	
-	// Key - mesh id; Value - index of corresponding texture descriptor in samplerDescriptorSets vector.
-	// If mesh has no texture - value is -1.
-	std::map<uint32_t, uint32_t> meshSamplerDescriptorMap;
-
-	VkDescriptorPool samplerDescriptorPool;
-	std::vector<VkDescriptorSet> samplerDescriptorSets;
+	std::vector<VkMaterial*> materials;
 
 	void createFromGenericModel(const Model& model, VkSamplerDescriptorSetCreateInfo createInfo);
 	void cleanup();

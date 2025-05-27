@@ -673,7 +673,7 @@ void VulkanRenderer::createGraphicsPipeline()
 	colorBlendingCreateInfo.pAttachments = &colorState;
 
 	// PIPELINE LAYOUT
-	std::array<VkDescriptorSetLayout, 2> descriptorSetLayouts = { this->vkDescriptorSetLayout, this->vkSamplerDescriptorSetLayout };
+	std::array<VkDescriptorSetLayout, 3> descriptorSetLayouts = { this->vkDescriptorSetLayout, this->vkSamplerDescriptorSetLayout, this->vkSamplerDescriptorSetLayout };
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -926,23 +926,34 @@ void VulkanRenderer::createDescriptorSetLayout()
 	}
 
 	// TEXTURE SAMPLER DESCRIPTOR SET LAYOUT
-	VkDescriptorSetLayoutBinding samplerBinding = {};
-	samplerBinding.binding = 0;
-	samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerBinding.descriptorCount = 1;
-	samplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	samplerBinding.pImmutableSamplers = nullptr;
-
-	VkDescriptorSetLayoutCreateInfo samplerDescriptorLayoutCreateInfo = {};
-	samplerDescriptorLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	samplerDescriptorLayoutCreateInfo.bindingCount = 1;
-	samplerDescriptorLayoutCreateInfo.pBindings = &samplerBinding;
-
-	result = vkCreateDescriptorSetLayout(this->vkLogicalDevice, &samplerDescriptorLayoutCreateInfo,
-		nullptr, &this->vkSamplerDescriptorSetLayout);
-	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to create Texture Sampler Descriptor Set Layout.");
+		VkDescriptorSetLayoutBinding diffuseMapSamplerBinding = {};
+		diffuseMapSamplerBinding.binding = 0;
+		diffuseMapSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		diffuseMapSamplerBinding.descriptorCount = 1;
+		diffuseMapSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		diffuseMapSamplerBinding.pImmutableSamplers = nullptr;
+
+		//VkDescriptorSetLayoutBinding specularMapSamplerBinding = {};
+		//specularMapSamplerBinding.binding = 1;
+		//specularMapSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		//specularMapSamplerBinding.descriptorCount = 1;
+		//specularMapSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		//specularMapSamplerBinding.pImmutableSamplers = nullptr;
+		 
+		std::array<VkDescriptorSetLayoutBinding, 1> bindings = { diffuseMapSamplerBinding};
+
+		VkDescriptorSetLayoutCreateInfo samplerDescriptorLayoutCreateInfo = {};
+		samplerDescriptorLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		samplerDescriptorLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		samplerDescriptorLayoutCreateInfo.pBindings = bindings.data();
+
+		result = vkCreateDescriptorSetLayout(this->vkLogicalDevice, &samplerDescriptorLayoutCreateInfo,
+			nullptr, &this->vkSamplerDescriptorSetLayout);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create Texture Samplers Descriptor Set Layout.");
+		}
 	}
 
 	// INPUT ATTACHMENT IMAGE DESCRIPTOR SET LAYOUT
@@ -1441,7 +1452,6 @@ bool VulkanRenderer::addToRendererTextured(const Model& model)
 	if (!isModelInRenderer(model.id))
 	{
 		VkUtils::VkSamplerDescriptorSetCreateInfo createInfo = {};
-		createInfo.descriptorPool = this->vkDescriptorPool;
 		createInfo.sampler = this->vkTextureSampler;
 		createInfo.samplerDescriptorSetLayout = this->vkSamplerDescriptorSetLayout;
 

@@ -7,7 +7,7 @@ VkModel::VkModel(uint32_t id, const Model& model, VkContext context, VkSamplerDe
 
 	meshCount = model.getMeshCount();
 	meshes.resize(meshCount);
-	textures.resize(meshCount);
+	materials.resize(meshCount);
 
 	createFromGenericModel(model, createInfo);
 }
@@ -22,9 +22,9 @@ int VkModel::getMeshCount() const
 	return meshCount;
 }
 
-int VkModel::getTextureCount() const
+int VkModel::getMaterialCount() const
 {
-	return textureCount;
+	return materialCount;
 }
 
 const VkMesh* VkModel::getMesh(uint32_t id) const
@@ -40,8 +40,10 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 
 void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkDescriptorSet descriptorSet)
 {
-	for (auto& mesh : meshes)
+	for (int i = 0; i < meshCount; i++)
 	{
+		auto& mesh = meshes[i];
+
 		VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };															// buffers to bind
 		VkBuffer indexBuffer = mesh->getIndexBuffer();
 		VkDeviceSize offsets[] = { 0 };																					// offsets into buffers being bound
@@ -54,22 +56,27 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
 		//	0, 1, &this->vkDescriptorSets[currentImage], 1, &dynamicOffset);
 
-		uint32_t descriptorIndex = meshSamplerDescriptorMap[mesh->id];
+		bool textured = materials[i] != nullptr && materials[i]->getTextureCount() > 0;
 
-		bool textured = descriptorIndex != NO_TEXTURE_INDEX;
-
-		PushConstant push = {};
-		push.model = mesh->getTransformMat();
-		push.useTexture = textured;
-		vkCmdPushConstants(commandBuffer, pipelineLayout,
-			VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
+		// PUSH CONSTANTS
+		{
+			PushConstant push = {};
+			push.model = mesh->getTransformMat();
+			push.useTexture = textured;
+			vkCmdPushConstants(commandBuffer, pipelineLayout,
+				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
+		}
 
 		if (textured)
 		{
-			std::array<VkDescriptorSet, 2> descriptorSets = { descriptorSet, samplerDescriptorSets[descriptorIndex]};
-
+			auto* material = materials[i];
+			
+			// Uniform descriptor set
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-				0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
+				0, 1, &descriptorSet, 0, nullptr);
+			// Material sampler descriptor sets
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+				1, material->getTextureCount(), material->getSamplerDescriptorSets().data(), 0, nullptr);
 		}
 		else
 		{
@@ -79,8 +86,6 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 
 		// execute pipeline
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->getIndexCount()), 1, 0, -VERTEX_INDEX_OFFSET, 0);
-
-		meshCount++;
 	}
 }
 
@@ -94,14 +99,6 @@ void VkModel::setTransform(glm::mat4 transform)
 
 void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetCreateInfo createInfo)
 {
-	samplerDescriptorPool = createDescriptorPool(
-		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		model.getMaterialCount(),
-		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-		context);
-
-	createInfo.descriptorPool = samplerDescriptorPool;
-
 	for (int i = 0; i < model.getMeshCount(); i++)
 	{
 		const Mesh& mesh = model.getMeshes()[i];
@@ -110,32 +107,21 @@ void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetC
 		VkMesh* vkMesh = new VkMesh(newMeshId, mesh, context);
 		
 		auto material = model.getMaterials()[i];
-		VkTexture* vkTexture = nullptr;
-		if (material != nullptr && !material->diffuseTexture.empty())
+		VkMaterial* vkMaterial = nullptr;
+		if (material != nullptr)
 		{
-			textureCount++;
-			vkTexture = new VkTexture(material->diffuseTexture, context);
-			
-			VkDescriptorSet descriptorSet = vkTexture->createTextureSamplerDescriptor(createInfo);
-			samplerDescriptorSets.push_back(descriptorSet);
-			
-			meshSamplerDescriptorMap[newMeshId] = samplerDescriptorSets.size() - 1;
-		}
-		else
-		{
-			meshSamplerDescriptorMap[newMeshId] = NO_TEXTURE_INDEX;
+			materialCount++;
+			vkMaterial = new VkMaterial(*material, context, createInfo);
 		}
 
 		meshes[i] = vkMesh;
-		textures[i] = vkTexture;
+		materials[i] = vkMaterial;
 	}
 }
 
 void VkModel::cleanup()
 {
-	vkDestroyDescriptorPool(context.logicalDevice, samplerDescriptorPool, nullptr);
-
-	for (auto& texture : textures)
+	for (auto& texture : materials)
 	{
 		delete texture;
 		texture = nullptr;

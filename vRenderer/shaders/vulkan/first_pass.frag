@@ -5,7 +5,8 @@ layout(location = 1) in vec2 fragUv;
 layout(location = 2) in vec3 fragNormal;
 layout(location = 3) flat in uint fragTextured;
 
-layout(set = 1, binding = 0) uniform sampler2D textureSampler;
+layout(set = 1, binding = 0) uniform sampler2D diffuseMap;
+layout(set = 2, binding = 0) uniform sampler2D specularMap;
 
 layout(location = 0) out vec4 outColor;     // final output color
 
@@ -13,7 +14,7 @@ void main()
 {
     if(fragTextured != 0)
     {
-        outColor = texture(textureSampler, fragUv);
+        outColor = texture(diffuseMap, fragUv);
     }
     else
     {

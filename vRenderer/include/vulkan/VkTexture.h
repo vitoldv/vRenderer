@@ -12,7 +12,7 @@ class VkTexture
 {
 public:
 
-	const char* name;
+	const std::string name;
 
 	VkTexture(std::string fileName, VkContext context);
 	~VkTexture();
