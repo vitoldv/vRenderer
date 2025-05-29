@@ -527,14 +527,12 @@ void VulkanRenderer::createGraphicsPipeline()
 	///////////////////////////////////
 	// ----- FIRST PASS PIPELINE -----
 	///////////////////////////////////
-	
-	// read SPIR-V shader code
-	auto vertexShaderCode = VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_vert.spv");
-	auto fragmentShaderCode = VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_frag.spv");
+
+	// SHADER STAGES SETUP
 
 	// build shader modules to link to graphics pipeline
-	VkShaderModule vertexShaderModule = createShaderModule(vertexShaderCode);
-	VkShaderModule fragmentShaderModule = createShaderModule(fragmentShaderCode);
+	VkShaderModule vertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_vert.spv"));
+	VkShaderModule fragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_frag.spv"));
 
 	// VERTEX STAGE CREATION
 	VkPipelineShaderStageCreateInfo vertexShaderStageCreateInfo = {};
@@ -552,66 +550,73 @@ void VulkanRenderer::createGraphicsPipeline()
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertexShaderStageCreateInfo, fragmentShaderStageCreateInfo };
 
-	// Describing vertex data layout
-	VkVertexInputBindingDescription bindingDescription = {};
-	bindingDescription.binding = 0;
-	bindingDescription.stride = sizeof(Vertex);
-	bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-	std::array<VkVertexInputAttributeDescription, 4> attributes;
-	attributes[0].binding = 0;										// should be same as above
-	attributes[0].location = 0;
-	attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	attributes[0].offset = offsetof(Vertex, pos);
-
-	attributes[1].binding = 0;										// should be same as above
-	attributes[1].location = 1;
-	attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-	attributes[1].offset = offsetof(Vertex, color);	
-
-	attributes[2].binding = 0;										// should be same as above
-	attributes[2].location = 2;
-	attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-	attributes[2].offset = offsetof(Vertex, normal);
-	
-	attributes[3].binding = 0;										// should be same as above
-	attributes[3].location = 3;
-	attributes[3].format = VK_FORMAT_R32G32_SFLOAT;
-	attributes[3].offset = offsetof(Vertex, uv);
-
-	// VERTEX INPUT
+	// DEFINING VERTEX ATTRIBUTES LAYOUT
 	VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
-	vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputCreateInfo.vertexBindingDescriptionCount = 1;
-	vertexInputCreateInfo.pVertexBindingDescriptions = &bindingDescription;					// list of vertex binding descriptions (data spacing/stride information)
-	vertexInputCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
-	vertexInputCreateInfo.pVertexAttributeDescriptions = attributes.data();				// list of vertex attribute descriptions (data format and where to bind to/from)
+	{
+		VkVertexInputBindingDescription bindingDescription = {};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		std::array<VkVertexInputAttributeDescription, 4> attributes;
+		attributes[0].binding = 0;										// should be same as above
+		attributes[0].location = 0;
+		attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributes[0].offset = offsetof(Vertex, pos);
+
+		attributes[1].binding = 0;										// should be same as above
+		attributes[1].location = 1;
+		attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributes[1].offset = offsetof(Vertex, color);
+
+		attributes[2].binding = 0;										// should be same as above
+		attributes[2].location = 2;
+		attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributes[2].offset = offsetof(Vertex, normal);
+
+		attributes[3].binding = 0;										// should be same as above
+		attributes[3].location = 3;
+		attributes[3].format = VK_FORMAT_R32G32_SFLOAT;
+		attributes[3].offset = offsetof(Vertex, uv);
+
+		// VERTEX INPUT
+		vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertexInputCreateInfo.vertexBindingDescriptionCount = 1;
+		vertexInputCreateInfo.pVertexBindingDescriptions = &bindingDescription;					// list of vertex binding descriptions (data spacing/stride information)
+		vertexInputCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
+		vertexInputCreateInfo.pVertexAttributeDescriptions = attributes.data();				// list of vertex attribute descriptions (data format and where to bind to/from)
+	}
 
 	// INPUT ASSEMBLY
+	// defines how vertex data is perceived (topology)
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
+	{
+		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		inputAssembly.primitiveRestartEnable = VK_FALSE;
+	}
 
 	// VIEWPORT & SCISSORS
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)this->swapChainExtent.width;
-	viewport.height = (float)this->swapChainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0,0 };
-	scissor.extent = this->swapChainExtent;
-
 	VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {};
-	viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportStateCreateInfo.viewportCount = 1;
-	viewportStateCreateInfo.pViewports = &viewport;
-	viewportStateCreateInfo.scissorCount = 1;
-	viewportStateCreateInfo.pScissors = &scissor;
+	{
+		VkViewport viewport = {};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)this->swapChainExtent.width;
+		viewport.height = (float)this->swapChainExtent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkRect2D scissor = {};
+		scissor.offset = { 0,0 };
+		scissor.extent = this->swapChainExtent;
+
+		viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportStateCreateInfo.viewportCount = 1;
+		viewportStateCreateInfo.pViewports = &viewport;
+		viewportStateCreateInfo.scissorCount = 1;
+		viewportStateCreateInfo.pScissors = &scissor;
+	}
 
 	/*
 	// DYNAMIC STATES
@@ -628,81 +633,90 @@ void VulkanRenderer::createGraphicsPipeline()
 
 	// RASTERIZER
 	VkPipelineRasterizationStateCreateInfo rastCreateInfo = {};
-	rastCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rastCreateInfo.depthClampEnable = VK_FALSE;
-	rastCreateInfo.rasterizerDiscardEnable = VK_FALSE;
-	rastCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-	rastCreateInfo.lineWidth = 1.0f;
-	rastCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	rastCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rastCreateInfo.depthBiasEnable = VK_FALSE;				// whether to add depth bias to fragments (good for stopping "shadow acne" in shadow mapping)
+	{
+		rastCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rastCreateInfo.depthClampEnable = VK_FALSE;
+		rastCreateInfo.rasterizerDiscardEnable = VK_FALSE;
+		rastCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+		rastCreateInfo.lineWidth = 1.0f;
+		rastCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+		rastCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rastCreateInfo.depthBiasEnable = VK_FALSE;				// whether to add depth bias to fragments (good for stopping "shadow acne" in shadow mapping)
+	}
 
 	// MULTI SAMPLING
 	VkPipelineMultisampleStateCreateInfo multisamplingCreateInfo = {};
-	multisamplingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisamplingCreateInfo.sampleShadingEnable = VK_FALSE;
-	multisamplingCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-	// BLENDING
-	// Blending decides how to blend a new color being written to a fragment, with the old value
-
-	// Blend Attachment State (how blending is handled)
-	VkPipelineColorBlendAttachmentState colorState = {};
-	colorState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT	// colors to apply blending to
-		| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorState.blendEnable = VK_TRUE;													// Enable blending
-
-	// Blending uses equation: (srcColorBlendFactor * new color) colorBlendOp (dstColorBlendFactor * old color)
-	colorState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorState.colorBlendOp = VK_BLEND_OP_ADD;
-
-	// Summarised: (VK_BLEND_FACTOR_SRC_ALPHA * new color) + (VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA * old color)
-	//			   (new color alpha * new color) + ((1 - new color alpha) * old color)
-
-	colorState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorState.alphaBlendOp = VK_BLEND_OP_ADD;
-	// Summarised: (1 * new alpha) + (0 * old alpha) = new alpha
-
-	VkPipelineColorBlendStateCreateInfo colorBlendingCreateInfo = {};
-	colorBlendingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlendingCreateInfo.logicOpEnable = VK_FALSE;
-	colorBlendingCreateInfo.attachmentCount = 1;
-	colorBlendingCreateInfo.pAttachments = &colorState;
-
-	// PIPELINE LAYOUT
-	std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = { 
-		this->vpUniforms[0]->getDescriptorLayout(),
-		this->vkSamplerDescriptorSetLayout,
-		this->vkSamplerDescriptorSetLayout, 
-		this->lightUniforms[0]->getDescriptorLayout()
-	};
-
-
-
-	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
-	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-	pipelineLayoutCreateInfo.pPushConstantRanges = &this->vkPushConstantRange;
-
-	// Create Pipeline Layout
-	VkResult result = vkCreatePipelineLayout(this->vkLogicalDevice, &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout);
-	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to create Pipeline Layout!");
+		multisamplingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisamplingCreateInfo.sampleShadingEnable = VK_FALSE;
+		multisamplingCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 	}
 
-	VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
-	depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencilCreateInfo.depthTestEnable = VK_TRUE;
-	depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
-	depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-	depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE; 
-	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
+	// COLOR SETUP DEFINITION (blending etc.)
+	VkPipelineColorBlendStateCreateInfo colorBlendingCreateInfo = {};
+	{
+		// BLENDING
+		// Blending decides how to blend a new color being written to a fragment, with the old value
 
+		// Blend Attachment State (how blending is handled)
+		VkPipelineColorBlendAttachmentState colorState = {};
+		colorState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT	// colors to apply blending to
+			| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorState.blendEnable = VK_TRUE;													// Enable blending
+
+		// Blending uses equation: (srcColorBlendFactor * new color) colorBlendOp (dstColorBlendFactor * old color)
+		colorState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		colorState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		colorState.colorBlendOp = VK_BLEND_OP_ADD;
+
+		// Summarised: (VK_BLEND_FACTOR_SRC_ALPHA * new color) + (VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA * old color)
+		//			   (new color alpha * new color) + ((1 - new color alpha) * old color)
+
+		colorState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		colorState.alphaBlendOp = VK_BLEND_OP_ADD;
+		// Summarised: (1 * new alpha) + (0 * old alpha) = new alpha
+
+		colorBlendingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		colorBlendingCreateInfo.logicOpEnable = VK_FALSE;
+		colorBlendingCreateInfo.attachmentCount = 1;
+		colorBlendingCreateInfo.pAttachments = &colorState;
+	}
+
+	// PIPELINE LAYOUT SETUP (DESCRIPTORS AND PUSH CONSTANTS LAYOUT)
+	{
+		std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = {
+			this->vpUniforms[0]->getDescriptorLayout(),
+			this->vkSamplerDescriptorSetLayout,
+			this->vkSamplerDescriptorSetLayout,
+			this->lightUniforms[0]->getDescriptorLayout()
+		};
+
+		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+		pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
+		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+		pipelineLayoutCreateInfo.pPushConstantRanges = &this->vkPushConstantRange;
+
+		// Create Pipeline Layout
+		VkResult result = vkCreatePipelineLayout(this->vkLogicalDevice, &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create Pipeline Layout!");
+		}
+	}
+
+	// DEPTH TESTING AND STENCIL TESTING SETUP
+	VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
+	{
+		depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilCreateInfo.depthTestEnable = VK_TRUE;
+		depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
+		depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
+		depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
+	}
 
 	// -- GRAPHICS PIPELINE CREATION --
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
@@ -726,12 +740,13 @@ void VulkanRenderer::createGraphicsPipeline()
 	pipelineCreateInfo.basePipelineIndex = -1;				// or index of pipeline being created to derive from (in case creating multiple at once)
 
 	// Create Graphics Pipeline
-	result = vkCreateGraphicsPipelines(this->vkLogicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &this->vkGraphicsPipeline);
+	VkResult result = vkCreateGraphicsPipelines(this->vkLogicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &this->vkGraphicsPipeline);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create a Graphics Pipeline!");
 	}
 
+	// Shader modules are no longer needed once pipeline is created
 	vkDestroyShaderModule(this->vkLogicalDevice, fragmentShaderModule, nullptr);
 	vkDestroyShaderModule(this->vkLogicalDevice, vertexShaderModule, nullptr);
 
@@ -745,7 +760,7 @@ void VulkanRenderer::createGraphicsPipeline()
 	// reusing shader create infos for previous pipeline
 	vertexShaderStageCreateInfo.module = secondVertexShaderModule;
 	fragmentShaderStageCreateInfo.module = secondFragmentShaderModule;
-	
+
 	VkPipelineShaderStageCreateInfo secondShaderStages[] = { vertexShaderStageCreateInfo, fragmentShaderStageCreateInfo };
 
 	// No vertex data for second pass
@@ -788,11 +803,9 @@ void VulkanRenderer::createGraphicsPipeline()
 
 void VulkanRenderer::createColorBufferImage()
 {
-	int colorBuffersCount = IMAGE_COUNT;
-
-	this->colorBufferImage.resize(colorBuffersCount);
-	this->colorBufferImageView.resize(colorBuffersCount);
-	this->colorBufferImageMemory.resize(colorBuffersCount);
+	this->colorBufferImage.resize(IMAGE_COUNT);
+	this->colorBufferImageView.resize(IMAGE_COUNT);
+	this->colorBufferImageMemory.resize(IMAGE_COUNT);
 
 	// Get supported format for depth buffer
 	this->colorFormat = defineSupportedFormat(
@@ -800,7 +813,7 @@ void VulkanRenderer::createColorBufferImage()
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-	for (int i = 0; i < colorBuffersCount; i++)
+	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		// Create color buffer image
 		this->colorBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
@@ -1136,7 +1149,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 {
 	// Update ViewProjection uniform
 	{
-		VkUtils::UboViewProjection mvp = {};
+		UboViewProjection mvp = {};
 		mvp.projection = mainCamera->getProjectionMatrix();
 		mvp.view = mainCamera->getViewMatrix();
 
