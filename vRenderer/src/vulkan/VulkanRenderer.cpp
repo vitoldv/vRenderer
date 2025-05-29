@@ -22,9 +22,8 @@ int VulkanRenderer::init(GLFWwindow* window)
 		createDescriptorSetLayout();
 		createTextureSampler();
 		createPushConstantRange();
-		createDescriptorPool();
-		createUniformBuffers();
-		createDescriptorSets();
+		createDescriptorPools();
+		createUniforms();
 		createInputDescriptorSets();
 		createGraphicsPipeline();
 		createFramebuffers();
@@ -71,14 +70,14 @@ void VulkanRenderer::cleanup()
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	//_aligned_free(modelTransferSpace);
 	 
-	for (int i = 0; i < swapchainImages.size(); i++)
+	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		vkDestroyImageView(this->vkLogicalDevice, this->colorBufferImageView[i], nullptr);
 		vkDestroyImage(this->vkLogicalDevice, this->colorBufferImage[i], nullptr);
 		vkFreeMemory(this->vkLogicalDevice, colorBufferImageMemory[i], nullptr);
 	}
 
-	for (int i = 0; i < swapchainImages.size(); i++)
+	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		vkDestroyImageView(this->vkLogicalDevice, this->depthBufferImageView[i], nullptr);
 		vkDestroyImage(this->vkLogicalDevice, this->depthBufferImage[i], nullptr);
@@ -86,7 +85,7 @@ void VulkanRenderer::cleanup()
 	}
 
 
-	for (int i = 0; i < swapchainImages.size(); i++)
+	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		vpUniforms[i]->cleanup();
 		lightUniforms[i]->cleanup();
@@ -311,15 +310,10 @@ void VulkanRenderer::createSwapChain()
 	VkPresentModeKHR presentMode = definePresentationMode(swapChainDetails.presentationModes);
 	VkExtent2D extent = defineSwapChainExtent(swapChainDetails.surfaceCapabilities);
 
-	// How many images are in the swap chain? Get 1 more than the minimum to allow triple buffering
-	uint32_t imageCount = swapChainDetails.surfaceCapabilities.minImageCount + 1;
-
-	// If imageCount higher than max, then clamp down to max
-	// If 0, then limitless
-	if (swapChainDetails.surfaceCapabilities.maxImageCount > 0
-		&& swapChainDetails.surfaceCapabilities.maxImageCount < imageCount)
+	if (IMAGE_COUNT < swapChainDetails.surfaceCapabilities.minImageCount ||
+		IMAGE_COUNT > swapChainDetails.surfaceCapabilities.maxImageCount)
 	{
-		imageCount = swapChainDetails.surfaceCapabilities.maxImageCount;
+		throw std::runtime_error("Specified IMAGE_COUNT is not possible on this device.");
 	}
 
 	// Creation information for swap chain
@@ -330,7 +324,7 @@ void VulkanRenderer::createSwapChain()
 	swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;								// Swapchain color space
 	swapChainCreateInfo.presentMode = presentMode;												// Swapchain presentation mode
 	swapChainCreateInfo.imageExtent = extent;													// Swapchain image extents
-	swapChainCreateInfo.minImageCount = imageCount;												// Minimum images in swapchain
+	swapChainCreateInfo.minImageCount = IMAGE_COUNT;												// Minimum images in swapchain
 	swapChainCreateInfo.imageArrayLayers = 1;													// Number of layers for each image in chain
 	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;						// What attachment images will be used as
 	swapChainCreateInfo.preTransform = swapChainDetails.surfaceCapabilities.currentTransform;	// Transform to perform on swap chain images
@@ -794,7 +788,7 @@ void VulkanRenderer::createGraphicsPipeline()
 
 void VulkanRenderer::createColorBufferImage()
 {
-	int colorBuffersCount = swapchainImages.size();
+	int colorBuffersCount = IMAGE_COUNT;
 
 	this->colorBufferImage.resize(colorBuffersCount);
 	this->colorBufferImageView.resize(colorBuffersCount);
@@ -818,7 +812,7 @@ void VulkanRenderer::createColorBufferImage()
 
 void VulkanRenderer::createFramebuffers()
 {
-	vkSwapchainFramebuffers.resize(swapchainImages.size());
+	vkSwapchainFramebuffers.resize(IMAGE_COUNT);
 	for (int i = 0; i < vkSwapchainFramebuffers.size(); i++)
 	{
 		std::array<VkImageView, 3> attachments = {
@@ -862,7 +856,7 @@ void VulkanRenderer::createCommandPool()
 
 void VulkanRenderer::createCommandBuffers()
 {
-	this->vkCommandBuffers.resize(vkSwapchainFramebuffers.size());
+	this->vkCommandBuffers.resize(IMAGE_COUNT);
 
 	VkCommandBufferAllocateInfo cbAllocInfo = {};
 	cbAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -967,26 +961,23 @@ void VulkanRenderer::createDescriptorSetLayout()
 	}
 }
 
-void VulkanRenderer::createUniformBuffers()
+void VulkanRenderer::createUniforms()
 {
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	//allocateDynamicBufferTransferSpace();
 
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	// Model Buffer size
-	//VkDeviceSize modelBufferSize = modelUniformAlignment * MAX_OBJECTS;
+	//VkDeviceSize modelBufferSize = modelUniformAlignment * MAX_OBJECTS;;
 
-	// one uniform for each image
-	uint32_t imagesCount = swapchainImages.size();
-
-	vpUniforms.resize(imagesCount);
-	lightUniforms.resize(imagesCount);
+	vpUniforms.resize(IMAGE_COUNT);
+	lightUniforms.resize(IMAGE_COUNT);
 
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	//uniformBuffersDynamic.resize(swapchainImages.size());
 	//uniformBuffersMemoryDynamic.resize(swapchainImages.size());
 
-	for (int i = 0; i < imagesCount; i++)
+	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(VK_SHADER_STAGE_VERTEX_BIT, context);
 		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(VK_SHADER_STAGE_FRAGMENT_BIT, context);
@@ -998,11 +989,9 @@ void VulkanRenderer::createUniformBuffers()
 
 void VulkanRenderer::createDepthBuffer()
 {
-	int depthBuffersCount = swapchainImages.size();
-
-	this->depthBufferImage.resize(depthBuffersCount);
-	this->depthBufferImageView.resize(depthBuffersCount);
-	this->depthBufferImageMemory.resize(depthBuffersCount);
+	this->depthBufferImage.resize(IMAGE_COUNT);
+	this->depthBufferImageView.resize(IMAGE_COUNT);
+	this->depthBufferImageMemory.resize(IMAGE_COUNT);
 
 	// Get supported format for depth buffer
 	depthFormat = defineSupportedFormat(
@@ -1010,7 +999,7 @@ void VulkanRenderer::createDepthBuffer()
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-	for (int i = 0; i < depthBuffersCount; i++)
+	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		// Create depth buffer image
 		this->depthBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
@@ -1019,7 +1008,7 @@ void VulkanRenderer::createDepthBuffer()
 	}
 }   
 
-void VulkanRenderer::createDescriptorPool()
+void VulkanRenderer::createDescriptorPools()
 {
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	//VkDescriptorPoolSize poolSizeDynamic = {};
@@ -1034,7 +1023,6 @@ void VulkanRenderer::createDescriptorPool()
 		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, 
 		context);
 	context.uniformDescriptorPool = uniformDescriptorPool;
-
 
 	// CREATE INPUT ATTACHMENT DESCRIPTOR POOL
 	VkDescriptorPoolSize colorInputPoolSize = {};
@@ -1059,21 +1047,16 @@ void VulkanRenderer::createDescriptorPool()
 	}
 }
 
-void VulkanRenderer::createDescriptorSets()
-{
-	// nothing
-}
-
 void VulkanRenderer::createInputDescriptorSets()
 {
-	this->vkInputDescriptorSets.resize(swapchainImages.size());
+	this->vkInputDescriptorSets.resize(IMAGE_COUNT);
 
-	std::vector<VkDescriptorSetLayout> setLayouts(swapchainImages.size(), this->vkInputDescriptorSetLayout);
+	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, this->vkInputDescriptorSetLayout);
 
 	VkDescriptorSetAllocateInfo setAllocInfo = {};
 	setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	setAllocInfo.descriptorPool = this->vkInputDescriptorPool;
-	setAllocInfo.descriptorSetCount = static_cast<uint32_t>(swapchainImages.size());
+	setAllocInfo.descriptorSetCount = static_cast<uint32_t>(IMAGE_COUNT);
 	setAllocInfo.pSetLayouts = setLayouts.data();
 
 	VkResult result = vkAllocateDescriptorSets(this->vkLogicalDevice, &setAllocInfo, this->vkInputDescriptorSets.data());
@@ -1082,7 +1065,7 @@ void VulkanRenderer::createInputDescriptorSets()
 		throw std::runtime_error("Failed to allocate Input Attachment descriptor sets.");
 	}
 
-	for (int i = 0; i < swapchainImages.size(); i++)
+	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		VkDescriptorImageInfo colorAttachmentDescriptor = {};
 		colorAttachmentDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; 

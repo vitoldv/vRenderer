@@ -45,6 +45,7 @@
 
 #define BACKGROUND_COLOR 0x008B8BFF
 
+#define IMAGE_COUNT 3			// the number of images in swapchain
 #define MAX_FRAME_DRAWS 2
 #define MAX_LIGHT_SOURCES 10
 
@@ -135,6 +136,7 @@ private:
 		UboLight lights[MAX_LIGHT_SOURCES];       // Total size: 96 * 10 = 960 bytes
 	} uboLightArray;
 
+	// Uniforms
 	std::vector<std::unique_ptr<VkUniform<UboLightArray>>> lightUniforms;
 	std::vector<std::unique_ptr<VkUniform<UboViewProjection>>> vpUniforms;
 
@@ -186,9 +188,8 @@ private:
 	void createCommandBuffers();
 	void createSyncTools();
 	void createDescriptorSetLayout();
-	void createUniformBuffers();
-	void createDescriptorPool();
-	void createDescriptorSets();
+	void createUniforms();
+	void createDescriptorPools();
 	void createInputDescriptorSets();
 	void createPushConstantRange();
 	void createTextureSampler();
@@ -231,7 +232,6 @@ private:
 
 // ------------------- TODO -------------------
 // 1. Make a generic function for pipeline creation to avoid a lot of duplicated code in createGraphicsPipeline();
-// 2. Create a solution for removing swapChainImages.size() overuse (Create a constant value for images count or 
 // make a wrapper for single swapchain image code);
 // 3. Think of single memory buffer for meshes related to specific model
 // 4. Create solution for instance batching
