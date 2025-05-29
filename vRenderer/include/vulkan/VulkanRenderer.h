@@ -28,6 +28,7 @@
 #include "Model.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
+#include "VkUniform.h"
 #include "BaseCamera.h"
 #include "Lighting.h"
 
@@ -134,13 +135,10 @@ private:
 
 	std::vector<Light*> lightSources;
 	struct UboLightArray {
-		UboLight lights[10];       // Total size: 96 * 10 = 960 bytes
+		UboLight lights[MAX_LIGHT_SOURCES];       // Total size: 96 * 10 = 960 bytes
 	} uboLightArray;
-	
-	std::vector<VkBuffer> lightUniformBuffers;
-	std::vector<VkDeviceMemory> lightUniformMemory;
-	VkDescriptorSetLayout vkLightDescriptorSetLayout;
-	std::vector<VkDescriptorSet> vkLightDescriptorSets;
+
+	std::vector<std::unique_ptr<VkUniform<UboLightArray>>> lightUniforms;
 
 	// Textures
 	VkSampler vkTextureSampler;

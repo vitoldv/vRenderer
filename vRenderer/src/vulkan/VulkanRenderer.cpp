@@ -22,14 +22,15 @@ int VulkanRenderer::init(GLFWwindow* window)
 		createDescriptorSetLayout();
 		createTextureSampler();
 		createPushConstantRange();
+		createDescriptorPool();
+		createUniformBuffers();
+		createDescriptorSets();
+		createInputDescriptorSets();
 		createGraphicsPipeline();
 		createFramebuffers();
 		createCommandPool();
 		createCommandBuffers();
-		createUniformBuffers();
-		createDescriptorPool();
-		createDescriptorSets();
-		createInputDescriptorSets();
+
 		createSyncTools();
 
 		createImguiDescriptorPool();
@@ -59,12 +60,10 @@ void VulkanRenderer::cleanup()
 		model = nullptr;
 	}
 
-	for (int i = 0; i < lightUniformBuffers.size(); i++)
+	for (int i = 0; i < lightUniforms.size(); i++)
 	{
-		vkDestroyBuffer(vkLogicalDevice, lightUniformBuffers[i], nullptr);
-		vkFreeMemory(vkLogicalDevice, lightUniformMemory[i], nullptr);
+		lightUniforms[i]->cleanup();
 	}
-	vkDestroyDescriptorSetLayout(vkLogicalDevice, vkLightDescriptorSetLayout, nullptr);
 
 	this->modelsToRender.clear();
 
@@ -147,6 +146,7 @@ void VulkanRenderer::setImguiCallback(std::function<void()> imguiCode)
 
 VulkanRenderer::~VulkanRenderer()
 {
+	cleanup();
 }
 
 /// <summary>
@@ -685,7 +685,14 @@ void VulkanRenderer::createGraphicsPipeline()
 	colorBlendingCreateInfo.pAttachments = &colorState;
 
 	// PIPELINE LAYOUT
-	std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = { this->vkDescriptorSetLayout, this->vkSamplerDescriptorSetLayout, this->vkSamplerDescriptorSetLayout, this->vkLightDescriptorSetLayout};
+	std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = { 
+		this->vkDescriptorSetLayout, 
+		this->vkSamplerDescriptorSetLayout,
+		this->vkSamplerDescriptorSetLayout, 
+		this->lightUniforms[0]->getDescriptorLayout()
+	};
+
+
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -970,29 +977,6 @@ void VulkanRenderer::createDescriptorSetLayout()
 		}
 	}
 
-	// LIGHT UNIFORM
-	{
-		// UboLight binding info
-		VkDescriptorSetLayoutBinding binding;
-		binding.binding = 0;												// bindings specified in shader
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;			// type of descriptor (simple uniform in this case)
-		binding.descriptorCount = 1;										// number of binded values
-		binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;					// specifies shader stage
-		binding.pImmutableSamplers = nullptr;								// for textures
-
-		// Create descriptor set layout with given bindings
-		VkDescriptorSetLayoutCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createInfo.bindingCount = 1;
-		createInfo.pBindings = &binding;
-
-		VkResult result = vkCreateDescriptorSetLayout(this->vkLogicalDevice, &createInfo, nullptr, &this->vkLightDescriptorSetLayout);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to create Light uniform dessciptor layout");
-		}
-	}
-
 	// INPUT ATTACHMENT IMAGE DESCRIPTOR SET LAYOUT
 	{
 		// Color input binding
@@ -1032,7 +1016,6 @@ void VulkanRenderer::createUniformBuffers()
 
 	// Buffer size should be the size of data we pass as uniforms
 	VkDeviceSize bufferSize = sizeof(VkUtils::UboProjectionView);
-	VkDeviceSize lightUniformBufferSize = sizeof(VkUtils::UboLight) * MAX_LIGHT_SOURCES;
 
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	// Model Buffer size
@@ -1043,8 +1026,8 @@ void VulkanRenderer::createUniformBuffers()
 	uniformBuffers.resize(imagesCount);
 	uniformBuffersMemory.resize(imagesCount);
 
-	lightUniformBuffers.resize(imagesCount);
-	lightUniformMemory.resize(imagesCount);
+	lightUniforms.resize(imagesCount);
+
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 	//uniformBuffersDynamic.resize(swapchainImages.size());
 	//uniformBuffersMemoryDynamic.resize(swapchainImages.size());
@@ -1054,9 +1037,7 @@ void VulkanRenderer::createUniformBuffers()
 		VkUtils::createBuffer(this->vkPhysicalDevice, this->vkLogicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformBuffers[i], &uniformBuffersMemory[i]);
 
-		VkUtils::createBuffer(this->vkPhysicalDevice, this->vkLogicalDevice, lightUniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &lightUniformBuffers[i], &lightUniformMemory[i]);
-
+		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(vkDescriptorPool, VK_SHADER_STAGE_FRAGMENT_BIT, context);
 		// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
 		//createBuffer(this->vkPhysicalDevice, this->vkLogicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 		//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformBuffersDynamic[i], &uniformBuffersMemoryDynamic[i]);
@@ -1097,7 +1078,7 @@ void VulkanRenderer::createDescriptorPool()
 	// UNIFORM BUFFERS descriptor pool
 	vkDescriptorPool = VkUtils::createDescriptorPool(
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		uniformBuffers.size() + lightUniformBuffers.size(),
+		3 + MAX_LIGHT_SOURCES,
 		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, 
 		context);
 
@@ -1146,24 +1127,6 @@ void VulkanRenderer::createDescriptorSets()
 		}
 	}
 
-	// Light uniform descriptors
-	{
-		this->vkLightDescriptorSets.resize(descriptorSetsCount);
-		std::vector<VkDescriptorSetLayout> setLayouts(descriptorSetsCount, this->vkLightDescriptorSetLayout);
-
-		VkDescriptorSetAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = this->vkDescriptorPool;						// pool to allocate sets from
-		allocInfo.descriptorSetCount = descriptorSetsCount;						// number of sets to allocate
-		allocInfo.pSetLayouts = setLayouts.data();								// layouts to use to allocate sets (1:1)
-
-		VkResult result = vkAllocateDescriptorSets(this->vkLogicalDevice, &allocInfo, this->vkLightDescriptorSets.data());
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to allocate light descriptor sets.");
-		}
-	}
-
 	// Set binding between buffers and descriptor sets
 	for (int i = 0; i < descriptorSetsCount; i++)
 	{
@@ -1202,24 +1165,6 @@ void VulkanRenderer::createDescriptorSets()
 			std::vector<VkWriteDescriptorSet> setWrites = { vpSetWrite };
 
 			vkUpdateDescriptorSets(this->vkLogicalDevice, static_cast<uint32_t>(setWrites.size()), setWrites.data(), 0, nullptr);
-		}
-		// Light uniforms
-		{
-			VkDescriptorBufferInfo vpBufferInfo = {};
-			vpBufferInfo.buffer = lightUniformBuffers[i];
-			vpBufferInfo.offset = 0;
-			vpBufferInfo.range = sizeof(VkUtils::UboLight) * MAX_LIGHT_SOURCES;
-
-			VkWriteDescriptorSet setWrite = {};
-			setWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			setWrite.dstSet = this->vkLightDescriptorSets[i];
-			setWrite.dstBinding = 0;											// matches with binding on layout in shader
-			setWrite.dstArrayElement = 0;
-			setWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			setWrite.descriptorCount = 1;
-			setWrite.pBufferInfo = &vpBufferInfo;
-
-			vkUpdateDescriptorSets(this->vkLogicalDevice, 1, &setWrite, 0, nullptr);
 		}
 	}
 }
@@ -1322,9 +1267,9 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 		memcpy(data, &mvp, sizeof(VkUtils::UboProjectionView));
 		vkUnmapMemory(this->vkLogicalDevice, uniformBuffersMemory[imageIndex]);
 	}
-	
+
+	// Update light uniform values
 	{
-		// Update light uniform values
 		for (int i = 0; i < MAX_LIGHT_SOURCES; i++)
 		{
 			if (i < lightSources.size())
@@ -1351,11 +1296,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 			}
 		}
 
-		// Copy uniform data (view projection matrices)
-		void* data;
-		vkMapMemory(this->vkLogicalDevice, lightUniformMemory[imageIndex], 0, sizeof(UboLightArray), 0, &data);
-		memcpy(data, &uboLightArray, sizeof(UboLightArray));
-		vkUnmapMemory(this->vkLogicalDevice, lightUniformMemory[imageIndex]);
+		lightUniforms[imageIndex]->update(uboLightArray);
 	}
 
 	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
@@ -1422,8 +1363,8 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	// 
 	vkCmdBindDescriptorSets(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
 		0, 1, &this->vkDescriptorSets[currentImage], 0, nullptr);
-	vkCmdBindDescriptorSets(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
-		3, 1, this->vkLightDescriptorSets.data(), 0, nullptr);
+
+	lightUniforms[currentImage]->cmdBind(3, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
 
 	int meshCount = 0;
 	for (auto& model : modelsToRender)

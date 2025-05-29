@@ -13,6 +13,8 @@
 class IRenderer
 {
 public:
+	virtual ~IRenderer() = default;
+
 	virtual int init(GLFWwindow* window) = 0;
 	virtual void draw() = 0;
 

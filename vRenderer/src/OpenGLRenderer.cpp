@@ -1,5 +1,10 @@
 #include "OpenGLRenderer.h"
 
+OpenGLRenderer::~OpenGLRenderer()
+{
+	cleanup();
+}
+
 int OpenGLRenderer::init(GLFWwindow* window)
 {
 	int width, height;

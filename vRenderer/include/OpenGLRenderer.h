@@ -27,6 +27,8 @@ class OpenGLRenderer : public IRenderer
 {
 public:
 
+	~OpenGLRenderer();
+
 	int init(GLFWwindow* window) override;
 	void draw() override;
 	bool addToRenderer(const Model& model, glm::vec3 color) override;

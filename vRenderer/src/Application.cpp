@@ -156,7 +156,8 @@ void Application::cleanup()
 	delete modelToRender;
 	modelToRender = nullptr;
 
-	renderer->cleanup();
+	delete renderer;
+	renderer = nullptr;
 }
 
 void Application::destroyWindow()
