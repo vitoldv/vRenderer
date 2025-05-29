@@ -11,7 +11,7 @@ class VkUniform
 {
 public:
 
-	VkUniform(VkDescriptorPool descriptorPool, VkShaderStageFlagBits shaderStageFlags, VkContext context);
+	VkUniform(VkShaderStageFlagBits shaderStageFlags, VkContext context);
 	~VkUniform();
 
 	void update(const T& data);
@@ -34,11 +34,11 @@ private:
 	VkShaderStageFlagBits shaderStage;
 	VkContext context;
 
-	void create(VkDescriptorPool descriptorPool);
+	void create();
 };
 
 template<typename T>
-inline VkUniform<T>::VkUniform(VkDescriptorPool descriptorPool, VkShaderStageFlagBits shaderStageFlags, VkContext context)
+inline VkUniform<T>::VkUniform(VkShaderStageFlagBits shaderStageFlags, VkContext context)
 {
 	//lightUniformBuffers.resize(frameCount);
 	//lightUniformMemory.resize(frameCount);
@@ -46,7 +46,7 @@ inline VkUniform<T>::VkUniform(VkDescriptorPool descriptorPool, VkShaderStageFla
 	//vkLightDescriptorSets.resize(frameCount);
 	this->context = context;
 	shaderStage = shaderStageFlags;
-	create(descriptorPool);
+	create();
 }
 
 template<typename T>
@@ -87,7 +87,7 @@ inline void VkUniform<T>::cleanup()
 }
 
 template<typename T>
-inline void VkUniform<T>::create(VkDescriptorPool descriptorPool)
+inline void VkUniform<T>::create()
 {
 	// LAYOUT CREATION
 	{
@@ -112,15 +112,18 @@ inline void VkUniform<T>::create(VkDescriptorPool descriptorPool)
 	}
 
 	// Buffer creation
-	VkDeviceSize bufferSize = sizeof(T);
-	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &buffer, &memory);
+	{
+		// Buffer size should be the size of data we pass as uniforms
+		VkDeviceSize bufferSize = sizeof(T);
+		createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &buffer, &memory);
+	}
 
 	// Descriptor set allocation
 	{
 		VkDescriptorSetAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptorPool;						// pool to allocate sets from
+		allocInfo.descriptorPool = context.uniformDescriptorPool;						// pool to allocate sets from
 		allocInfo.descriptorSetCount = 1;						// number of sets to allocate
 		allocInfo.pSetLayouts = &descriptorSetLayout;								// layouts to use to allocate sets (1:1)
 
@@ -137,6 +140,22 @@ inline void VkUniform<T>::create(VkDescriptorPool descriptorPool)
 		descriptorBufferInfo.buffer = buffer;
 		descriptorBufferInfo.offset = 0;
 		descriptorBufferInfo.range = sizeof(T);
+
+		// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
+		// //DYNAMIC UNIFORM BUFFER (used for passing specific model's transform)
+		//VkDescriptorBufferInfo modelBufferInfo = {};
+		//modelBufferInfo.buffer = uniformBuffersDynamic[i];
+		//modelBufferInfo.offset = 0;
+		//modelBufferInfo.range = modelUniformAlignment;
+		//VkWriteDescriptorSet modelSetWrite = {};
+		//modelSetWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		//modelSetWrite.dstSet = this->vkDescriptorSets[i];
+		//modelSetWrite.dstBinding = 1;
+		//modelSetWrite.dstArrayElement = 0;
+		//modelSetWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		//modelSetWrite.descriptorCount = 1;
+		//modelSetWrite.pBufferInfo = &modelBufferInfo;
+		//std::vector<VkWriteDescriptorSet> setWrites = { vpSetWrite, modelSetWrite };
 
 		VkWriteDescriptorSet setWrite = {};
 		setWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

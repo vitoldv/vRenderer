@@ -26,7 +26,7 @@ namespace VkUtils
 		glm::vec2 uv;
 	};
 
-	struct UboProjectionView
+	struct UboViewProjection
 	{
 		glm::mat4 projection;
 		glm::mat4 view;
@@ -122,6 +122,7 @@ namespace VkUtils
 		VkQueue graphicsQueue;
 		VkCommandPool graphicsCommandPool;
 
+		VkDescriptorPool uniformDescriptorPool;
 		//// Texturing
 		//VkSampler vkTextureSampler;
 		//VkDescriptorSetLayout samplerDescriptorSetLayout;

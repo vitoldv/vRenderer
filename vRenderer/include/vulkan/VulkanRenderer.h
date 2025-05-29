@@ -102,16 +102,13 @@ private:
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	// Descriptors
-	VkDescriptorSetLayout vkDescriptorSetLayout;
 	VkDescriptorSetLayout vkSamplerDescriptorSetLayout;
 	VkDescriptorSetLayout vkInputDescriptorSetLayout;		// input to subpass 2
 
-	VkDescriptorPool vkDescriptorPool;
+	VkDescriptorPool uniformDescriptorPool;
 	VkDescriptorPool vkInputDescriptorPool;
-	std::vector<VkDescriptorSet> vkDescriptorSets;
 	std::vector<VkDescriptorSet> vkInputDescriptorSets;
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
+
 	VkDeviceSize minUniformBufferOffset;
 	VkPushConstantRange vkPushConstantRange;
 
@@ -139,6 +136,7 @@ private:
 	} uboLightArray;
 
 	std::vector<std::unique_ptr<VkUniform<UboLightArray>>> lightUniforms;
+	std::vector<std::unique_ptr<VkUniform<UboViewProjection>>> vpUniforms;
 
 	// Textures
 	VkSampler vkTextureSampler;
