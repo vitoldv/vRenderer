@@ -12,12 +12,16 @@
 #include <imgui_impl_opengl3.h>
 
 #include "IRenderer.h"
+#include "Lighting.h"
 #include "GLUtils.h"
+#include "GLShader.h"
 #include "GLModel.h"
 #include "GLTexture.h"
 #include "BaseCamera.h"
 
 #define BACKGROUND_COLOR 0x888800FF
+
+#define MAX_LIGHT_SOURCES 10
 
 class OpenGLRenderer : public IRenderer
 {
@@ -31,15 +35,21 @@ public:
 	bool isModelInRenderer(uint32_t id) override;
 	bool updateModelTransform(int modelId, glm::mat4 newTransform) override;
 	void setCamera(BaseCamera* camera) override;
+	bool addLightSource(Light* light) override;
 	void cleanup() override;
 	void setImguiCallback(std::function<void()> callback) override;
 
 private:
 
+	GLShader* shader;
+
 	BaseCamera* camera;
 	std::vector<GLModel*> modelsToRender;
+	std::vector<Light*> lightSources;
 
 	GLModel* getModel(uint32_t id);
+
+	void applyLighting();
 
 	/*
 	---- IMGUI fields -----

@@ -24,10 +24,12 @@
 
 #include "display_settings.h"
 #include "IRenderer.h"
+#include "Lighting.h"
 #include "Model.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
 #include "BaseCamera.h"
+#include "Lighting.h"
 
 #ifdef NDEBUG
 #define ENABLE_VALIDATION_LAYERS false
@@ -43,10 +45,12 @@
 #define BACKGROUND_COLOR 0x008B8BFF
 
 #define MAX_FRAME_DRAWS 2
+#define MAX_LIGHT_SOURCES 10
 
 // Names of extensions required to run the application
 const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	VK_EXT_ROBUSTNESS_2_EXTENSION_NAME
 };
 
 const std::vector<const char*> validationLayers = {
@@ -100,6 +104,7 @@ private:
 	VkDescriptorSetLayout vkDescriptorSetLayout;
 	VkDescriptorSetLayout vkSamplerDescriptorSetLayout;
 	VkDescriptorSetLayout vkInputDescriptorSetLayout;		// input to subpass 2
+
 	VkDescriptorPool vkDescriptorPool;
 	VkDescriptorPool vkInputDescriptorPool;
 	std::vector<VkDescriptorSet> vkDescriptorSets;
@@ -127,6 +132,16 @@ private:
 	std::vector<VkModel*> modelsToRender;
 	std::vector<VkModel*> modelsToDestroy;
 
+	std::vector<Light*> lightSources;
+	struct UboLightArray {
+		UboLight lights[10];       // Total size: 96 * 10 = 960 bytes
+	} uboLightArray;
+	
+	std::vector<VkBuffer> lightUniformBuffers;
+	std::vector<VkDeviceMemory> lightUniformMemory;
+	VkDescriptorSetLayout vkLightDescriptorSetLayout;
+	std::vector<VkDescriptorSet> vkLightDescriptorSets;
+
 	// Textures
 	VkSampler vkTextureSampler;
 
@@ -142,6 +157,7 @@ public:
 
 	int init(GLFWwindow* window);
 	void draw();
+	void applyLighting();
 
 	bool addToRenderer(const Model& model, glm::vec3 color);
 	bool addToRendererTextured(const Model& model);
@@ -150,7 +166,8 @@ public:
 
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
 	void setCamera(BaseCamera* camera);
-	
+	bool addLightSource(Light* light);
+
 	void cleanup();
 
 	void setImguiCallback(std::function<void()> callback);

@@ -12,13 +12,13 @@ class VkTexture
 {
 public:
 
-	const char* name;
+	const std::string name;
 
 	VkTexture(std::string fileName, VkContext context);
 	~VkTexture();
 
 	VkImageView getImageView() const;
-	VkDescriptorSet createTextureSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo);
+	VkDescriptorSet createSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo);
 
 private:
 	VkImage image;

@@ -9,7 +9,7 @@ class GLTexture
 {
 public:
 
-	const char* name;
+	const std::string name;
 	uint32_t glId;
 
 	GLTexture(std::string fileName);

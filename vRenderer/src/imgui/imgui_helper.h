@@ -124,6 +124,34 @@ namespace imgui_helper
 		settingsChanged = ImGui::SliderInt("FOV", &fov, 1, 150);
 	}
 
+	const char* lightTypeLabels[] = { "Directional", "Point", "Spot"};
+	void ShowLightSettingsTab(std::vector<Light*>& lights, bool& settingsChanged)
+	{
+		for (int i = 0; i < lights.size(); i++)
+		{
+			Light* light = lights[i];
+			std::string header = "Source #" + std::to_string(i) + " (" + lightTypeLabels[light->type - 1] + ")";
+			if (ImGui::CollapsingHeader(header.c_str()))
+			{
+				ImGui::PushID(i);
+				settingsChanged = false;
+				settingsChanged |= ImGui::DragFloat3("Position", static_cast<float*>(&light->position[0]), 0.1f, -100.0f, 100.0f);
+				settingsChanged |= ImGui::DragFloat("Ambient", &light->ambientStrength, 0.05f, 0, 1.0f);
+				settingsChanged |= ImGui::DragFloat("Specular", &light->specularStrength, 0.05f, 0, 1.0f);
+				settingsChanged |= ImGui::DragInt("Shininess", &light->shininess, 1, 1, 256);
+				settingsChanged |= ImGui::DragFloat3("Direction", static_cast<float*>(&light->direction[0]), 0.1f, -100.0f, 100.0f);
+				settingsChanged |= ImGui::DragFloat("Constant", &light->constant, 0.05f, 0, 1.0f);
+				settingsChanged |= ImGui::DragFloat("Linear", &light->linear, 0.05f, 0, 1.0f);
+				settingsChanged |= ImGui::DragFloat("Quadratic", &light->quadratic, 0.05f, 0, 1.0f);
+				settingsChanged |= ImGui::DragFloat("CutOff", &light->cutOff, 0.05f, 0, 120.0f);
+				settingsChanged |= ImGui::DragFloat("OuterCutOff", &light->outerCutOff, 0.05f, 0, 120.0f);
+				ImGui::NewLine();
+				settingsChanged |= ImGui::ColorPicker3("Color", static_cast<float*>(&light->color[0]));
+				ImGui::PopID();
+			}
+		}
+	}
+
 	/// <summary>
 	/// Editor for a glm::vec3. Allows simultaneous edit of all components at once via sync flag.
 	/// </summary>

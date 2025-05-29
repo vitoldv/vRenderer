@@ -61,6 +61,37 @@ int Application::initApplication()
 
 	setSceneCamera(CameraType::ORBIT);
 
+	Light* light = new Light(1, Light::Type::DIRECTIONAL);
+	light->color = { 1.0f, 1.0f, 1.0f };
+	light->position = { 1.8f, 0.9f, 0.0f };
+	light->direction = { 0, -1.0f, 0 };
+	light->ambientStrength = 0.1f;
+	light->specularStrength = 0.5f;
+	light->shininess = 32;
+	light->constant = 1.0f;
+	light->linear = 0.09f;
+	light->quadratic = 0.032f;
+	light->cutOff = 20.0f;
+	light->outerCutOff = 27.0f;
+	lightSources.push_back(light);
+
+	Light* light2 = new Light(2, Light::Type::POINT);
+	light2->color = { 1.0f, 1.0f, 1.0f };
+	light2->position = { 0.0f, 0.9f, 1.8f };
+	light2->direction = { 0.0f, 0, -1.0f };
+	light2->ambientStrength = 0.1f;
+	light2->specularStrength = 0.5f;
+	light2->shininess = 32;
+	light2->constant = 1.0f;
+	light2->linear = 0.09f;
+	light2->quadratic = 0.032f;
+	light2->cutOff = 20.0f;
+	light2->outerCutOff = 27.0f;
+	lightSources.push_back(light2);
+
+	renderer->addLightSource(light);
+	renderer->addLightSource(light2);
+
 	return 0;
 }
 
@@ -144,6 +175,11 @@ void Application::onCameraSettingsChanged()
 	this->camera->setFov(cameraFov);
 }
 
+void Application::onLightSettingsChanged()
+{
+	// nothing for now
+}
+
 void Application::setSceneCamera(CameraType cameraType)
 {
 	BaseCamera* oldCamera = nullptr;
@@ -208,6 +244,16 @@ void Application::imguiMenu()
 				if (settingsChanged)
 				{
 					onCameraSettingsChanged();
+				}
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Light"))
+			{
+				bool settingsChanged;
+				imgui_helper::ShowLightSettingsTab(lightSources, settingsChanged);
+				if (settingsChanged)
+				{
+					onLightSettingsChanged();
 				}
 				ImGui::EndTabItem();
 			}

@@ -2,7 +2,7 @@
 #include "stb_image.h"
 
 GLTexture::GLTexture(std::string fileName) : 
-	name(fileName.c_str())
+	name(fileName)
 {
 	createTexture(fileName);
 }
@@ -48,6 +48,9 @@ void GLTexture::createTexture(std::string fileName)
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(data);
+
+	// I nearly ate my brain out in attempts to grasp why the fuck my shader was sampling stuff I 'never' bind...
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void GLTexture::cleanup()

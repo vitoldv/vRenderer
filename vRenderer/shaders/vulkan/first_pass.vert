@@ -17,6 +17,8 @@ layout(set = 0, binding = 0) uniform UboProjectionView {
 
 layout(push_constant) uniform PushModel {
     mat4 model;
+    mat4 normalMatrix;
+    vec3 viewPos;
     uint textured;
 } pushModel;
 
@@ -24,12 +26,15 @@ layout(location = 0) out vec3 fragCol;
 layout(location = 1) out vec2 fragUv;
 layout(location = 2) out vec3 fragNormal;
 layout(location = 3) flat out uint fragTextured;
+layout(location = 4) flat out vec3 outViewPos;
+layout(location = 5) out vec3 outFragPos;
 
 void main() {
     gl_Position = uboProjectionView.projection * uboProjectionView.view * pushModel.model * vec4(pos, 1.0);
     fragCol = col;
     fragUv = uv;
-    vec4 n = pushModel.model * vec4(normal, 1.0);
-    fragNormal = vec3(n.x, n.y, n.z);
+    fragNormal = (pushModel.normalMatrix * vec4(normal, 1.0)).xyz;
     fragTextured = pushModel.textured;
+    outViewPos = pushModel.viewPos;
+    outFragPos = (pushModel.model * vec4(pos, 1.0)).xyz;
 }

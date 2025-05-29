@@ -8,9 +8,11 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "GLMesh.h"
-#include "GLTexture.h"
+#include "GLShader.h"
+#include "GLMaterial.h"
 #include "GLUtils.h"
 #include "Model.h"
+#include "BaseCamera.h"
 
 class GLModel
 {
@@ -20,22 +22,22 @@ public:
 	GLModel(uint32_t id, const Model& model);
 	~GLModel();
 
-	void draw(uint32_t shaderProgram);
+	void draw(GLShader& shader, BaseCamera& camera);
 	void setTransform(glm::mat4 transform);
 
 private:
 	
-	const char* TRANSFORM_UNIFORM_NAME = "transform";
-	const char* SAMPLER_UNIFORM_NAME = "outTexture";
-	const char* USE_TEXTURE_UNIFORM_NAME = "useTexture";
+	const char* MODEL_UNIFORM_NAME = "model";
+	const char* NORMAL_MATRIX_UNIFORM_NAME = "normalMatrix";
+	const char* USE_MATERIAL_UNIFORM_NAME = "useMaterial";
 
 	uint32_t meshCount;
-	uint32_t textureCount;
+	uint32_t materialCount;
 
 	glm::mat4 transform;
 
 	std::vector<GLMesh*> meshes;
-	std::vector<GLTexture*> textures;
+	std::vector<GLMaterial*> materials;
 
 	void createFromGenericModel(const Model& model);
 

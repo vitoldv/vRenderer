@@ -19,22 +19,23 @@ void GLModel::setTransform(glm::mat4 transform)
 	}
 }
 
-void GLModel::draw(uint32_t shaderProgram)
+void GLModel::draw(GLShader& shader, BaseCamera& camera)
 {
-	// Setting uniforms
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, TRANSFORM_UNIFORM_NAME), 1, GL_FALSE, glm::value_ptr(this->transform));
+	// Calculate Normal matrix (required for proper normals transformation)
+	glm::mat3 normalMat = glm::transpose(glm::inverse(camera.getViewMatrix() * this->transform));
 
+	// Setting uniforms
+	shader.setUniform(MODEL_UNIFORM_NAME, this->transform);
+	shader.setUniform(NORMAL_MATRIX_UNIFORM_NAME, normalMat);
+	
 	for (int i = 0; i < meshes.size(); i++)
 	{
-		if (textures[i] != nullptr)
+		bool useMaterial = materials[i] != nullptr;
+		if (useMaterial)
 		{
-			// Attach texture
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, textures[i]->glId);
-			glUniform1i(glGetUniformLocation(shaderProgram, SAMPLER_UNIFORM_NAME), 0);
+			materials[i]->apply(shader);
 		}
-			
-		glUniform1i(glGetUniformLocation(shaderProgram, USE_TEXTURE_UNIFORM_NAME), textures[i] != nullptr ? GL_TRUE : GL_FALSE);
+		shader.setUniform(USE_MATERIAL_UNIFORM_NAME, useMaterial ? GL_TRUE : GL_FALSE);
 
 		meshes[i]->draw();
 	}
@@ -44,7 +45,7 @@ void GLModel::createFromGenericModel(const Model& model)
 {
 	meshCount = model.getMeshCount();
 	meshes.resize(meshCount);
-	textures.resize(meshCount);
+	materials.resize(meshCount);
 
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -53,25 +54,34 @@ void GLModel::createFromGenericModel(const Model& model)
 		uint32_t newMeshId = i;
 		GLMesh* glMesh = new GLMesh(newMeshId, mesh);
 
-		auto textureName = model.getTextures()[i];
-		GLTexture* glTexture = nullptr;
-		if (!textureName.empty())
+		auto material = model.getMaterials()[i];
+		if (material != nullptr)
 		{
-			textureCount++;
-			glTexture = new GLTexture(model.getFullTexturePath(i));
+			materialCount++;
+			GLMaterial* glMaterial = new GLMaterial(material->name.c_str());
+
+			if (!material->diffuseTexture.empty())
+			{
+				glMaterial->diffuse = new GLTexture(material->diffuseTexture);
+			}
+			if (!material->specularTexture.empty())
+			{
+				glMaterial->specular = new GLTexture(material->specularTexture);
+			}
+
+			materials[i] = glMaterial;
 		}
 
 		meshes[i] = glMesh;
-		textures[i] = glTexture;
 	}
 }
 
 void GLModel::cleanup()
 {
-	for (auto& texture : textures)
+	for (auto& material : materials)
 	{
-		delete texture;
-		texture = nullptr;
+		delete material;
+		material = nullptr;
 	}
 	for (auto& mesh : meshes)
 	{

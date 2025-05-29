@@ -144,6 +144,9 @@
     <ClCompile Include="vRenderer\externals\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="vRenderer\externals\imgui\imgui_tables.cpp" />
     <ClCompile Include="vRenderer\externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="vRenderer\include\GLMaterial.cpp" />
+    <ClCompile Include="vRenderer\include\Material.cpp" />
+    <ClCompile Include="vRenderer\include\opengl\GLShader.cpp" />
     <ClCompile Include="vRenderer\src\AppContext.cpp" />
     <ClCompile Include="vRenderer\src\Application.cpp" />
     <ClCompile Include="vRenderer\src\BaseCamera.cpp" />
@@ -159,6 +162,7 @@
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />
     <ClCompile Include="vRenderer\src\VkModel.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkTexture.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VulkanRenderer.cpp" />
@@ -170,11 +174,15 @@
     <ClInclude Include="vRenderer\include\Application.h" />
     <ClInclude Include="vRenderer\include\Event.h" />
     <ClInclude Include="vRenderer\include\FpvCamera.h" />
+    <ClInclude Include="vRenderer\include\GLMaterial.h" />
     <ClInclude Include="vRenderer\include\input_handler.h" />
     <ClInclude Include="vRenderer\include\IRenderer.h" />
     <ClInclude Include="vRenderer\include\json.hpp" />
+    <ClInclude Include="vRenderer\include\Lighting.h" />
+    <ClInclude Include="vRenderer\include\Material.h" />
     <ClInclude Include="vRenderer\include\OpenGLRenderer.h" />
     <ClInclude Include="vRenderer\include\opengl\GLMesh.h" />
+    <ClInclude Include="vRenderer\include\opengl\GLShader.h" />
     <ClInclude Include="vRenderer\include\opengl\GLTexture.h" />
     <ClInclude Include="vRenderer\include\opengl\GLUtils.h" />
     <ClInclude Include="vRenderer\include\OrbitCamera.h" />
@@ -187,6 +195,7 @@
     <ClInclude Include="vRenderer\include\stb_image.h" />
     <ClInclude Include="vRenderer\include\utils.h" />
     <ClInclude Include="vRenderer\include\VkModel.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMesh.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkTexture.h" />
     <ClInclude Include="vRenderer\include\vulkan\VulkanRenderer.h" />
