@@ -38,7 +38,7 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 	return meshes;
 }
 
-void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, VkDescriptorSet descriptorSet)
+void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, BaseCamera* camera)
 {
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -56,13 +56,15 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
 		//	0, 1, &this->vkDescriptorSets[currentImage], 1, &dynamicOffset);
 
-		bool textured = materials[i] != nullptr && materials[i]->getTextureCount() > 0;
+		bool textured = materials[i] != nullptr && materials[i]->textureCount > 0;
 
 		// PUSH CONSTANTS
 		{
 			PushConstant push = {};
 			push.model = mesh->getTransformMat();
 			push.useTexture = textured;
+			push.normalMatrix = glm::transpose(glm::inverse(mesh->getTransformMat()));
+			push.viewPosition = camera->getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
 		}
@@ -70,18 +72,9 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		if (textured)
 		{
 			auto* material = materials[i];
-			
-			// Uniform descriptor set
+			// Material sampler uniforms
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-				0, 1, &descriptorSet, 0, nullptr);
-			// Material sampler descriptor sets
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-				1, material->getTextureCount(), material->getSamplerDescriptorSets().data(), 0, nullptr);
-		}
-		else
-		{
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-				0, 1, &descriptorSet, 0, nullptr);
+				1, material->textureCount, material->getSamplerDescriptorSets().data(), 0, nullptr);
 		}
 
 		// execute pipeline

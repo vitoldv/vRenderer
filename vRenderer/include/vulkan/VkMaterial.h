@@ -10,29 +10,32 @@ class VkMaterial
 {
 public:
 
-	const std::string name;
+	const std::string name;	
+	const uint32_t textureCount = 2;
 
-	uint32_t textureCount;
+	// The order of texture creation affects the order of sampler descriptors in samplerDescriptorSets vector,
+	// and, accordingly, what texture is passed in shader.
+	// This way, let the order of declaration here match the order of creation and the declaration order in shader.
 	std::unique_ptr<VkTexture> diffuse;
 	std::unique_ptr<VkTexture> specular;
 
 	VkMaterial(const Material& material, VkContext context, VkSamplerDescriptorSetCreateInfo createInfo);
 	~VkMaterial();
 
-	void apply();
 	void cleanup();
 
-	uint32_t getTextureCount() const;
 	const std::vector<VkDescriptorSet>& getSamplerDescriptorSets() const;
 
 private:
-
-	// Color applied to fragment if diffuse texture is missing
-	const glm::vec3 diffuseColor = { 1.0f, 0.5f, 0.31f };
 
 	VkContext context;
 	VkDescriptorPool samplerDescriptorPool;
 	std::vector<VkDescriptorSet> samplerDescriptorSets;
 
+	// Storage for dummy buffers and their memory used for null descriptors initialization
+	std::vector<VkBuffer> dummyBuffers;
+	std::vector<VkDeviceMemory> dummyBuffersMemory;
+	
 	void createFromGenericMaterial(const Material& material, VkSamplerDescriptorSetCreateInfo createInfo);
+	VkDescriptorSet createNullSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo);
 };

@@ -3,8 +3,6 @@
 #include <glm/glm.hpp>
 #include <string>
 
-#include <GLShader.h>
-
 struct Light
 {
 	enum Type

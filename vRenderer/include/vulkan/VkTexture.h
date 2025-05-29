@@ -18,7 +18,7 @@ public:
 	~VkTexture();
 
 	VkImageView getImageView() const;
-	VkDescriptorSet createTextureSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo);
+	VkDescriptorSet createSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo);
 
 private:
 	VkImage image;

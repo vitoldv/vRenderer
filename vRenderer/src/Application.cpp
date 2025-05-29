@@ -61,10 +61,10 @@ int Application::initApplication()
 
 	setSceneCamera(CameraType::ORBIT);
 
-	Light* light = new Light(1, Light::Type::SPOT);
+	Light* light = new Light(1, Light::Type::DIRECTIONAL);
 	light->color = { 1.0f, 1.0f, 1.0f };
 	light->position = { 1.8f, 0.9f, 0.0f };
-	light->direction = { -1.0f, 0, 0 };
+	light->direction = { 0, -1.0f, 0 };
 	light->ambientStrength = 0.1f;
 	light->specularStrength = 0.5f;
 	light->shininess = 32;

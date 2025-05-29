@@ -124,15 +124,16 @@ namespace imgui_helper
 		settingsChanged = ImGui::SliderInt("FOV", &fov, 1, 150);
 	}
 
+	const char* lightTypeLabels[] = { "Directional", "Point", "Spot"};
 	void ShowLightSettingsTab(std::vector<Light*>& lights, bool& settingsChanged)
 	{
 		for (int i = 0; i < lights.size(); i++)
 		{
-			std::string header = "Source #" + std::to_string(i);
+			Light* light = lights[i];
+			std::string header = "Source #" + std::to_string(i) + " (" + lightTypeLabels[light->type - 1] + ")";
 			if (ImGui::CollapsingHeader(header.c_str()))
 			{
 				ImGui::PushID(i);
-				Light* light = lights[i];
 				settingsChanged = false;
 				settingsChanged |= ImGui::DragFloat3("Position", static_cast<float*>(&light->position[0]), 0.1f, -100.0f, 100.0f);
 				settingsChanged |= ImGui::DragFloat("Ambient", &light->ambientStrength, 0.05f, 0, 1.0f);

@@ -7,10 +7,14 @@
 #include <fstream>
 #include <iostream>
 #include <array>
+#include "Lighting.h"
 
 #define VALIDATION_LAYER_OUTPUT_STR "--- VALIDATION LAYER MSG: "
 #define VALIDATION_LAYER_ALLOWED_MESSAGE_SEVERITY VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
 #define VALIDATION_LAYER_ALLOWED_MESSAGE_TYPE VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+
+// Macro to be used on uniform struct declaration to satisfy std140 alignment
+#define ALIGN_STD140 alignas(16)
 
 namespace VkUtils
 {
@@ -28,6 +32,38 @@ namespace VkUtils
 		glm::mat4 view;
 	};
 
+	/// <summary>
+	/// Should match the UboLight struct declared in shader.
+	/// P.S. The order differs from generic light to satisfy std140 alignment
+	/// with the least occupied memory. Also position and direction are present 
+	/// as shading in calculated in world space
+	/// </summary>
+	struct ALIGN_STD140 UboLight
+	{
+		glm::vec4 color;
+		glm::vec4 position;
+		glm::vec4 direction;
+		
+		// 0 - none
+		// 1 - directional
+		// 2 - point
+		// 3 - spot
+		Light::Type type;
+
+		// Phong
+		float ambientStrength;
+		float specularStrength;
+		int shininess;
+
+		// Attenuation
+		float constant;
+		float linear;
+		float quadratic;
+		// Spotlight components
+		float cutOff;
+		float outerCutOff;
+	};
+
 	/*
 	* Push Constants provide:
 	* 1. Model matrix (transform matrix)
@@ -35,12 +71,19 @@ namespace VkUtils
 	*/
 	struct PushConstant
 	{
+		// model matrix (transform)
 		glm::mat4 model;
+		// normal matrix for proper normals transformation
+		// P.S. can be as well used to transform any direction vector in world space
+		glm::mat4 normalMatrix;
+		// the position of a viewer (camera)
+		glm::vec3 viewPosition;
+		// flag to inform whether model is textured
 		uint8_t useTexture;
 	};
 
 	const std::vector<glm::vec3> meshVertices = {
-		{-1, -1, 0.0},
+		{-1, -1, 0.0},	
 		{1,  -1, 0.0},
 		{1,  1, 0.0},
 		{-1, 1, 0.0},

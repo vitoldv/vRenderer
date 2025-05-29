@@ -81,7 +81,14 @@ stbi_uc* loadTexture(std::string fileName, int* width, int* height, VkDeviceSize
 	 vkFreeMemory(context.logicalDevice, imageStagingBufferMemory, nullptr);
  }
 
-VkDescriptorSet VkTexture::createTextureSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo)
+/// <summary>
+/// Creates a texture sampler descriptor set.
+/// If dummy flag is set, an empty descriptor (allocated but not bound to any resource) is returned.
+/// </summary>
+/// <param name="createInfo"></param>
+/// <param name="dummy"></param>
+/// <returns></returns>
+VkDescriptorSet VkTexture::createSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo)
  {
 	 VkDescriptorSet descriptorSet;
 
@@ -97,22 +104,22 @@ VkDescriptorSet VkTexture::createTextureSamplerDescriptor(VkSamplerDescriptorSet
 		 throw std::runtime_error("Failed to allocate texture sampler descriptor sets.");
 	 }
 
-	 // texture image info
-	 VkDescriptorImageInfo imageInfo = {};
-	 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	 imageInfo.imageView = imageView;
-	 imageInfo.sampler = createInfo.sampler;
+		 // texture image info
+		 VkDescriptorImageInfo imageInfo = {};
+		 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		 imageInfo.imageView = imageView;
+		 imageInfo.sampler = createInfo.sampler;
 
-	 VkWriteDescriptorSet setWrite = {};
-	 setWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	 setWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	 setWrite.descriptorCount = 1;
-	 setWrite.dstSet = descriptorSet;
-	 setWrite.dstArrayElement = 0;
-	 setWrite.dstBinding = 0;
-	 setWrite.pImageInfo = &imageInfo;
+		 VkWriteDescriptorSet setWrite = {};
+		 setWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		 setWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		 setWrite.descriptorCount = 1;
+		 setWrite.dstSet = descriptorSet;
+		 setWrite.dstArrayElement = 0;
+		 setWrite.dstBinding = 0;
+		 setWrite.pImageInfo = &imageInfo;
 
-	 vkUpdateDescriptorSets(context.logicalDevice, 1, &setWrite, 0, nullptr);
+		 vkUpdateDescriptorSets(context.logicalDevice, 1, &setWrite, 0, nullptr);
 
 	 return descriptorSet;
  }
