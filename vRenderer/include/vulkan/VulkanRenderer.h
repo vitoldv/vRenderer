@@ -28,7 +28,7 @@
 #include "Model.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
-#include "VkUniform.h"
+#include "VkUniform.hpp"
 #include "BaseCamera.h"
 #include "Lighting.h"
 
