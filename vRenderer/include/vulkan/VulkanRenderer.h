@@ -150,7 +150,8 @@ private:
 	std::function<void()> imguiCallback;
 
 public:
-	VulkanRenderer();
+
+	~VulkanRenderer();
 
 	int init(GLFWwindow* window);
 	void draw();
@@ -165,41 +166,36 @@ public:
 	void setCamera(const std::shared_ptr<BaseCamera> camera);
 	bool addLightSources(const std::shared_ptr<Light> light[], uint32_t count);
 
-	void cleanup();
-
 	void setImguiCallback(std::function<void()> callback);
 
-	~VulkanRenderer();
+	void cleanup();
 
 private:
 	
 	void createVulkanInstance();
+	void createSurface();
 	void retrievePhysicalDevice();
 	void createLogicalDevice();
-	void createSurface();
 	void createSwapChain();
-	void createRenderPass();
-	void createGraphicsPipeline();
-	void createColorBufferImage();
 	void createDepthBuffer();
+	void createColorBufferImage();
+	void createRenderPass();
+	
+	void createDescriptorSetLayouts();
+	void createTextureSampler();
+	void createPushConstantRange();
+	void createDescriptorPools();
+	void createUniforms();
+	void createSubpassInputDescriptorSets();
+	void createGraphicsPipeline();
+	
 	void createFramebuffers();
 	void createCommandPool();
 	void createCommandBuffers();
 	void createSyncTools();
-	void createDescriptorSetLayouts();
-	void createUniforms();
-	void createDescriptorPools();
-	void createSubpassInputDescriptorSets();
-	void createPushConstantRange();
-	void createTextureSampler();
 
-	/* 
-	---- IMGUI functions -----
-	*/
-	void setupImgui();
-	void createImguiDescriptorPool();
-	ImDrawData* drawImgui();
-	void cleanupImgui();
+	void recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData);
+	void updateUniformBuffers(uint32_t imageIndex);
 
 	void setupDebugMessenger();
 
@@ -207,10 +203,6 @@ private:
 	VkPresentModeKHR definePresentationMode(const std::vector<VkPresentModeKHR> presentationModes);
 	VkExtent2D defineSwapChainExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities);
 	VkFormat defineSupportedFormat(const std::vector<VkFormat>& formats, VkImageTiling tiling, VkFormatFeatureFlags featureFlags);
-
-	VkShaderModule createShaderModule(const std::vector<char>& code);
-	void recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData);
-	void updateUniformBuffers(uint32_t imageIndex);
 
 	bool isInstanceExtensionsSupported(std::vector<const char*>* extensions);
 	bool isDeviceSupportsRequiredExtensions(VkPhysicalDevice device);
@@ -223,6 +215,14 @@ private:
 	VkModel* getModel(uint32_t id);
 
 	void printPhysicalDeviceInfo(VkPhysicalDevice device, bool printPropertiesFull = false, bool printFeaturesFull = false);
+
+	/*
+	---- IMGUI functions -----
+	*/
+	void setupImgui();
+	void createImguiDescriptorPool();
+	ImDrawData* drawImgui();
+	void cleanupImgui();
 };
 
 

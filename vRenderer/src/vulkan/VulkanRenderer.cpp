@@ -1,9 +1,5 @@
 #include "VulkanRenderer.h"
 
-VulkanRenderer::VulkanRenderer()
-{
-}
-
 int VulkanRenderer::init(GLFWwindow* window)
 {
 	this->window = window;
@@ -44,6 +40,11 @@ int VulkanRenderer::init(GLFWwindow* window)
 	}
 
 	return 0;
+}
+
+VulkanRenderer::~VulkanRenderer()
+{
+	cleanup();
 }
 
 void VulkanRenderer::cleanup()
@@ -136,11 +137,6 @@ void VulkanRenderer::setImguiCallback(std::function<void()> imguiCode)
 	imguiCallback = imguiCode;
 }
 
-VulkanRenderer::~VulkanRenderer()
-{
-	cleanup();
-}
-
 /// <summary>
 /// Creates Vulkan Instance
 /// </summary>
@@ -210,6 +206,15 @@ void VulkanRenderer::createVulkanInstance()
 	{
 		throw std::runtime_error("Failed to create a Vulkan Instance.");
 	}
+}
+
+void VulkanRenderer::createSurface()
+{
+	if (glfwCreateWindowSurface(vkInstance, window, nullptr, &surface) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create window surface.");
+	}
+
 }
 
 void VulkanRenderer::retrievePhysicalDevice()
@@ -289,15 +294,6 @@ void VulkanRenderer::createLogicalDevice()
 
 	context.logicalDevice = logicalDevice;
 	context.graphicsQueue = graphicsQueue;
-}
-
-void VulkanRenderer::createSurface()
-{
-	if (glfwCreateWindowSurface(vkInstance, window, nullptr, &surface) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create window surface.");
-	}
-
 }
 
 void VulkanRenderer::createSwapChain()
@@ -383,6 +379,49 @@ void VulkanRenderer::createSwapChain()
 
 		// Add to swapchain image list
 		swapchainImages.push_back(swapChainImage);
+	}
+}
+
+void VulkanRenderer::createDepthBuffer()
+{
+	depthBufferImage.resize(IMAGE_COUNT);
+	depthBufferImageView.resize(IMAGE_COUNT);
+	depthBufferImageMemory.resize(IMAGE_COUNT);
+
+	// Get supported format for depth buffer
+	depthFormat = defineSupportedFormat(
+		{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT },
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+	for (int i = 0; i < IMAGE_COUNT; i++)
+	{
+		// Create depth buffer image
+		depthBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &depthBufferImageMemory[i], context);
+		depthBufferImageView[i] = VkUtils::createImageView(depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, context);
+	}
+}
+
+void VulkanRenderer::createColorBufferImage()
+{
+	colorBufferImage.resize(IMAGE_COUNT);
+	colorBufferImageView.resize(IMAGE_COUNT);
+	colorBufferImageMemory.resize(IMAGE_COUNT);
+
+	// Get supported format for depth buffer
+	colorFormat = defineSupportedFormat(
+		{ VK_FORMAT_R8G8B8A8_UNORM },
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+	for (int i = 0; i < IMAGE_COUNT; i++)
+	{
+		// Create color buffer image
+		colorBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
+			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &colorBufferImageMemory[i], context);
+		colorBufferImageView[i] = VkUtils::createImageView(colorBufferImage[i], colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
 	}
 }
 
@@ -522,6 +561,171 @@ void VulkanRenderer::createRenderPass()
 	}
 }
 
+void VulkanRenderer::createDescriptorSetLayouts()
+{
+	// Index here must match set's index in shader
+	setLayoutMap[0] = createDescriptorSetLayout(1, VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
+	setLayoutMap[1] = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context);
+	setLayoutMap[2] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
+	setLayoutMap[3] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, context);
+
+	samplerDescriptorCreateInfo.samplerDescriptorSetLayout = setLayoutMap[1];
+
+	// layout for second pass input attachment
+	inputDescriptorSetLayout = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, context);
+}
+
+void VulkanRenderer::createTextureSampler()
+{
+	VkSamplerCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	createInfo.magFilter = VK_FILTER_LINEAR;
+	createInfo.minFilter = VK_FILTER_LINEAR;
+	createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	createInfo.unnormalizedCoordinates = VK_FALSE;
+	createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	createInfo.mipLodBias = 0.0f;
+	createInfo.maxLod = 0.0f;
+	createInfo.minLod = 0.0f;
+	createInfo.anisotropyEnable = VK_FALSE;
+	createInfo.maxAnisotropy = 16;
+
+	VkResult result = vkCreateSampler(logicalDevice, &createInfo, nullptr, &textureSampler);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create texture sampler.");
+	}
+
+	samplerDescriptorCreateInfo.sampler = textureSampler;
+}
+
+void VulkanRenderer::createPushConstantRange()
+{
+	// Defines push constant values
+	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	pushConstantRange.offset = 0;
+	pushConstantRange.size = sizeof(PushConstant);
+}
+
+
+void VulkanRenderer::createDescriptorPools()
+{
+	dynamicUniformDescriptorPool = VkUtils::createDescriptorPool(
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+		IMAGE_COUNT,
+		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		context);
+	context.dynamicUniformDescriptorPool = dynamicUniformDescriptorPool;
+
+	// UNIFORM descriptor pool
+	uniformDescriptorPool = VkUtils::createDescriptorPool(
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		3 + MAX_LIGHT_SOURCES,
+		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		context);
+	context.uniformDescriptorPool = uniformDescriptorPool;
+
+	// CREATE INPUT ATTACHMENT DESCRIPTOR POOL
+	VkDescriptorPoolSize colorInputPoolSize = {};
+	colorInputPoolSize.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+	colorInputPoolSize.descriptorCount = static_cast<uint32_t>(colorBufferImageView.size());
+	VkDescriptorPoolSize depthInputPoolSize = {};
+	depthInputPoolSize.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+	depthInputPoolSize.descriptorCount = static_cast<uint32_t>(depthBufferImageView.size());
+
+	std::vector<VkDescriptorPoolSize> inputPoolSizes = { colorInputPoolSize, depthInputPoolSize };
+
+	VkDescriptorPoolCreateInfo inputPoolCreateInfo = {};
+	inputPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	inputPoolCreateInfo.maxSets = static_cast<uint32_t>(colorBufferImageView.size()); // can either use depthBufferImageView.size() or swapchainImages.size()
+	inputPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(inputPoolSizes.size());
+	inputPoolCreateInfo.pPoolSizes = inputPoolSizes.data();
+
+	VkResult result = vkCreateDescriptorPool(logicalDevice, &inputPoolCreateInfo, nullptr, &inputDescriptorPool);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create Input Descriptor pools.");
+	}
+}
+
+void VulkanRenderer::createUniforms()
+{
+	vpUniforms.resize(IMAGE_COUNT);
+	lightUniforms.resize(IMAGE_COUNT);
+	colorUniformsDynamic.resize(IMAGE_COUNT);
+
+	for (int i = 0; i < IMAGE_COUNT; i++)
+	{
+		uint32_t descriptorSetIndex;
+
+		descriptorSetIndex = 0;
+		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
+
+		descriptorSetIndex = 2;
+		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
+
+		descriptorSetIndex = 3;
+		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
+	}
+}
+
+void VulkanRenderer::createSubpassInputDescriptorSets()
+{
+	inputDescriptorSets.resize(IMAGE_COUNT);
+
+	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, inputDescriptorSetLayout);
+
+	VkDescriptorSetAllocateInfo setAllocInfo = {};
+	setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	setAllocInfo.descriptorPool = inputDescriptorPool;
+	setAllocInfo.descriptorSetCount = static_cast<uint32_t>(IMAGE_COUNT);
+	setAllocInfo.pSetLayouts = setLayouts.data();
+
+	VkResult result = vkAllocateDescriptorSets(logicalDevice, &setAllocInfo, inputDescriptorSets.data());
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to allocate Input Attachment descriptor sets.");
+	}
+
+	for (int i = 0; i < IMAGE_COUNT; i++)
+	{
+		VkDescriptorImageInfo colorAttachmentDescriptor = {};
+		colorAttachmentDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		colorAttachmentDescriptor.imageView = colorBufferImageView[i];
+		colorAttachmentDescriptor.sampler = VK_NULL_HANDLE;
+
+		// Color attachment descriptor write
+		VkWriteDescriptorSet colorWrite = {};
+		colorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		colorWrite.dstSet = inputDescriptorSets[i];
+		colorWrite.dstBinding = 0;
+		colorWrite.dstArrayElement = 0;
+		colorWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+		colorWrite.descriptorCount = 1;
+		colorWrite.pImageInfo = &colorAttachmentDescriptor;
+
+		VkDescriptorImageInfo depthAttachmentDescriptor = {};
+		depthAttachmentDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		depthAttachmentDescriptor.imageView = depthBufferImageView[i];
+		depthAttachmentDescriptor.sampler = VK_NULL_HANDLE;
+
+		// Color attachment descriptor write
+		VkWriteDescriptorSet depthWrite = {};
+		depthWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		depthWrite.dstSet = inputDescriptorSets[i];
+		depthWrite.dstBinding = 1;
+		depthWrite.dstArrayElement = 0;
+		depthWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+		depthWrite.descriptorCount = 1;
+		depthWrite.pImageInfo = &depthAttachmentDescriptor;
+
+		std::vector<VkWriteDescriptorSet> setWrites = { colorWrite, depthWrite };
+		vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(setWrites.size()), setWrites.data(), 0, nullptr);
+	}
+}
+
 void VulkanRenderer::createGraphicsPipeline()
 {
 	///////////////////////////////////
@@ -531,8 +735,8 @@ void VulkanRenderer::createGraphicsPipeline()
 	// SHADER STAGES SETUP
 
 	// build shader modules to link to graphics pipeline
-	VkShaderModule vertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_vert.spv"));
-	VkShaderModule fragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_frag.spv"));
+	VkShaderModule vertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_vert.spv"), context);
+	VkShaderModule fragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_frag.spv"), context);
 
 	// VERTEX STAGE CREATION
 	VkPipelineShaderStageCreateInfo vertexShaderStageCreateInfo = {};
@@ -758,8 +962,8 @@ void VulkanRenderer::createGraphicsPipeline()
 	// ----- SECOND PASS PIPELINE -----
 	///////////////////////////////////
 
-	VkShaderModule secondVertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_vert.spv"));
-	VkShaderModule secondFragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_frag.spv"));
+	VkShaderModule secondVertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_vert.spv"), context);
+	VkShaderModule secondFragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_frag.spv"), context);
 
 	// reusing shader create infos for previous pipeline
 	vertexShaderStageCreateInfo.module = secondVertexShaderModule;
@@ -803,28 +1007,6 @@ void VulkanRenderer::createGraphicsPipeline()
 
 	vkDestroyShaderModule(logicalDevice, secondVertexShaderModule, nullptr);
 	vkDestroyShaderModule(logicalDevice, secondFragmentShaderModule, nullptr);
-}
-
-void VulkanRenderer::createColorBufferImage()
-{
-	colorBufferImage.resize(IMAGE_COUNT);
-	colorBufferImageView.resize(IMAGE_COUNT);
-	colorBufferImageMemory.resize(IMAGE_COUNT);
-
-	// Get supported format for depth buffer
-	colorFormat = defineSupportedFormat(
-		{ VK_FORMAT_R8G8B8A8_UNORM },
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		// Create color buffer image
-		colorBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
-			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &colorBufferImageMemory[i], context);
-		colorBufferImageView[i] = VkUtils::createImageView(colorBufferImage[i], colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
-	}
 }
 
 void VulkanRenderer::createFramebuffers()
@@ -913,185 +1095,78 @@ void VulkanRenderer::createSyncTools()
 	}
 }
 
-void VulkanRenderer::createDescriptorSetLayouts()
+void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData)
 {
-	// Index here must match set's index in shader
-	setLayoutMap[0] = createDescriptorSetLayout(1, VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
-	setLayoutMap[1] = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context);
-	setLayoutMap[2] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
-	setLayoutMap[3] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, context);
+	VkCommandBufferBeginInfo bufferBeginInfo = {};
+	bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-	samplerDescriptorCreateInfo.samplerDescriptorSetLayout = setLayoutMap[1];
+	// Information about how to begin a render pass (only required for graphical apps)
+	VkRenderPassBeginInfo renderPassBeginInfo = {};
+	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassBeginInfo.renderPass = renderPass;
+	renderPassBeginInfo.renderArea.offset = { 0,0 };						// start point of render pass
+	renderPassBeginInfo.renderArea.extent = swapChainExtent;
 
-	// layout for second pass input attachment
-	inputDescriptorSetLayout = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, context);
-}
+	auto backgroundColor = VkUtils::getRGBANormalized(BACKGROUND_COLOR);
+	std::array<VkClearValue, 3> clearValues = {};
+	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };		// basically it doesn't matter what will be here
+	clearValues[1].color = { backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3] };
+	clearValues[2].depthStencil.depth = 1.0f;
 
-void VulkanRenderer::createUniforms()
-{
-	vpUniforms.resize(IMAGE_COUNT);
-	lightUniforms.resize(IMAGE_COUNT);
-	colorUniformsDynamic.resize(IMAGE_COUNT);
+	renderPassBeginInfo.pClearValues = clearValues.data();							// list of clear values
+	renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		uint32_t descriptorSetIndex;
+	renderPassBeginInfo.framebuffer = swapchainFramebuffers[currentImage];
 
-		descriptorSetIndex = 0;
-		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
-
-		descriptorSetIndex = 2;
-		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
-
-		descriptorSetIndex = 3;
-		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
-	}
-}
-
-void VulkanRenderer::createDepthBuffer()
-{
-	depthBufferImage.resize(IMAGE_COUNT);
-	depthBufferImageView.resize(IMAGE_COUNT);
-	depthBufferImageMemory.resize(IMAGE_COUNT);
-
-	// Get supported format for depth buffer
-	depthFormat = defineSupportedFormat(
-		{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT },
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		// Create depth buffer image
-		depthBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &depthBufferImageMemory[i], context);
-		depthBufferImageView[i] = VkUtils::createImageView(depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, context);
-	}
-}   
-
-void VulkanRenderer::createDescriptorPools()
-{
-	dynamicUniformDescriptorPool = VkUtils::createDescriptorPool(
-		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-		IMAGE_COUNT,
-		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-		context);
-	context.dynamicUniformDescriptorPool = dynamicUniformDescriptorPool;
-
-	// UNIFORM descriptor pool
-	uniformDescriptorPool = VkUtils::createDescriptorPool(
-		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		3 + MAX_LIGHT_SOURCES,
-		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, 
-		context);
-	context.uniformDescriptorPool = uniformDescriptorPool;
-
-	// CREATE INPUT ATTACHMENT DESCRIPTOR POOL
-	VkDescriptorPoolSize colorInputPoolSize = {};
-	colorInputPoolSize.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-	colorInputPoolSize.descriptorCount = static_cast<uint32_t>(colorBufferImageView.size());
-	VkDescriptorPoolSize depthInputPoolSize = {};
-	depthInputPoolSize.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-	depthInputPoolSize.descriptorCount = static_cast<uint32_t>(depthBufferImageView.size());
-
-	std::vector<VkDescriptorPoolSize> inputPoolSizes = { colorInputPoolSize, depthInputPoolSize };
-
-	VkDescriptorPoolCreateInfo inputPoolCreateInfo = {};
-	inputPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	inputPoolCreateInfo.maxSets = static_cast<uint32_t>(colorBufferImageView.size()); // can either use depthBufferImageView.size() or swapchainImages.size()
-	inputPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(inputPoolSizes.size());
-	inputPoolCreateInfo.pPoolSizes = inputPoolSizes.data();
-
-	VkResult result = vkCreateDescriptorPool(logicalDevice, &inputPoolCreateInfo, nullptr, &inputDescriptorPool);
+	// Start recording commands to command buffer 
+	VkResult result = vkBeginCommandBuffer(commandBuffers[currentImage], &bufferBeginInfo);
 	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to create Input Descriptor pools.");
+		throw std::runtime_error("Failed to start recording a command buffer.");
 	}
-}
 
-void VulkanRenderer::createSubpassInputDescriptorSets()
-{
-	inputDescriptorSets.resize(IMAGE_COUNT);
+	// Begin render pass
+	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
 
-	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, inputDescriptorSetLayout);
+	// bind pipeline to be used with render pass
+	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-	VkDescriptorSetAllocateInfo setAllocInfo = {};
-	setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	setAllocInfo.descriptorPool = inputDescriptorPool;
-	setAllocInfo.descriptorSetCount = static_cast<uint32_t>(IMAGE_COUNT);
-	setAllocInfo.pSetLayouts = setLayouts.data();
+	// bind (static) uniforms
+	if (vpUniforms.size() == IMAGE_COUNT)
+		vpUniforms[currentImage]->cmdBind(vpUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
 
-	VkResult result = vkAllocateDescriptorSets(logicalDevice, &setAllocInfo, inputDescriptorSets.data());
+	if (lightUniforms.size() == IMAGE_COUNT)
+		lightUniforms[currentImage]->cmdBind(lightUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
+
+	int meshCount = 0;
+	for (int i = 0; i < modelsToRender.size(); i++)
+	{
+		// bind dynamic uniforms (unique per object)
+		if (colorUniformsDynamic.size() == IMAGE_COUNT)
+			colorUniformsDynamic[currentImage]->cmdBind(i, colorUniformsDynamic[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
+
+		modelsToRender[i]->draw(commandBuffers[currentImage], pipelineLayout, *sceneCamera);
+	}
+
+	// Start second subpass
+	vkCmdNextSubpass(commandBuffers[currentImage], VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipeline);
+	vkCmdBindDescriptorSets(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipelineLayout,
+		0, 1, &inputDescriptorSets[currentImage], 0, nullptr);
+	vkCmdDraw(commandBuffers[currentImage], 3, 1, 0, 0);
+
+	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, commandBuffers[currentImage]);
+
+	// End render pass
+	vkCmdEndRenderPass(commandBuffers[currentImage]);
+
+	// Stop recording commands to command buffer 
+	result = vkEndCommandBuffer(commandBuffers[currentImage]);
 	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to allocate Input Attachment descriptor sets.");
+		throw std::runtime_error("Failed to stop recording a command buffer.");
 	}
-
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		VkDescriptorImageInfo colorAttachmentDescriptor = {};
-		colorAttachmentDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; 
-		colorAttachmentDescriptor.imageView = colorBufferImageView[i];
-		colorAttachmentDescriptor.sampler = VK_NULL_HANDLE;
-
-		// Color attachment descriptor write
-		VkWriteDescriptorSet colorWrite = {};
-		colorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		colorWrite.dstSet = inputDescriptorSets[i];
-		colorWrite.dstBinding = 0;
-		colorWrite.dstArrayElement = 0;
-		colorWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-		colorWrite.descriptorCount = 1;
-		colorWrite.pImageInfo = &colorAttachmentDescriptor;
-
-		VkDescriptorImageInfo depthAttachmentDescriptor = {};
-		depthAttachmentDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		depthAttachmentDescriptor.imageView = depthBufferImageView[i];
-		depthAttachmentDescriptor.sampler = VK_NULL_HANDLE;
-
-		// Color attachment descriptor write
-		VkWriteDescriptorSet depthWrite = {};
-		depthWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		depthWrite.dstSet = inputDescriptorSets[i];
-		depthWrite.dstBinding = 1;
-		depthWrite.dstArrayElement = 0;
-		depthWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-		depthWrite.descriptorCount = 1;
-		depthWrite.pImageInfo = &depthAttachmentDescriptor;
-
-		std::vector<VkWriteDescriptorSet> setWrites = { colorWrite, depthWrite };
-		vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(setWrites.size()), setWrites.data(), 0, nullptr);
-	}
-}
-
-void VulkanRenderer::createPushConstantRange()
-{
-	// Defines push constant values
-	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantRange.offset = 0;
-	pushConstantRange.size = sizeof(PushConstant);
-}
-	
-
-VkSurfaceFormatKHR VulkanRenderer::defineSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats)
-{
-	// If only 1 format available and is undefined, then this means ALL formats are available (no restrictions)
-	if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
-	{
-		return { SURFACE_COLOR_FORMAT, SURFACE_COLOR_SPACE };
-	}
-
-	// If restricted, search for optimal format
-	for (const auto& format : formats)
-	{
-		if (format.format == SURFACE_COLOR_FORMAT && format.colorSpace == SURFACE_COLOR_SPACE)
-		{
-			return format;
-		}
-	}
-
-	// If can't find optimal format, then just return first format
-	return formats[0];
 }
 
 void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
@@ -1136,122 +1211,6 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 	}
 }
 
-void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData)
-{
-	VkCommandBufferBeginInfo bufferBeginInfo = {};
-	bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-	// Information about how to begin a render pass (only required for graphical apps)
-	VkRenderPassBeginInfo renderPassBeginInfo = {};
-	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassBeginInfo.renderPass = renderPass;
-	renderPassBeginInfo.renderArea.offset = { 0,0 };						// start point of render pass
-	renderPassBeginInfo.renderArea.extent = swapChainExtent;
-	
-	auto backgroundColor = VkUtils::getRGBANormalized(BACKGROUND_COLOR);
-	std::array<VkClearValue, 3> clearValues = {};
-	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };		// basically it doesn't matter what will be here
-	clearValues[1].color = {  backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3] };
-	clearValues[2].depthStencil.depth = 1.0f;
-
-	renderPassBeginInfo.pClearValues = clearValues.data();							// list of clear values
-	renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-
-	renderPassBeginInfo.framebuffer = swapchainFramebuffers[currentImage];
-
-	// Start recording commands to command buffer 
-	VkResult result = vkBeginCommandBuffer(commandBuffers[currentImage], &bufferBeginInfo);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to start recording a command buffer.");
-	}
-
-	// Begin render pass
-	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
-
-	// bind pipeline to be used with render pass
-	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-
-	// bind (static) uniforms
-	if(vpUniforms.size() == IMAGE_COUNT)
-		vpUniforms[currentImage]->cmdBind(vpUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
-
-	if(lightUniforms.size() == IMAGE_COUNT)
-		lightUniforms[currentImage]->cmdBind(lightUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
-
-	int meshCount = 0;
-	for (int i = 0; i < modelsToRender.size(); i++)
-	{
-		// bind dynamic uniforms (unique per object)
-		if(colorUniformsDynamic.size() == IMAGE_COUNT)
-			colorUniformsDynamic[currentImage]->cmdBind(i, colorUniformsDynamic[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
-
-		modelsToRender[i]->draw(commandBuffers[currentImage], pipelineLayout, *sceneCamera);
-	}
-
-	// Start second subpass
-	vkCmdNextSubpass(commandBuffers[currentImage], VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipeline);
-	vkCmdBindDescriptorSets(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipelineLayout,
-		0, 1, &inputDescriptorSets[currentImage], 0, nullptr);
-	vkCmdDraw(commandBuffers[currentImage], 3, 1, 0, 0);
-
-	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, commandBuffers[currentImage]);
-
-	// End render pass
-	vkCmdEndRenderPass(commandBuffers[currentImage]);
-
-	// Stop recording commands to command buffer 
-	result = vkEndCommandBuffer(commandBuffers[currentImage]);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to stop recording a command buffer.");
-	}
-}
-
-VkPresentModeKHR VulkanRenderer::definePresentationMode(const std::vector<VkPresentModeKHR> presentationModes)
-{
-	// Look for Mailbox presentation mode
-	for (const auto& presentationMode : presentationModes)
-	{
-		if (presentationMode == SURFACE_PRESENTATION_MODE)
-		{
-			return presentationMode;
-		}
-	}
-
-	// If can't find, use FIFO as Vulkan spec says it must be present
-	return VK_PRESENT_MODE_FIFO_KHR;
-}
-
-VkExtent2D VulkanRenderer::defineSwapChainExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities)
-{
-	// If current extent is at numeric limits, then extent can vary. Otherwise, it is the size of the window.
-	if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-	{
-		return surfaceCapabilities.currentExtent;
-	}
-	else
-	{
-		// If value can vary, need to set manually
-
-		// Get window size
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
-
-		// Create new extent using window size
-		VkExtent2D newExtent = {};
-		newExtent.width = static_cast<uint32_t>(width);
-		newExtent.height = static_cast<uint32_t>(height);
-
-		// Surface also defines max and min, so make sure within boundaries by clamping value
-		newExtent.width = std::max(surfaceCapabilities.minImageExtent.width, std::min(surfaceCapabilities.maxImageExtent.width, newExtent.width));
-		newExtent.height = std::max(surfaceCapabilities.minImageExtent.height, std::min(surfaceCapabilities.maxImageExtent.height, newExtent.height));
-
-		return newExtent;
-	}
-}
 
 void VulkanRenderer::draw()
 {
@@ -1402,6 +1361,10 @@ bool VulkanRenderer::removeFromRenderer(int modelId)
 	return false;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// HELPER FUNCTIONS
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void VulkanRenderer::setupDebugMessenger()
 {
 	if (!ENABLE_VALIDATION_LAYERS)
@@ -1413,6 +1376,70 @@ void VulkanRenderer::setupDebugMessenger()
 	if (VkUtils::createDebugUtilsMessengerEXT(vkInstance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to set up debug messenger.");
+	}
+}
+
+VkSurfaceFormatKHR VulkanRenderer::defineSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats)
+{
+	// If only 1 format available and is undefined, then this means ALL formats are available (no restrictions)
+	if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
+	{
+		return { SURFACE_COLOR_FORMAT, SURFACE_COLOR_SPACE };
+	}
+
+	// If restricted, search for optimal format
+	for (const auto& format : formats)
+	{
+		if (format.format == SURFACE_COLOR_FORMAT && format.colorSpace == SURFACE_COLOR_SPACE)
+		{
+			return format;
+		}
+	}
+
+	// If can't find optimal format, then just return first format
+	return formats[0];
+}
+
+VkPresentModeKHR VulkanRenderer::definePresentationMode(const std::vector<VkPresentModeKHR> presentationModes)
+{
+	// Look for Mailbox presentation mode
+	for (const auto& presentationMode : presentationModes)
+	{
+		if (presentationMode == SURFACE_PRESENTATION_MODE)
+		{
+			return presentationMode;
+		}
+	}
+
+	// If can't find, use FIFO as Vulkan spec says it must be present
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkExtent2D VulkanRenderer::defineSwapChainExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities)
+{
+	// If current extent is at numeric limits, then extent can vary. Otherwise, it is the size of the window.
+	if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+	{
+		return surfaceCapabilities.currentExtent;
+	}
+	else
+	{
+		// If value can vary, need to set manually
+
+		// Get window size
+		int width, height;
+		glfwGetFramebufferSize(window, &width, &height);
+
+		// Create new extent using window size
+		VkExtent2D newExtent = {};
+		newExtent.width = static_cast<uint32_t>(width);
+		newExtent.height = static_cast<uint32_t>(height);
+
+		// Surface also defines max and min, so make sure within boundaries by clamping value
+		newExtent.width = std::max(surfaceCapabilities.minImageExtent.width, std::min(surfaceCapabilities.maxImageExtent.width, newExtent.width));
+		newExtent.height = std::max(surfaceCapabilities.minImageExtent.height, std::min(surfaceCapabilities.maxImageExtent.height, newExtent.height));
+
+		return newExtent;
 	}
 }
 
@@ -1497,100 +1524,6 @@ bool VulkanRenderer::isDeviceSupportsRequiredExtensions(VkPhysicalDevice device)
 	return true;
 }
 
-/*
-	ImGui initialization, creation and cleanup functions 
-*/
-
-/// <summary>
-/// Initializes IMGUI context and required IMGUI implementations
-/// </summary>
-void VulkanRenderer::setupImgui()
-{
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	imguiIO = ImGui::GetIO(); (void)imguiIO;
-	imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-
-	ImGui::StyleColorsDark();
-
-	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForVulkan(window, true);
-	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.ApiVersion = VK_API_VERSION_1_4;              // Pass in your value of VkApplicationInfo::apiVersion, otherwise will default to header version.
-	init_info.Instance = vkInstance;
-	init_info.PhysicalDevice = physicalDevice;
-	init_info.Device = logicalDevice;
-	init_info.QueueFamily = getQueueFamilies(physicalDevice).graphicsFamily;
-	init_info.Queue = graphicsQueue;
-	init_info.DescriptorPool = imguiDescriptorPool;
-	init_info.RenderPass = renderPass;
-	init_info.Subpass = 1;
-	init_info.MinImageCount = 2;
-	init_info.ImageCount = 3;
-	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-	init_info.CheckVkResultFn = VkUtils::check_vk_result;
-	ImGui_ImplVulkan_Init(&init_info);
-}
-
-/// <summary>
-/// Prepares new imgui frame. Look for actual Imgui draw call in recordCommands() method.
-/// </summary>
-/// <returns></returns>
-ImDrawData* VulkanRenderer::drawImgui()
-{
-	// Start the Dear ImGui frame
-	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
-	imguiCallback();
-
-	// Rendering
-	ImGui::Render();
-	ImDrawData* draw_data = ImGui::GetDrawData();
-
-	return draw_data;
-}
-
-/// <summary>
-/// Creates descriptor pool required for IMGUI context. Descriptor sets creation is handled by IMGUI itself.
-/// </summary>
-void VulkanRenderer::createImguiDescriptorPool()
-{
-	VkDescriptorPoolSize pool_sizes[] =
-	{
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE },
-	};
-	VkDescriptorPoolCreateInfo pool_info = {};
-	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	pool_info.maxSets = 0;
-	for (VkDescriptorPoolSize& pool_size : pool_sizes)
-		pool_info.maxSets += pool_size.descriptorCount;
-	pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
-	pool_info.pPoolSizes = pool_sizes;
-	VkResult result  = vkCreateDescriptorPool(logicalDevice, &pool_info, nullptr, &imguiDescriptorPool);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create IMGUI Descriptor pool.");
-	}
-}
-
-void VulkanRenderer::cleanupImgui()
-{
-	ImGui_ImplVulkan_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
-
-	vkDestroyDescriptorPool(logicalDevice, imguiDescriptorPool, nullptr);
-}
-
-/*
-	Vulkan helper functions
-*/
-
-
-
 bool VulkanRenderer::isDeviceSuitable(VkPhysicalDevice device)
 {
 	//VkPhysicalDeviceProperties deviceProperties;
@@ -1660,32 +1593,6 @@ VkUtils::QueueFamilyIndices VulkanRenderer::getQueueFamilies(VkPhysicalDevice de
 	}
 
 	return indices;
-}
-
-void VulkanRenderer::createTextureSampler()
-{
-	VkSamplerCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	createInfo.magFilter = VK_FILTER_LINEAR;
-	createInfo.minFilter = VK_FILTER_LINEAR;
-	createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	createInfo.unnormalizedCoordinates = VK_FALSE;
-	createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	createInfo.mipLodBias = 0.0f;
-	createInfo.maxLod = 0.0f;
-	createInfo.minLod = 0.0f;
-	createInfo.anisotropyEnable = VK_FALSE;
-	createInfo.maxAnisotropy = 16;
-
-	VkResult result = vkCreateSampler(logicalDevice, &createInfo, nullptr, &textureSampler);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create texture sampler.");
-	}
-
-	samplerDescriptorCreateInfo.sampler = textureSampler;
 }
 
 VkUtils::SwapChainDetails VulkanRenderer::getSwapChainDetails(VkPhysicalDevice device)
@@ -1765,23 +1672,94 @@ void VulkanRenderer::printPhysicalDeviceInfo(VkPhysicalDevice device, bool print
 
 	VkPhysicalDeviceFeatures deviceFeatures;
 	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-	
+
 	// TODO Print device features info
 }
 
-VkShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code)
-{
-	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
-	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	shaderModuleCreateInfo.codeSize = code.size();
-	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+/*
+	ImGui initialization, creation and cleanup functions
+*/
 
-	VkShaderModule shaderModule;
-	VkResult result = vkCreateShaderModule(logicalDevice, &shaderModuleCreateInfo, nullptr, &shaderModule);
+/// <summary>
+/// Initializes IMGUI context and required IMGUI implementations
+/// </summary>
+void VulkanRenderer::setupImgui()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	imguiIO = ImGui::GetIO(); (void)imguiIO;
+	imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+
+	ImGui::StyleColorsDark();
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplGlfw_InitForVulkan(window, true);
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.ApiVersion = VK_API_VERSION_1_4;              // Pass in your value of VkApplicationInfo::apiVersion, otherwise will default to header version.
+	init_info.Instance = vkInstance;
+	init_info.PhysicalDevice = physicalDevice;
+	init_info.Device = logicalDevice;
+	init_info.QueueFamily = getQueueFamilies(physicalDevice).graphicsFamily;
+	init_info.Queue = graphicsQueue;
+	init_info.DescriptorPool = imguiDescriptorPool;
+	init_info.RenderPass = renderPass;
+	init_info.Subpass = 1;
+	init_info.MinImageCount = 2;
+	init_info.ImageCount = 3;
+	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	init_info.CheckVkResultFn = VkUtils::check_vk_result;
+	ImGui_ImplVulkan_Init(&init_info);
+}
+
+/// <summary>
+/// Prepares new imgui frame. Look for actual Imgui draw call in recordCommands() method.
+/// </summary>
+/// <returns></returns>
+ImDrawData* VulkanRenderer::drawImgui()
+{
+	// Start the Dear ImGui frame
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	imguiCallback();
+
+	// Rendering
+	ImGui::Render();
+	ImDrawData* draw_data = ImGui::GetDrawData();
+
+	return draw_data;
+}
+
+/// <summary>
+/// Creates descriptor pool required for IMGUI context. Descriptor sets creation is handled by IMGUI itself.
+/// </summary>
+void VulkanRenderer::createImguiDescriptorPool()
+{
+	VkDescriptorPoolSize pool_sizes[] =
+	{
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE },
+	};
+	VkDescriptorPoolCreateInfo pool_info = {};
+	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	pool_info.maxSets = 0;
+	for (VkDescriptorPoolSize& pool_size : pool_sizes)
+		pool_info.maxSets += pool_size.descriptorCount;
+	pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+	pool_info.pPoolSizes = pool_sizes;
+	VkResult result = vkCreateDescriptorPool(logicalDevice, &pool_info, nullptr, &imguiDescriptorPool);
 	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to create shader module.");
+		throw std::runtime_error("Failed to create IMGUI Descriptor pool.");
 	}
+}
 
-	return shaderModule;
+void VulkanRenderer::cleanupImgui()
+{
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	vkDestroyDescriptorPool(logicalDevice, imguiDescriptorPool, nullptr);
 }

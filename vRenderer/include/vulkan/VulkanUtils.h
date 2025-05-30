@@ -583,4 +583,22 @@ namespace VkUtils
 
 		return layout;
 	}
+
+
+	static VkShaderModule createShaderModule(const std::vector<char>& code, VkContext context)
+	{
+		VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
+		shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shaderModuleCreateInfo.codeSize = code.size();
+		shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+		VkShaderModule shaderModule;
+		VkResult result = vkCreateShaderModule(context.logicalDevice, &shaderModuleCreateInfo, nullptr, &shaderModule);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create shader module.");
+		}
+
+		return shaderModule;
+	}
 }
