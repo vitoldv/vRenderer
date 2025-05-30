@@ -38,6 +38,10 @@ layout(set = 3, binding = 0) uniform LightsUniform {
     Light lights[MAX_LIGHT_SOURCES];
 } lightUniform;
 
+layout(set = 4, binding = 0) uniform ColorDynamicUniform{
+    vec4 color;
+} colorUniform;
+
 layout(location = 0) out vec4 outColor;     // final output color
 
 vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir);
@@ -89,7 +93,8 @@ void main()
     // Light application
     result = shading * result;
 
-    outColor = vec4(result, 1.0);
+    //outColor = vec4(result, 1.0);
+    outColor = colorUniform.color;
 }
 
 // Returns a vector of Phong shading impact

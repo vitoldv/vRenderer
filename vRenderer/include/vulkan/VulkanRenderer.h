@@ -29,6 +29,7 @@
 #include "VkModel.h"
 #include "VulkanUtils.h"
 #include "VkUniform.hpp"
+#include "VkUniformDynamic.hpp"
 #include "BaseCamera.h"
 #include "Lighting.h"
 
@@ -107,17 +108,11 @@ private:
 	VkDescriptorSetLayout vkInputDescriptorSetLayout;		// input to subpass 2
 
 	VkDescriptorPool uniformDescriptorPool;
+	VkDescriptorPool dynamicUniformDescriptorPool;
 	VkDescriptorPool vkInputDescriptorPool;
 	std::vector<VkDescriptorSet> vkInputDescriptorSets;
 
-	VkDeviceSize minUniformBufferOffset;
 	VkPushConstantRange vkPushConstantRange;
-
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	// UboModel* modelTransferSpace;	
-	// size_t modelUniformAlignment;
-	//std::vector<VkBuffer> uniformBuffersDynamic;
-	//std::vector<VkDeviceMemory> uniformBuffersMemoryDynamic;
 
 	// Utility
 	VkFormat swapChainImageFormat;
@@ -139,6 +134,7 @@ private:
 	// Uniforms
 	std::vector<std::unique_ptr<VkUniform<UboLightArray>>> lightUniforms;
 	std::vector<std::unique_ptr<VkUniform<UboViewProjection>>> vpUniforms;
+	std::vector<std::unique_ptr<VkUniformDynamic<UboDynamicColor>>> colorUniformsDynamic;
 
 	// Textures
 	VkSampler vkTextureSampler;
@@ -212,9 +208,6 @@ private:
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	void recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData);
 	void updateUniformBuffers(uint32_t imageIndex);
-	
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	//void allocateDynamicBufferTransferSpace();
 
 	bool isInstanceExtensionsSupported(std::vector<const char*>* extensions);
 	bool isDeviceSupportsRequiredExtensions(VkPhysicalDevice device);

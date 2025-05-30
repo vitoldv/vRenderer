@@ -1,3 +1,4 @@
+#pragma once
 template<typename T>
 inline VkUniform<T>::VkUniform(VkShaderStageFlagBits shaderStageFlags, VkContext context)
 {
@@ -16,13 +17,20 @@ inline VkUniform<T>::~VkUniform()
 	//cleanup();
 }
 
+
+template<typename T>
+inline size_t VkUniform<T>::getBufferSize()
+{
+	return sizeof(T);
+}
+
 template<typename T>
 inline void VkUniform<T>::update(const T& data)
 {
 	// Copy uniform data
 	void* dataPtr;
-	vkMapMemory(context.logicalDevice, memory, 0, sizeof(T), 0, &dataPtr);
-	memcpy(dataPtr, &data, sizeof(T));
+	vkMapMemory(context.logicalDevice, memory, 0, getBufferSize(), 0, &dataPtr);
+	memcpy(dataPtr, &data, getBufferSize());
 	vkUnmapMemory(context.logicalDevice, memory);
 }
 
@@ -75,7 +83,7 @@ inline void VkUniform<T>::create()
 	// Buffer creation
 	{
 		// Buffer size should be the size of data we pass as uniforms
-		VkDeviceSize bufferSize = sizeof(T);
+		VkDeviceSize bufferSize = getBufferSize();
 		createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &buffer, &memory);
 	}
@@ -100,23 +108,7 @@ inline void VkUniform<T>::create()
 		VkDescriptorBufferInfo descriptorBufferInfo = {};
 		descriptorBufferInfo.buffer = buffer;
 		descriptorBufferInfo.offset = 0;
-		descriptorBufferInfo.range = sizeof(T);
-
-		// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-		// //DYNAMIC UNIFORM BUFFER (used for passing specific model's transform)
-		//VkDescriptorBufferInfo modelBufferInfo = {};
-		//modelBufferInfo.buffer = uniformBuffersDynamic[i];
-		//modelBufferInfo.offset = 0;
-		//modelBufferInfo.range = modelUniformAlignment;
-		//VkWriteDescriptorSet modelSetWrite = {};
-		//modelSetWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		//modelSetWrite.dstSet = this->vkDescriptorSets[i];
-		//modelSetWrite.dstBinding = 1;
-		//modelSetWrite.dstArrayElement = 0;
-		//modelSetWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		//modelSetWrite.descriptorCount = 1;
-		//modelSetWrite.pBufferInfo = &modelBufferInfo;
-		//std::vector<VkWriteDescriptorSet> setWrites = { vpSetWrite, modelSetWrite };
+		descriptorBufferInfo.range = getBufferSize();
 
 		VkWriteDescriptorSet setWrite = {};
 		setWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -130,3 +122,4 @@ inline void VkUniform<T>::create()
 		vkUpdateDescriptorSets(context.logicalDevice, 1, &setWrite, 0, nullptr);
 	}
 }
+

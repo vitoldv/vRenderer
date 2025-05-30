@@ -12,6 +12,7 @@
 #include "VkMesh.h"
 #include "VkMaterial.h"
 #include "BaseCamera.h"
+#include <functional>
 
 using namespace VkUtils;
 
@@ -30,7 +31,7 @@ public:
 	const VkMesh* getMesh(uint32_t id) const;
 	const std::vector<VkMesh*>& getMeshes() const;
 
-	void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, BaseCamera* camera);
+	void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, BaseCamera* camera, std::function<void(int)> callback);
 
 	void setTransform(glm::mat4 transform);
 

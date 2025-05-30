@@ -20,21 +20,19 @@ public:
 
 	void cleanup();
 
-private:
-	//std::vector<VkBuffer> lightUniformBuffers;
-	//std::vector<VkDeviceMemory> lightUniformMemory;
-	//VkDescriptorSetLayout vkLightDescriptorSetLayout;
-	//std::vector<VkDescriptorSet> vkLightDescriptorSets;
+protected:
 
 	VkBuffer buffer;
 	VkDeviceMemory memory;
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorSet descriptorSet;
 
-	VkShaderStageFlagBits shaderStage;
 	VkContext context;
+	VkShaderStageFlagBits shaderStage;
 
 	void create();
+
+	size_t getBufferSize();
 };
 
 #include "VkUniform.ipp"

@@ -16,6 +16,8 @@
 // Macro to be used on uniform struct declaration to satisfy std140 alignment
 #define ALIGN_STD140 alignas(16)
 
+#define MAX_OBJECTS 100
+
 namespace VkUtils
 {
 	struct Vertex
@@ -62,6 +64,11 @@ namespace VkUtils
 		// Spotlight components
 		float cutOff;
 		float outerCutOff;
+	};
+
+	struct ALIGN_STD140 UboDynamicColor
+	{
+		glm::vec4 color;
 	};
 
 	/*
@@ -123,9 +130,13 @@ namespace VkUtils
 		VkCommandPool graphicsCommandPool;
 
 		VkDescriptorPool uniformDescriptorPool;
+		VkDescriptorPool dynamicUniformDescriptorPool;
+		
 		//// Texturing
 		//VkSampler vkTextureSampler;
 		//VkDescriptorSetLayout samplerDescriptorSetLayout;
+
+		VkDeviceSize minUniformBufferOffset;
 	};
 
 	struct VkSamplerDescriptorSetCreateInfo

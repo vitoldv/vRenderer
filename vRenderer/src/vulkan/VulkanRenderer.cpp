@@ -66,9 +66,6 @@ void VulkanRenderer::cleanup()
 
 	vkDestroyDescriptorSetLayout(this->vkLogicalDevice, this->vkSamplerDescriptorSetLayout, nullptr); 
 	vkDestroySampler(this->vkLogicalDevice, this->vkTextureSampler, nullptr);
-
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	//_aligned_free(modelTransferSpace);
 	 
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
@@ -84,17 +81,15 @@ void VulkanRenderer::cleanup()
 		vkFreeMemory(this->vkLogicalDevice, depthBufferImageMemory[i], nullptr);
 	}
 
-
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		vpUniforms[i]->cleanup();
 		lightUniforms[i]->cleanup();
-		// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-		//vkDestroyBuffer(this->vkLogicalDevice, uniformBuffersDynamic[i], nullptr);
-		//vkFreeMemory(this->vkLogicalDevice, uniformBuffersMemoryDynamic[i], nullptr);
+		colorUniformsDynamic[i]->cleanup();
 	}
 
 	vkDestroyDescriptorPool(this->vkLogicalDevice, this->uniformDescriptorPool, nullptr);
+	vkDestroyDescriptorPool(this->vkLogicalDevice, this->dynamicUniformDescriptorPool, nullptr);
 
 	for (int i = 0; i < MAX_FRAME_DRAWS; i++)
 	{
@@ -231,7 +226,7 @@ void VulkanRenderer::retrievePhysicalDevice()
 	VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(this->vkPhysicalDevice, &deviceProperties);
 	
-	minUniformBufferOffset = deviceProperties.limits.minUniformBufferOffsetAlignment;
+	context.minUniformBufferOffset = deviceProperties.limits.minUniformBufferOffsetAlignment;
 	
 	context.physicalDevice = vkPhysicalDevice;
 }
@@ -685,11 +680,12 @@ void VulkanRenderer::createGraphicsPipeline()
 
 	// PIPELINE LAYOUT SETUP (DESCRIPTORS AND PUSH CONSTANTS LAYOUT)
 	{
-		std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = {
+		std::array<VkDescriptorSetLayout, 5> descriptorSetLayouts = {
 			this->vpUniforms[0]->getDescriptorLayout(),
 			this->vkSamplerDescriptorSetLayout,
 			this->vkSamplerDescriptorSetLayout,
-			this->lightUniforms[0]->getDescriptorLayout()
+			this->lightUniforms[0]->getDescriptorLayout(),
+			this->colorUniformsDynamic[0]->getDescriptorLayout()
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
@@ -976,27 +972,15 @@ void VulkanRenderer::createDescriptorSetLayout()
 
 void VulkanRenderer::createUniforms()
 {
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	//allocateDynamicBufferTransferSpace();
-
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	// Model Buffer size
-	//VkDeviceSize modelBufferSize = modelUniformAlignment * MAX_OBJECTS;;
-
 	vpUniforms.resize(IMAGE_COUNT);
 	lightUniforms.resize(IMAGE_COUNT);
-
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	//uniformBuffersDynamic.resize(swapchainImages.size());
-	//uniformBuffersMemoryDynamic.resize(swapchainImages.size());
+	colorUniformsDynamic.resize(IMAGE_COUNT);
 
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(VK_SHADER_STAGE_VERTEX_BIT, context);
 		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(VK_SHADER_STAGE_FRAGMENT_BIT, context);
-		// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-		//createBuffer(this->vkPhysicalDevice, this->vkLogicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformBuffersDynamic[i], &uniformBuffersMemoryDynamic[i]);
+		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>(VK_SHADER_STAGE_FRAGMENT_BIT, context);
 	}
 }
 
@@ -1023,11 +1007,12 @@ void VulkanRenderer::createDepthBuffer()
 
 void VulkanRenderer::createDescriptorPools()
 {
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	//VkDescriptorPoolSize poolSizeDynamic = {};
-	//poolSizeDynamic.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-	//poolSizeDynamic.descriptorCount = static_cast<uint32_t>(uniformBuffersDynamic.size());
-	//std::vector<VkDescriptorPoolSize> descriptorPoolSizes = {poolSize, poolSizeDynamic};
+	dynamicUniformDescriptorPool = VkUtils::createDescriptorPool(
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+		IMAGE_COUNT,
+		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		context);
+	context.dynamicUniformDescriptorPool = dynamicUniformDescriptorPool;
 
 	// UNIFORM descriptor pool
 	uniformDescriptorPool = VkUtils::createDescriptorPool(
@@ -1187,30 +1172,18 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 		lightUniforms[imageIndex]->update(uboLightArray);
 	}
 
-	// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-	//// Copy dynamic uniform data (model transform matrix)
-	//int modelCount = 0;
-	//for (auto pair : meshesToRender)
-	//{
-	//	VkMesh mesh = pair.second;
-	//	UboModel* thisModel = (UboModel*)((InputState)modelTransferSpace + (modelCount * modelUniformAlignment));
-	//	*thisModel = mesh.getModelMatrix();
-	//	modelCount++;
-	//}
-	//vkMapMemory(this->vkLogicalDevice, uniformBuffersMemoryDynamic[imageIndex], 0, modelUniformAlignment * meshesToRender.size(), 0, &data);
-	//memcpy(data, modelTransferSpace, modelUniformAlignment * meshesToRender.size());
-	//vkUnmapMemory(this->vkLogicalDevice, uniformBuffersMemoryDynamic[imageIndex]);
+	{
+		if (modelsToRender.size() > 0)
+		{
+			std::vector<UboDynamicColor> colors(modelsToRender[0]->getMeshCount());
+			for (int i = 0; i < colors.size(); i++)
+			{
+				colors[i] = { glm::vec4((float)i / 10.0f, 0.0f, 0.0f, 1.0f) };
+			}
+			colorUniformsDynamic[imageIndex]->update(colors.data(), modelsToRender[0]->getMeshCount());
+		}
+	}
 }
-
-// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-//void VulkanRenderer::allocateDynamicBufferTransferSpace()
-//{
-//	// Calculate alignbment of model data
-//	modelUniformAlignment = (sizeof(UboModel) + minUniformBufferOffset - 1) & ~(minUniformBufferOffset - 1);
-//
-//	// Create space in memory to hold dynamic buffer that is alighned to our required alignment and holds MAX_OBJECTS
-//	modelTransferSpace = (UboModel*)_aligned_malloc(modelUniformAlignment * MAX_OBJECTS, modelUniformAlignment);
-//}
 
 void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData)
 {
@@ -1249,12 +1222,16 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	vkCmdBindPipeline(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkGraphicsPipeline);
 
 	vpUniforms[currentImage]->cmdBind(0, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
+	// sets 1 and 2 are diffuseMap and specularMap
 	lightUniforms[currentImage]->cmdBind(3, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
 
+
 	int meshCount = 0;
-	for (auto& model : modelsToRender)
+	for (int i = 0; i < modelsToRender.size(); i++)
 	{
-		model->draw(this->vkCommandBuffers[currentImage], this->vkPipelineLayout, this->mainCamera);
+		modelsToRender[i]->draw(this->vkCommandBuffers[currentImage], this->vkPipelineLayout, this->mainCamera, [&](int call) {
+			colorUniformsDynamic[currentImage]->cmdBind(call, 4, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
+		});
 	}
 
 	// Start second subpass
@@ -1349,10 +1326,9 @@ void VulkanRenderer::draw()
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(this->vkLogicalDevice, this->vkSwapchain, std::numeric_limits<InputState>::max(), this->vkSemImageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
+	updateUniformBuffers(imageIndex);
 	recordCommands(imageIndex, *imguiDrawData);
 	
-	updateUniformBuffers(imageIndex);
-
 	// -- 2
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
