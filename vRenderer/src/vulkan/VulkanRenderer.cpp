@@ -1148,21 +1148,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 		{
 			if (i < lightSources.size())
 			{
-				auto* light = lightSources[i];
-				auto& uboLight = uboLightArray.lights[i];
-
-				uboLight.type = light->type;
-				uboLight.color = glm::vec4(light->color, 0.0f);
-				uboLight.direction = glm::vec4(light->direction, 0.0f);
-				uboLight.position = glm::vec4(light->position, 0.0f);
-				uboLight.ambientStrength = light->ambientStrength;
-				uboLight.specularStrength = light->specularStrength;
-				uboLight.shininess = light->shininess;
-				uboLight.constant = light->constant;
-				uboLight.linear = light->linear;
-				uboLight.quadratic = light->quadratic;
-				uboLight.cutOff = light->cutOff;
-				uboLight.outerCutOff = light->outerCutOff;
+				uboLightArray.lights[i] = *lightSources[i];
 			}
 			else
 			{

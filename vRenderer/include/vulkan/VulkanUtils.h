@@ -51,12 +51,12 @@ namespace VkUtils
 		// 1 - directional
 		// 2 - point
 		// 3 - spot
-		Light::Type type;
+		uint32_t type;
 
 		// Phong
 		float ambientStrength;
 		float specularStrength;
-		int shininess;
+		uint32_t shininess;
 
 		// Attenuation
 		float constant;
@@ -65,6 +65,23 @@ namespace VkUtils
 		// Spotlight components
 		float cutOff;
 		float outerCutOff;
+
+		UboLight& operator = (const Light& genericLight)
+		{
+			type = static_cast<uint32_t>(genericLight.type);
+			color = glm::vec4(genericLight.color, 0.0f);
+			direction = glm::vec4(genericLight.direction, 0.0f);		// w = 0.0 for directions (though)
+			position = glm::vec4(genericLight.position, 1.0f);			// w = 1.0 for position
+			ambientStrength = genericLight.ambientStrength;
+			specularStrength = genericLight.specularStrength;
+			shininess = genericLight.shininess;
+			constant = genericLight.constant;
+			linear = genericLight.linear;
+			quadratic = genericLight.quadratic;
+			cutOff = genericLight.cutOff;
+			outerCutOff = genericLight.outerCutOff;
+			return *this;
+		}
 	};
 
 	struct ALIGN_STD140 UboDynamicColor
