@@ -628,26 +628,12 @@ void VulkanRenderer::createDescriptorPools()
 	context.uniformDescriptorPool = uniformDescriptorPool;
 
 	// CREATE INPUT ATTACHMENT DESCRIPTOR POOL
-	VkDescriptorPoolSize colorInputPoolSize = {};
-	colorInputPoolSize.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-	colorInputPoolSize.descriptorCount = static_cast<uint32_t>(colorBufferImageView.size());
-	VkDescriptorPoolSize depthInputPoolSize = {};
-	depthInputPoolSize.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-	depthInputPoolSize.descriptorCount = static_cast<uint32_t>(depthBufferImageView.size());
-
-	std::vector<VkDescriptorPoolSize> inputPoolSizes = { colorInputPoolSize, depthInputPoolSize };
-
-	VkDescriptorPoolCreateInfo inputPoolCreateInfo = {};
-	inputPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	inputPoolCreateInfo.maxSets = static_cast<uint32_t>(colorBufferImageView.size()); // can either use depthBufferImageView.size() or swapchainImages.size()
-	inputPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(inputPoolSizes.size());
-	inputPoolCreateInfo.pPoolSizes = inputPoolSizes.data();
-
-	VkResult result = vkCreateDescriptorPool(logicalDevice, &inputPoolCreateInfo, nullptr, &inputDescriptorPool);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create Input Descriptor pools.");
-	}
+	inputDescriptorPool = createDescriptorPool(
+		VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+		// IMAGE_COUNT for both depth and color, thus multiplied by 2
+		IMAGE_COUNT * 2,									
+		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		context);
 }
 
 void VulkanRenderer::createUniforms()

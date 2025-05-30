@@ -478,15 +478,15 @@ namespace VkUtils
 		return imageView;
 	}
 
-	static VkDescriptorPool createDescriptorPool(VkDescriptorType type, uint32_t count, VkDescriptorPoolCreateFlagBits flags, VkContext context)
+	static VkDescriptorPool createDescriptorPool(VkDescriptorType type, uint32_t size, VkDescriptorPoolCreateFlagBits flags, VkContext context)
 	{
 		VkDescriptorPoolSize poolSize = {};
 		poolSize.type = type;
-		poolSize.descriptorCount = count;
+		poolSize.descriptorCount = size;
 
 		VkDescriptorPoolCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		createInfo.maxSets = count;
+		createInfo.maxSets = size;
 		createInfo.poolSizeCount = 1;
 		createInfo.pPoolSizes = &poolSize;
 		createInfo.flags = flags;
