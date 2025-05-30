@@ -38,7 +38,7 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 	return meshes;
 }
 
-void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, BaseCamera* camera, std::function<void(int)> callback)
+void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, BaseCamera* camera)
 {
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -61,9 +61,7 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 			push.viewPosition = camera->getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
-		}
-
-		callback(i);
+		} 
 
 		if (textured)
 		{

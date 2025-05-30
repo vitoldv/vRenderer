@@ -16,7 +16,8 @@
 // Macro to be used on uniform struct declaration to satisfy std140 alignment
 #define ALIGN_STD140 alignas(16)
 
-#define MAX_OBJECTS 100
+// How many MODELS can be rendered
+#define MAX_OBJECTS 1
 
 namespace VkUtils
 {

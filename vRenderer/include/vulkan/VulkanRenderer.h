@@ -134,8 +134,8 @@ private:
 	// Uniforms
 	std::vector<std::unique_ptr<VkUniform<UboLightArray>>> lightUniforms;
 	std::vector<std::unique_ptr<VkUniform<UboViewProjection>>> vpUniforms;
+		
 	std::vector<std::unique_ptr<VkUniformDynamic<UboDynamicColor>>> colorUniformsDynamic;
-
 	// Textures
 	VkSampler vkTextureSampler;
 
@@ -230,3 +230,12 @@ private:
 // 4. Create solution for instance batching
 // 5. Extract all duplicated "magic" Vulkan flags to single place in code
 // 6. Add mipmap generation for textures
+
+// 7. Resolve dynamic uniform issue.
+// Details: currently dynamic uniforms have no useful utilization. But they actually might be very helpful.
+// The main question still unresolved in implementation is a "scope" of a dynamic uniform.
+// As a "scope" I mean an abstract geometry unit which has unique dynamic uniform value. It might be the smallest "mesh"
+// as well as model that holds it. Current dummy implementation works per-model i.e. holds one single value.
+// But I tested it, and per-mesh approach works too, it just requires proper MAX_OBJECTS value (which could be extracted to a variable)
+// and per-mesh cmdBind call, which can be achieved either throught lambda callback in model->draw or the model itself could hold the uniform
+// (which is less preferrable due to pipeline data dependecy like currentImage. Also I hadn't tested it).

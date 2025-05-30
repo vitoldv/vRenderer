@@ -93,8 +93,7 @@ void main()
     // Light application
     result = shading * result;
 
-    //outColor = vec4(result, 1.0);
-    outColor = colorUniform.color;
+    outColor = vec4(result, 1.0);
 }
 
 // Returns a vector of Phong shading impact

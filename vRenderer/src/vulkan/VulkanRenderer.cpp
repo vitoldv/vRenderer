@@ -1172,15 +1172,16 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 		lightUniforms[imageIndex]->update(uboLightArray);
 	}
 
+	// UPDATE DYNAMIC UNIFORMS
 	{
 		if (modelsToRender.size() > 0)
 		{
-			std::vector<UboDynamicColor> colors(modelsToRender[0]->getMeshCount());
-			for (int i = 0; i < colors.size(); i++)
+			// This is bad and should not happen every frame. TODO: remove when I know what to do with dynamic uniforms
+			std::vector<UboDynamicColor> colorUbo(modelsToRender.size(), { glm::vec4(0.33f, 0.55f, 0.77f, 1.0f) });
+			for (int i = 0; i < modelsToRender.size(); i++)
 			{
-				colors[i] = { glm::vec4((float)i / 10.0f, 0.0f, 0.0f, 1.0f) };
+				colorUniformsDynamic[imageIndex]->update(colorUbo.data(), modelsToRender.size());
 			}
-			colorUniformsDynamic[imageIndex]->update(colors.data(), modelsToRender[0]->getMeshCount());
 		}
 	}
 }
@@ -1221,17 +1222,17 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	// bind pipeline to be used with render pass
 	vkCmdBindPipeline(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkGraphicsPipeline);
 
+	// bind (static) uniforms
 	vpUniforms[currentImage]->cmdBind(0, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
 	// sets 1 and 2 are diffuseMap and specularMap
 	lightUniforms[currentImage]->cmdBind(3, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
 
-
 	int meshCount = 0;
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
-		modelsToRender[i]->draw(this->vkCommandBuffers[currentImage], this->vkPipelineLayout, this->mainCamera, [&](int call) {
-			colorUniformsDynamic[currentImage]->cmdBind(call, 4, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
-		});
+		// bind dynamic uniforms (unique per object)
+		colorUniformsDynamic[currentImage]->cmdBind(i, 4, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
+		modelsToRender[i]->draw(this->vkCommandBuffers[currentImage], this->vkPipelineLayout, this->mainCamera);
 	}
 
 	// Start second subpass
