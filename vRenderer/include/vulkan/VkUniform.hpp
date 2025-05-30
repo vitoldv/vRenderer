@@ -11,7 +11,9 @@ class VkUniform
 {
 public:
 
-	VkUniform(VkShaderStageFlagBits shaderStageFlags, VkContext context);
+	const uint32_t descriptorSetIndex;
+
+	VkUniform(uint32_t descriptorSetIndex, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
 	~VkUniform();
 
 	void update(const T& data);
@@ -28,7 +30,6 @@ protected:
 	VkDescriptorSet descriptorSet;
 
 	VkContext context;
-	VkShaderStageFlagBits shaderStage;
 
 	void create();
 

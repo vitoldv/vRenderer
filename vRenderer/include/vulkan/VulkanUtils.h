@@ -549,4 +549,38 @@ namespace VkUtils
 
 		return image;
 	}
+
+	static VkDescriptorSetLayout createDescriptorSetLayout(
+		uint32_t bindingCount,
+		VkShaderStageFlags shaderStage,
+		VkDescriptorType descriptopType,
+		VkContext context)
+	{
+		VkDescriptorSetLayout layout;
+		std::vector<VkDescriptorSetLayoutBinding> bindings(bindingCount);
+		for (int i = 0; i < bindingCount; i++)
+		{
+			VkDescriptorSetLayoutBinding binding;
+			binding.binding = i;												// bindings specified in shader
+			binding.descriptorType = descriptopType;			// type of descriptor (simple uniform in this case)
+			binding.descriptorCount = 1;										// number of binded values
+			binding.stageFlags = shaderStage;									// specifies shader stage
+			binding.pImmutableSamplers = nullptr;
+			bindings[i] = binding;
+		}
+
+		// Create descriptor set layout with given bindings
+		VkDescriptorSetLayoutCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		createInfo.bindingCount = bindingCount;
+		createInfo.pBindings = bindings.data();
+
+		VkResult result = vkCreateDescriptorSetLayout(context.logicalDevice, &createInfo, nullptr, &layout);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create descriptor set layout.");
+		}
+
+		return layout;
+	}
 }

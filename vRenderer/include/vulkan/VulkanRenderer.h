@@ -79,6 +79,10 @@ private:
 	VkSwapchainKHR swapchain;
 	std::vector<VkUtils::SwapChainImage> swapchainImages;
 
+	std::array<VkDescriptorSetLayout, 4> setLayoutMap;
+	VkSamplerDescriptorSetCreateInfo samplerDescriptorCreateInfo;
+
+
 	// Graphics pipeline
 	VkRenderPass renderPass;
 	VkPipeline graphicsPipeline;
@@ -104,7 +108,6 @@ private:
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	// Descriptors
-	VkDescriptorSetLayout samplerDescriptorSetLayout;
 	VkDescriptorSetLayout inputDescriptorSetLayout;		// input to subpass 2
 
 	VkDescriptorPool uniformDescriptorPool;
@@ -183,10 +186,10 @@ private:
 	void createCommandPool();
 	void createCommandBuffers();
 	void createSyncTools();
-	void createDescriptorSetLayout();
+	void createDescriptorSetLayouts();
 	void createUniforms();
 	void createDescriptorPools();
-	void createInputDescriptorSets();
+	void createSubpassInputDescriptorSets();
 	void createPushConstantRange();
 	void createTextureSampler();
 
@@ -213,8 +216,8 @@ private:
 	bool isDeviceSupportsRequiredExtensions(VkPhysicalDevice device);
 	bool isDeviceSuitable(VkPhysicalDevice device);
 
-	VkUtils::QueueFamilyIndices getQueueFamilies(VkPhysicalDevice device);
-	VkUtils::SwapChainDetails getSwapChainDetails(VkPhysicalDevice device);
+	QueueFamilyIndices getQueueFamilies(VkPhysicalDevice device);
+	SwapChainDetails getSwapChainDetails(VkPhysicalDevice device);
 	bool checkValidationLayerSupport();
 
 	VkModel* getModel(uint32_t id);
@@ -224,8 +227,6 @@ private:
 
 
 // ------------------- TODO -------------------
-// 1. Make a generic function for pipeline creation to avoid a lot of duplicated code in createGraphicsPipeline();
-// make a wrapper for single swapchain image code);
 // 3. Think of single memory buffer for meshes related to specific model
 // 4. Create solution for instance batching
 // 5. Extract all duplicated "magic" Vulkan flags to single place in code

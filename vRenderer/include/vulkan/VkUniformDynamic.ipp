@@ -2,10 +2,11 @@
 // "VkUniformDynamic.ipp"
 
 template<typename T>
-inline VkUniformDynamic<T>::VkUniformDynamic(VkShaderStageFlagBits shaderStageFlags, VkContext context)
+inline VkUniformDynamic<T>::VkUniformDynamic(uint32_t descriptorSetIndex, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
+	descriptorSetIndex(descriptorSetIndex)
 {
 	this->context = context;
-	shaderStage = shaderStageFlags;
+	this->descriptorSetLayout = descriptorSetLayout;
 
 	allocateDynamicBufferTransferSpace();
 	create();
@@ -61,28 +62,6 @@ inline void VkUniformDynamic<T>::update(const T* data, uint32_t drawCount)
 template<typename T>
 inline void VkUniformDynamic<T>::create()
 {
-	// LAYOUT CREATION
-	{
-		VkDescriptorSetLayoutBinding binding;
-		binding.binding = 0;												// bindings specified in shader
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;			// type of descriptor (simple uniform in this case)
-		binding.descriptorCount = 1;										// number of binded values
-		binding.stageFlags = shaderStage;									// specifies shader stage
-		binding.pImmutableSamplers = nullptr;								// for textures
-
-		// Create descriptor set layout with given bindings
-		VkDescriptorSetLayoutCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createInfo.bindingCount = 1;
-		createInfo.pBindings = &binding;
-
-		VkResult result = vkCreateDescriptorSetLayout(context.logicalDevice, &createInfo, nullptr, &this->descriptorSetLayout);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to create uniform dessciptor layout");
-		}
-	}
-
 	// Buffer creation
 	{
 		// Buffer size should be the size of data we pass as uniforms
@@ -139,7 +118,6 @@ inline void VkUniformDynamic<T>::cleanup()
 	_aligned_free(transferSpace);
 	vkDestroyBuffer(context.logicalDevice, buffer, nullptr);
 	vkFreeMemory(context.logicalDevice, memory, nullptr);
-	vkDestroyDescriptorSetLayout(context.logicalDevice, descriptorSetLayout, nullptr);
 }
 
 template<typename T>

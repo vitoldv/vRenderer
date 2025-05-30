@@ -19,17 +19,18 @@ int VulkanRenderer::init(GLFWwindow* window)
 		createDepthBuffer();
 		createColorBufferImage();
 		createRenderPass();
-		createDescriptorSetLayout();
+
+		createDescriptorSetLayouts();
 		createTextureSampler();
 		createPushConstantRange();
 		createDescriptorPools();
 		createUniforms();
-		createInputDescriptorSets();
+		createSubpassInputDescriptorSets();
 		createGraphicsPipeline();
+
 		createFramebuffers();
 		createCommandPool();
 		createCommandBuffers();
-
 		createSyncTools();
 
 		createImguiDescriptorPool();
@@ -64,7 +65,6 @@ void VulkanRenderer::cleanup()
 	vkDestroyDescriptorPool(logicalDevice, inputDescriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(logicalDevice, inputDescriptorSetLayout , nullptr);
 
-	vkDestroyDescriptorSetLayout(logicalDevice, samplerDescriptorSetLayout, nullptr); 
 	vkDestroySampler(logicalDevice, textureSampler, nullptr);
 	 
 	for (int i = 0; i < IMAGE_COUNT; i++)
@@ -79,6 +79,11 @@ void VulkanRenderer::cleanup()
 		vkDestroyImageView(logicalDevice, depthBufferImageView[i], nullptr);
 		vkDestroyImage(logicalDevice, depthBufferImage[i], nullptr);
 		vkFreeMemory(logicalDevice, depthBufferImageMemory[i], nullptr);
+	}
+
+	for (int i = 0; i < setLayoutMap.size(); i++)
+	{
+		vkDestroyDescriptorSetLayout(logicalDevice, setLayoutMap[i], nullptr);
 	}
 
 	for (int i = 0; i < IMAGE_COUNT; i++)
@@ -682,17 +687,19 @@ void VulkanRenderer::createGraphicsPipeline()
 	{
 		// Each layout should correspond to the Descriptor Set type of the same index in shader
 		// Example: layout(set = 0) == layout at index 0 here
-		std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = {
-			vpUniforms[0]->getDescriptorLayout(),
-			samplerDescriptorSetLayout,
-			lightUniforms[0]->getDescriptorLayout(),
-			colorUniformsDynamic[0]->getDescriptorLayout()
-		};
+		//std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = {
+		//	vpUniforms[0]->getDescriptorLayout(),
+		//	samplerDescriptorSetLayout,
+		//	lightUniforms[0]->getDescriptorLayout(),
+		//	colorUniformsDynamic[0]->getDescriptorLayout()
+		//};
+
+
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-		pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
+		pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(setLayoutMap.size());
+		pipelineLayoutCreateInfo.pSetLayouts = setLayoutMap.data();
 		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 		pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
@@ -906,69 +913,18 @@ void VulkanRenderer::createSyncTools()
 	}
 }
 
-void VulkanRenderer::createDescriptorSetLayout()
+void VulkanRenderer::createDescriptorSetLayouts()
 {
-	// TEXTURE SAMPLER DESCRIPTOR SET LAYOUT
-	{
-		VkDescriptorSetLayoutBinding diffuseMapSamplerBinding = {};
-		diffuseMapSamplerBinding.binding = 0;
-		diffuseMapSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		diffuseMapSamplerBinding.descriptorCount = 1;
-		diffuseMapSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		diffuseMapSamplerBinding.pImmutableSamplers = nullptr;
+	// Index here must match set's index in shader
+	setLayoutMap[0] = createDescriptorSetLayout(1, VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
+	setLayoutMap[1] = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context);
+	setLayoutMap[2] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
+	setLayoutMap[3] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, context);
 
-		VkDescriptorSetLayoutBinding specularMapSamplerBinding = {};
-		specularMapSamplerBinding.binding = 1;
-		specularMapSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		specularMapSamplerBinding.descriptorCount = 1;
-		specularMapSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		specularMapSamplerBinding.pImmutableSamplers = nullptr;
-		 
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { diffuseMapSamplerBinding, specularMapSamplerBinding };
+	samplerDescriptorCreateInfo.samplerDescriptorSetLayout = setLayoutMap[1];
 
-		VkDescriptorSetLayoutCreateInfo samplerDescriptorLayoutCreateInfo = {};
-		samplerDescriptorLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		samplerDescriptorLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-		samplerDescriptorLayoutCreateInfo.pBindings = bindings.data();
-
-		VkResult result = vkCreateDescriptorSetLayout(logicalDevice, &samplerDescriptorLayoutCreateInfo,
-			nullptr, &samplerDescriptorSetLayout);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to create Texture Samplers Descriptor Set Layout.");
-		}
-	}
-
-	// INPUT ATTACHMENT IMAGE DESCRIPTOR SET LAYOUT
-	{
-		// Color input binding
-		VkDescriptorSetLayoutBinding colorInputBinding = {};
-		colorInputBinding.binding = 0;
-		colorInputBinding.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-		colorInputBinding.descriptorCount = 1;
-		colorInputBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		// Depth input binding
-		VkDescriptorSetLayoutBinding depthInputBinding = {};
-		depthInputBinding.binding = 1;
-		depthInputBinding.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-		depthInputBinding.descriptorCount = 1;
-		depthInputBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		std::vector<VkDescriptorSetLayoutBinding> inputBindings = { colorInputBinding, depthInputBinding };
-
-		VkDescriptorSetLayoutCreateInfo inputLayoutCreateInfo = {};
-		inputLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		inputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(inputBindings.size());
-		inputLayoutCreateInfo.pBindings = inputBindings.data();
-
-		VkResult result = vkCreateDescriptorSetLayout(logicalDevice, &inputLayoutCreateInfo,
-			nullptr, &inputDescriptorSetLayout);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to create Input Descriptor Set Layout.");
-		}
-	}
+	// layout for second pass input attachment
+	inputDescriptorSetLayout = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, context);
 }
 
 void VulkanRenderer::createUniforms()
@@ -979,9 +935,16 @@ void VulkanRenderer::createUniforms()
 
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
-		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(VK_SHADER_STAGE_VERTEX_BIT, context);
-		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(VK_SHADER_STAGE_FRAGMENT_BIT, context);
-		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>(VK_SHADER_STAGE_FRAGMENT_BIT, context);
+		uint32_t descriptorSetIndex;
+
+		descriptorSetIndex = 0;
+		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
+
+		descriptorSetIndex = 2;
+		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
+
+		descriptorSetIndex = 3;
+		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
 	}
 }
 
@@ -1046,7 +1009,7 @@ void VulkanRenderer::createDescriptorPools()
 	}
 }
 
-void VulkanRenderer::createInputDescriptorSets()
+void VulkanRenderer::createSubpassInputDescriptorSets()
 {
 	inputDescriptorSets.resize(IMAGE_COUNT);
 
@@ -1210,15 +1173,19 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
 	// bind (static) uniforms
-	vpUniforms[currentImage]->cmdBind(0, commandBuffers[currentImage], pipelineLayout);
-	// sets 1 and 2 are diffuseMap and specularMap
-	lightUniforms[currentImage]->cmdBind(2, commandBuffers[currentImage], pipelineLayout);
+	if(vpUniforms.size() == IMAGE_COUNT)
+		vpUniforms[currentImage]->cmdBind(vpUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
+
+	if(lightUniforms.size() == IMAGE_COUNT)
+		lightUniforms[currentImage]->cmdBind(lightUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
 
 	int meshCount = 0;
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
-		colorUniformsDynamic[currentImage]->cmdBind(i, 3, commandBuffers[currentImage], pipelineLayout);
+		if(colorUniformsDynamic.size() == IMAGE_COUNT)
+			colorUniformsDynamic[currentImage]->cmdBind(i, colorUniformsDynamic[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
+
 		modelsToRender[i]->draw(commandBuffers[currentImage], pipelineLayout, *sceneCamera);
 	}
 
@@ -1382,11 +1349,7 @@ bool VulkanRenderer::addToRendererTextured(const Model& model)
 	// If mesh is not in renderer
 	if (!isModelInRenderer(model.id))
 	{
-		VkUtils::VkSamplerDescriptorSetCreateInfo createInfo = {};
-		createInfo.sampler = textureSampler;
-		createInfo.samplerDescriptorSetLayout = samplerDescriptorSetLayout;
-
-		VkModel* vkModel = new VkModel(model.id, model, context, createInfo);
+		VkModel* vkModel = new VkModel(model.id, model, context, samplerDescriptorCreateInfo);
 		modelsToRender.push_back(vkModel);
 
 		return true;
@@ -1699,8 +1662,6 @@ VkUtils::QueueFamilyIndices VulkanRenderer::getQueueFamilies(VkPhysicalDevice de
 	return indices;
 }
 
-
-
 void VulkanRenderer::createTextureSampler()
 {
 	VkSamplerCreateInfo createInfo = {};
@@ -1723,6 +1684,8 @@ void VulkanRenderer::createTextureSampler()
 	{
 		throw std::runtime_error("Failed to create texture sampler.");
 	}
+
+	samplerDescriptorCreateInfo.sampler = textureSampler;
 }
 
 VkUtils::SwapChainDetails VulkanRenderer::getSwapChainDetails(VkPhysicalDevice device)

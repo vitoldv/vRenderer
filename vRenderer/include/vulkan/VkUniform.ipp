@@ -1,13 +1,15 @@
 #pragma once
 template<typename T>
-inline VkUniform<T>::VkUniform(VkShaderStageFlagBits shaderStageFlags, VkContext context)
+inline VkUniform<T>::VkUniform(uint32_t descriptorSetIndex, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
+	descriptorSetIndex(descriptorSetIndex)
 {
 	//lightUniformBuffers.resize(frameCount);
 	//lightUniformMemory.resize(frameCount);
 	//vkLightDescriptorSetLayout = VK_NULL_HANDLE;
 	//vkLightDescriptorSets.resize(frameCount);
 	this->context = context;
-	shaderStage = shaderStageFlags;
+	this->descriptorSetLayout = descriptorSetLayout;
+
 	create();
 }
 
@@ -52,34 +54,11 @@ inline void VkUniform<T>::cleanup()
 {
 	vkDestroyBuffer(context.logicalDevice, buffer, nullptr);
 	vkFreeMemory(context.logicalDevice, memory, nullptr);
-	vkDestroyDescriptorSetLayout(context.logicalDevice, descriptorSetLayout, nullptr);
 }
 
 template<typename T>
 inline void VkUniform<T>::create()
 {
-	// LAYOUT CREATION
-	{
-		VkDescriptorSetLayoutBinding binding;
-		binding.binding = 0;												// bindings specified in shader
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;			// type of descriptor (simple uniform in this case)
-		binding.descriptorCount = 1;										// number of binded values
-		binding.stageFlags = shaderStage;									// specifies shader stage
-		binding.pImmutableSamplers = nullptr;								// for textures
-
-		// Create descriptor set layout with given bindings
-		VkDescriptorSetLayoutCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createInfo.bindingCount = 1;
-		createInfo.pBindings = &binding;
-
-		VkResult result = vkCreateDescriptorSetLayout(context.logicalDevice, &createInfo, nullptr, &this->descriptorSetLayout);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to create uniform dessciptor layout");
-		}
-	}
-
 	// Buffer creation
 	{
 		// Buffer size should be the size of data we pass as uniforms

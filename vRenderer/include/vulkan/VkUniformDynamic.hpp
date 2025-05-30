@@ -16,7 +16,9 @@ class VkUniformDynamic
 {
 public:
 
-	VkUniformDynamic(VkShaderStageFlagBits shaderStageFlags, VkContext context);
+	const uint32_t descriptorSetIndex;
+
+	VkUniformDynamic(uint32_t descriptorSetIndex, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
 	~VkUniformDynamic();
 
 	size_t getBufferSize() const;
@@ -37,7 +39,6 @@ private:
 	VkDescriptorSet descriptorSet;
 
 	VkContext context;
-	VkShaderStageFlagBits shaderStage;
 
 	void allocateDynamicBufferTransferSpace();
 	void create();
