@@ -68,7 +68,7 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 			auto* material = materials[i];
 			// Material sampler uniforms
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-				1, material->textureCount, material->getSamplerDescriptorSets().data(), 0, nullptr);
+				material->descriptorSetIndex, 1, &material->getSamplerDescriptorSet(), 0, nullptr);
 		}
 
 		// execute pipeline

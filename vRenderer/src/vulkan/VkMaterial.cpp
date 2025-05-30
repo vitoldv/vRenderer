@@ -14,9 +14,9 @@ VkMaterial::~VkMaterial()
 	cleanup();
 }
 
-const std::vector<VkDescriptorSet>& VkMaterial::getSamplerDescriptorSets() const
+const VkDescriptorSet& VkMaterial::getSamplerDescriptorSet() const
 {
-	return samplerDescriptorSets;
+	return samplerDescriptorSet;
 }
 
 /// <summary>
@@ -44,71 +44,82 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 		}
 	};
 
-	// Lambda for per-texture descriptor set creation
-	auto& descriptors = samplerDescriptorSets;
-	auto createDescriptor = [&](std::unique_ptr<VkTexture>& vkTexture) {
-		VkDescriptorSet descriptorSet = vkTexture != nullptr
-			? vkTexture->createSamplerDescriptor(createInfo)
-			: createNullSamplerDescriptor(createInfo);
-		descriptors.push_back(descriptorSet);
-	};
-
 	createTexture(material.diffuseTexture, diffuse);
 	createTexture(material.specularTexture, specular);
 
-	createDescriptor(diffuse);
-	createDescriptor(specular);
+	createSamplerDescriptorSet(createInfo);
 }
 
 /// <summary>
-/// Creates generic null sampler descriptor. Create on for empty texture and bind to pipeline.
-/// P.S. Requires nullDescriptors feature enabled in VkPhysicalDeviceRobustness2FeaturesEXT.
+/// Creates a texture sampler descriptor set.
+/// If dummy flag is set, an empty descriptor (allocated but not bound to any resource) is returned.
 /// </summary>
 /// <param name="createInfo"></param>
+/// <param name="dummy"></param>
 /// <returns></returns>
-VkDescriptorSet VkMaterial::createNullSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo)
+void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo createInfo)
 {
-	VkDescriptorSet dummySet;
-
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = createInfo.descriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &createInfo.samplerDescriptorSetLayout;
 
-	VkResult result = vkAllocateDescriptorSets(context.logicalDevice, &allocInfo, &dummySet);
+	VkResult result = vkAllocateDescriptorSets(context.logicalDevice, &allocInfo, &samplerDescriptorSet);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to allocate texture sampler descriptor sets.");
 	}
 
-	uint32_t dummyBufferSize = 16;
+	std::array<VkWriteDescriptorSet, 2> setWrites;
+	std::array<VkDescriptorImageInfo, 2> imageInfos;	// required for avoiding lifetime issues
+	auto createDescriptorForTexture = [&](const VkTexture* texture, uint32_t binding) {
+		
+		// If texture exists - we bind its imageView an descriptor's resource
+		if (texture != nullptr)
+		{
+			// texture image info
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = texture->getImageView();
+			imageInfo.sampler = createInfo.sampler;
+			imageInfos[binding] = imageInfo;
+		}
+		// If there is no texture - we create dummy (empty) image as descriptor's resource
+		// nullDescriptor device feature should be enabled for this to work
+		else
+		{
+			uint32_t dummyBufferSize = 16;
+			VkBuffer dummyBuffer;
+			VkDeviceMemory dummyBufferMemory;
+			VkUtils::createBuffer(context.physicalDevice, context.logicalDevice, dummyBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &dummyBuffer, &dummyBufferMemory);
+			dummyBuffers.push_back(dummyBuffer);
+			dummyBuffersMemory.push_back(dummyBufferMemory);
 
-	VkBuffer dummyBuffer;
-	VkDeviceMemory dummyBufferMemory;
-	VkUtils::createBuffer(context.physicalDevice, context.logicalDevice, dummyBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &dummyBuffer, &dummyBufferMemory);
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			imageInfo.imageView = VK_NULL_HANDLE;
+			imageInfo.sampler = createInfo.sampler;
+			imageInfos[binding] = imageInfo;
+		}
+		
+		VkWriteDescriptorSet setWrite = {};
+		setWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		setWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		setWrite.descriptorCount = 1;
+		setWrite.dstSet = samplerDescriptorSet;
+		setWrite.dstArrayElement = 0;
+		setWrite.dstBinding = binding;
+		setWrite.pImageInfo = &imageInfos[binding];
+		setWrites[binding] = setWrite;
+	};
 
-	// dummy image info (null descriptor feature should be enabled)
-	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.imageView = VK_NULL_HANDLE;
-	imageInfo.sampler = createInfo.sampler;
+	// Passed bindings should match the ones in shader (as well as order of calling here)
+	createDescriptorForTexture(diffuse.get(), 0);
+	createDescriptorForTexture(specular.get(), 1);
 
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = dummySet;
-	descriptorWrite.dstBinding = 0; // Matches layout binding
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pImageInfo = &imageInfo;
-
-	vkUpdateDescriptorSets(context.logicalDevice, 1, &descriptorWrite, 0, nullptr);
-
-	dummyBuffers.push_back(dummyBuffer);
-	dummyBuffersMemory.push_back(dummyBufferMemory);
-
-	return dummySet;
+	vkUpdateDescriptorSets(context.logicalDevice, textureCount, setWrites.data(), 0, nullptr);
 }
 
 void VkMaterial::cleanup()

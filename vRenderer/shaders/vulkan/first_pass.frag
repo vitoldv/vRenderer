@@ -9,8 +9,9 @@ layout(location = 3) flat in uint fragTextured;
 layout(location = 4) flat in vec3 outViewPos;
 layout(location = 5) in vec3 outFragPos;
 
+// Material (set = 1)
 layout(set = 1, binding = 0) uniform sampler2D diffuseMap;
-layout(set = 2, binding = 0) uniform sampler2D specularMap;
+layout(set = 1, binding = 1) uniform sampler2D specularMap;
 
 struct Light {
 
@@ -34,11 +35,11 @@ struct Light {
     float outerCutOff;     // Offset: 80
 };
 
-layout(set = 3, binding = 0) uniform LightsUniform {
+layout(set = 2, binding = 0) uniform LightsUniform {
     Light lights[MAX_LIGHT_SOURCES];
 } lightUniform;
 
-layout(set = 4, binding = 0) uniform ColorDynamicUniform{
+layout(set = 3, binding = 0) uniform ColorDynamicUniform{
     vec4 color;
 } colorUniform;
 

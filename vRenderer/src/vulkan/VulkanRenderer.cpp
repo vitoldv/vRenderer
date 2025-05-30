@@ -680,9 +680,10 @@ void VulkanRenderer::createGraphicsPipeline()
 
 	// PIPELINE LAYOUT SETUP (DESCRIPTORS AND PUSH CONSTANTS LAYOUT)
 	{
-		std::array<VkDescriptorSetLayout, 5> descriptorSetLayouts = {
+		// Each layout should correspond to the Descriptor Set type of the same index in shader
+		// Example: layout(set = 0) == layout at index 0 here
+		std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = {
 			this->vpUniforms[0]->getDescriptorLayout(),
-			this->vkSamplerDescriptorSetLayout,
 			this->vkSamplerDescriptorSetLayout,
 			this->lightUniforms[0]->getDescriptorLayout(),
 			this->colorUniformsDynamic[0]->getDescriptorLayout()
@@ -916,14 +917,14 @@ void VulkanRenderer::createDescriptorSetLayout()
 		diffuseMapSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		diffuseMapSamplerBinding.pImmutableSamplers = nullptr;
 
-		//VkDescriptorSetLayoutBinding specularMapSamplerBinding = {};
-		//specularMapSamplerBinding.binding = 1;
-		//specularMapSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		//specularMapSamplerBinding.descriptorCount = 1;
-		//specularMapSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		//specularMapSamplerBinding.pImmutableSamplers = nullptr;
+		VkDescriptorSetLayoutBinding specularMapSamplerBinding = {};
+		specularMapSamplerBinding.binding = 1;
+		specularMapSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		specularMapSamplerBinding.descriptorCount = 1;
+		specularMapSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		specularMapSamplerBinding.pImmutableSamplers = nullptr;
 		 
-		std::array<VkDescriptorSetLayoutBinding, 1> bindings = { diffuseMapSamplerBinding};
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { diffuseMapSamplerBinding, specularMapSamplerBinding };
 
 		VkDescriptorSetLayoutCreateInfo samplerDescriptorLayoutCreateInfo = {};
 		samplerDescriptorLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1225,13 +1226,13 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	// bind (static) uniforms
 	vpUniforms[currentImage]->cmdBind(0, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
 	// sets 1 and 2 are diffuseMap and specularMap
-	lightUniforms[currentImage]->cmdBind(3, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
+	lightUniforms[currentImage]->cmdBind(2, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
 
 	int meshCount = 0;
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
-		colorUniformsDynamic[currentImage]->cmdBind(i, 4, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
+		colorUniformsDynamic[currentImage]->cmdBind(i, 3, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
 		modelsToRender[i]->draw(this->vkCommandBuffers[currentImage], this->vkPipelineLayout, this->mainCamera);
 	}
 
