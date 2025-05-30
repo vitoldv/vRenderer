@@ -14,32 +14,32 @@ VkMesh::~VkMesh()
 
 int VkMesh::getVertexCount()
 {
-	return this->vertexCount;
+	return vertexCount;
 }
 
 VkBuffer VkMesh::getVertexBuffer()
 {
-	return this->vertexBuffer;
+	return vertexBuffer;
 }
 
 int VkMesh::getIndexCount()
 {
-	return this->indexCount;
+	return indexCount;
 }
 
 VkBuffer VkMesh::getIndexBuffer()
 {
-	return this->indexBuffer;
+	return indexBuffer;
 }
 
 glm::mat4 VkMesh::getTransformMat()
 {
-	return this->transformMat;
+	return transformMat;
 }
 
 void VkMesh::setTransformMat(glm::mat4 transform)
 {
-	this->transformMat = transform;
+	transformMat = transform;
 }
 
 void VkMesh::createFromGenericMesh(const Mesh& mesh)
@@ -58,8 +58,8 @@ void VkMesh::createFromGenericMesh(const Mesh& mesh)
 		vertices.push_back(vertex);
 	}
 
-	this->indexCount = meshIndices.size();
-	this->vertexCount = vertices.size();
+	indexCount = meshIndices.size();
+	vertexCount = vertices.size();
 
 	setTransformMat(glm::identity<glm::mat4>());
 
@@ -117,9 +117,9 @@ void VkMesh::createIndexBuffer(const std::vector<uint32_t>& indices, VkContext c
 	// Create buffer with TRANSFER_DST_BIT to mark as recipient of transfer data (also indices buffer
 	// Buffer memory is to be DEVICE_LOCAL_BIT meaning memory is on the GPU and only accessible by it and not CPU (host))
 	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->indexBuffer, &this->indexBufferMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &indexBuffer, &indexBufferMemory);
 
-	copyBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, stagingBuffer, this->indexBuffer, bufferSize);
+	copyBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, stagingBuffer, indexBuffer, bufferSize);
 
 	vkDestroyBuffer(context.logicalDevice, stagingBuffer, nullptr);
 	vkFreeMemory(context.logicalDevice, stagingBufferMemory, nullptr);
@@ -127,9 +127,9 @@ void VkMesh::createIndexBuffer(const std::vector<uint32_t>& indices, VkContext c
 
 void VkMesh::cleanup()
 {
-	vkDestroyBuffer(context.logicalDevice, this->indexBuffer, nullptr);
-	vkFreeMemory(context.logicalDevice, this->indexBufferMemory, nullptr);
+	vkDestroyBuffer(context.logicalDevice, indexBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, indexBufferMemory, nullptr);
 
-	vkDestroyBuffer(context.logicalDevice, this->vertexBuffer, nullptr);
-	vkFreeMemory(context.logicalDevice, this->vertexBufferMemory, nullptr);
+	vkDestroyBuffer(context.logicalDevice, vertexBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, vertexBufferMemory, nullptr);
 }

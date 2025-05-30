@@ -71,24 +71,24 @@ private:
 
 	// Native Vulkan Components
 	VkInstance vkInstance; 
-	VkPhysicalDevice vkPhysicalDevice;
-	VkDevice vkLogicalDevice;
-	VkQueue vkGraphicsQueue;
-	VkQueue vkPresentationQueue;
-	VkSurfaceKHR vkSurface;
-	VkSwapchainKHR vkSwapchain;
+	VkPhysicalDevice physicalDevice;
+	VkDevice logicalDevice;
+	VkQueue graphicsQueue;
+	VkQueue presentationQueue;
+	VkSurfaceKHR surface;
+	VkSwapchainKHR swapchain;
 	std::vector<VkUtils::SwapChainImage> swapchainImages;
 
 	// Graphics pipeline
-	VkRenderPass vkRenderPass;
-	VkPipeline vkGraphicsPipeline;
-	VkPipelineLayout vkPipelineLayout;
-	VkPipeline vkSecondPipeline;
-	VkPipelineLayout vkSecondPipelineLayout;
+	VkRenderPass renderPass;
+	VkPipeline graphicsPipeline;
+	VkPipelineLayout pipelineLayout;
+	VkPipeline secondPipeline;
+	VkPipelineLayout secondPipelineLayout;
 
-	std::vector<VkFramebuffer> vkSwapchainFramebuffers;
-	VkCommandPool vkGraphicsCommandPool;
-	std::vector<VkCommandBuffer> vkCommandBuffers;
+	std::vector<VkFramebuffer> swapchainFramebuffers;
+	VkCommandPool graphicsCommandPool;
+	std::vector<VkCommandBuffer> commandBuffers;
 
 	std::vector<VkImage> colorBufferImage;
 	std::vector<VkDeviceMemory> colorBufferImageMemory;
@@ -104,22 +104,22 @@ private:
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	// Descriptors
-	VkDescriptorSetLayout vkSamplerDescriptorSetLayout;
-	VkDescriptorSetLayout vkInputDescriptorSetLayout;		// input to subpass 2
+	VkDescriptorSetLayout samplerDescriptorSetLayout;
+	VkDescriptorSetLayout inputDescriptorSetLayout;		// input to subpass 2
 
 	VkDescriptorPool uniformDescriptorPool;
 	VkDescriptorPool dynamicUniformDescriptorPool;
-	VkDescriptorPool vkInputDescriptorPool;
-	std::vector<VkDescriptorSet> vkInputDescriptorSets;
+	VkDescriptorPool inputDescriptorPool;
+	std::vector<VkDescriptorSet> inputDescriptorSets;
 
-	VkPushConstantRange vkPushConstantRange;
+	VkPushConstantRange pushConstantRange;
 
 	// Utility
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
-	std::vector<VkSemaphore> vkSemImageAvailable;
-	std::vector<VkSemaphore> vkSemRenderFinished;
-	std::vector<VkFence> vkDrawFences;
+	std::vector<VkSemaphore> semImageAvailable;
+	std::vector<VkSemaphore> semRenderFinished;
+	std::vector<VkFence> drawFences;
 
 	// Scene
 	BaseCamera* mainCamera;
@@ -137,7 +137,7 @@ private:
 		
 	std::vector<std::unique_ptr<VkUniformDynamic<UboDynamicColor>>> colorUniformsDynamic;
 	// Textures
-	VkSampler vkTextureSampler;
+	VkSampler textureSampler;
 
 	/*
 	---- IMGUI fields -----

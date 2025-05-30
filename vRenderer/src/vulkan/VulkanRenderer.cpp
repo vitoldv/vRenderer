@@ -13,7 +13,7 @@ int VulkanRenderer::init(GLFWwindow* window)
 		setupDebugMessenger();
 		createSurface();
 		retrievePhysicalDevice();
-		printPhysicalDeviceInfo(this->vkPhysicalDevice);
+		printPhysicalDeviceInfo(physicalDevice);
 		createLogicalDevice();
 		createSwapChain();
 		createDepthBuffer();
@@ -48,7 +48,7 @@ int VulkanRenderer::init(GLFWwindow* window)
 void VulkanRenderer::cleanup()
 {
 	// Wait until there is nothing on a queue 
-	vkDeviceWaitIdle(this->vkLogicalDevice);
+	vkDeviceWaitIdle(logicalDevice);
 
 	cleanupImgui();
 
@@ -59,26 +59,26 @@ void VulkanRenderer::cleanup()
 		model = nullptr;
 	}
 
-	this->modelsToRender.clear();
+	modelsToRender.clear();
 
-	vkDestroyDescriptorPool(this->vkLogicalDevice, this->vkInputDescriptorPool, nullptr);
-	vkDestroyDescriptorSetLayout(this->vkLogicalDevice, this->vkInputDescriptorSetLayout , nullptr);
+	vkDestroyDescriptorPool(logicalDevice, inputDescriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(logicalDevice, inputDescriptorSetLayout , nullptr);
 
-	vkDestroyDescriptorSetLayout(this->vkLogicalDevice, this->vkSamplerDescriptorSetLayout, nullptr); 
-	vkDestroySampler(this->vkLogicalDevice, this->vkTextureSampler, nullptr);
+	vkDestroyDescriptorSetLayout(logicalDevice, samplerDescriptorSetLayout, nullptr); 
+	vkDestroySampler(logicalDevice, textureSampler, nullptr);
 	 
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
-		vkDestroyImageView(this->vkLogicalDevice, this->colorBufferImageView[i], nullptr);
-		vkDestroyImage(this->vkLogicalDevice, this->colorBufferImage[i], nullptr);
-		vkFreeMemory(this->vkLogicalDevice, colorBufferImageMemory[i], nullptr);
+		vkDestroyImageView(logicalDevice, colorBufferImageView[i], nullptr);
+		vkDestroyImage(logicalDevice, colorBufferImage[i], nullptr);
+		vkFreeMemory(logicalDevice, colorBufferImageMemory[i], nullptr);
 	}
 
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
-		vkDestroyImageView(this->vkLogicalDevice, this->depthBufferImageView[i], nullptr);
-		vkDestroyImage(this->vkLogicalDevice, this->depthBufferImage[i], nullptr);
-		vkFreeMemory(this->vkLogicalDevice, depthBufferImageMemory[i], nullptr);
+		vkDestroyImageView(logicalDevice, depthBufferImageView[i], nullptr);
+		vkDestroyImage(logicalDevice, depthBufferImage[i], nullptr);
+		vkFreeMemory(logicalDevice, depthBufferImageMemory[i], nullptr);
 	}
 
 	for (int i = 0; i < IMAGE_COUNT; i++)
@@ -88,47 +88,47 @@ void VulkanRenderer::cleanup()
 		colorUniformsDynamic[i]->cleanup();
 	}
 
-	vkDestroyDescriptorPool(this->vkLogicalDevice, this->uniformDescriptorPool, nullptr);
-	vkDestroyDescriptorPool(this->vkLogicalDevice, this->dynamicUniformDescriptorPool, nullptr);
+	vkDestroyDescriptorPool(logicalDevice, uniformDescriptorPool, nullptr);
+	vkDestroyDescriptorPool(logicalDevice, dynamicUniformDescriptorPool, nullptr);
 
 	for (int i = 0; i < MAX_FRAME_DRAWS; i++)
 	{
-		vkDestroySemaphore(this->vkLogicalDevice, this->vkSemRenderFinished[i], nullptr);
-		vkDestroySemaphore(this->vkLogicalDevice, this->vkSemImageAvailable[i], nullptr);
-		vkDestroyFence(this->vkLogicalDevice, this->vkDrawFences[i], nullptr);
+		vkDestroySemaphore(logicalDevice, semRenderFinished[i], nullptr);
+		vkDestroySemaphore(logicalDevice, semImageAvailable[i], nullptr);
+		vkDestroyFence(logicalDevice, drawFences[i], nullptr);
 	}
 
-	vkDestroyCommandPool(this->vkLogicalDevice, vkGraphicsCommandPool, nullptr);
-	for (auto framebuffer : vkSwapchainFramebuffers)
+	vkDestroyCommandPool(logicalDevice, graphicsCommandPool, nullptr);
+	for (auto framebuffer : swapchainFramebuffers)
 	{
-		vkDestroyFramebuffer(this->vkLogicalDevice, framebuffer, nullptr);
+		vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 	}
 	
-	vkDestroyPipeline(this->vkLogicalDevice, this->vkSecondPipeline, nullptr);
-	vkDestroyPipelineLayout(this->vkLogicalDevice, this->vkSecondPipelineLayout, nullptr);
-	vkDestroyPipeline(this->vkLogicalDevice, this->vkGraphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(this->vkLogicalDevice, this->vkPipelineLayout, nullptr);
-	vkDestroyRenderPass(this->vkLogicalDevice, this->vkRenderPass, nullptr);
+	vkDestroyPipeline(logicalDevice, secondPipeline, nullptr);
+	vkDestroyPipelineLayout(logicalDevice, secondPipelineLayout, nullptr);
+	vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
+	vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
+	vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
 	for (auto image : swapchainImages)
 	{
-		vkDestroyImageView(this->vkLogicalDevice, image.imageView, nullptr);
+		vkDestroyImageView(logicalDevice, image.imageView, nullptr);
 	}
-	vkDestroySwapchainKHR(this->vkLogicalDevice, this->vkSwapchain, nullptr);
-	vkDestroySurfaceKHR(this->vkInstance, this->vkSurface, nullptr);
+	vkDestroySwapchainKHR(logicalDevice, swapchain, nullptr);
+	vkDestroySurfaceKHR(vkInstance, surface, nullptr);
 
 #ifndef NDEBUG
 	if (ENABLE_VALIDATION_LAYERS)
 	{
-		VkUtils::destroyDebugUtilsMessengerEXT(this->vkInstance, this->debugMessenger, nullptr);
+		VkUtils::destroyDebugUtilsMessengerEXT(vkInstance, debugMessenger, nullptr);
 	}
 #endif
-	vkDestroyDevice(this->vkLogicalDevice, nullptr);
-	vkDestroyInstance(this->vkInstance, nullptr);
+	vkDestroyDevice(logicalDevice, nullptr);
+	vkDestroyInstance(vkInstance, nullptr);
 }
 
 void VulkanRenderer::setImguiCallback(std::function<void()> imguiCode)
 {
-	this->imguiCallback = imguiCode;
+	imguiCallback = imguiCode;
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -200,7 +200,7 @@ void VulkanRenderer::createVulkanInstance()
 		vkInstanceInfo.ppEnabledLayerNames = nullptr;
 	}
 	// Create the Vulkan Instance
-	VkResult result = vkCreateInstance(&vkInstanceInfo, nullptr, &this->vkInstance);
+	VkResult result = vkCreateInstance(&vkInstanceInfo, nullptr, &vkInstance);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create a Vulkan Instance.");
@@ -211,30 +211,30 @@ void VulkanRenderer::retrievePhysicalDevice()
 {
 	// Enumerate Vulkan accessible physical devices (GPUs)
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(this->vkInstance, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(vkInstance, &deviceCount, nullptr);
 
 	// Get the list of supported physical devices
 	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(this->vkInstance, &deviceCount, devices.data());
+	vkEnumeratePhysicalDevices(vkInstance, &deviceCount, devices.data());
 	
 	// TEMP: Simply pick the first device (preferrably a choice must be provided)
 	if (isDeviceSuitable(devices[0]))
 	{
-		this->vkPhysicalDevice = devices[0];
+		physicalDevice = devices[0];
 	}
 
 	VkPhysicalDeviceProperties deviceProperties;
-	vkGetPhysicalDeviceProperties(this->vkPhysicalDevice, &deviceProperties);
+	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 	
 	context.minUniformBufferOffset = deviceProperties.limits.minUniformBufferOffsetAlignment;
 	
-	context.physicalDevice = vkPhysicalDevice;
+	context.physicalDevice = physicalDevice;
 }
 
 void VulkanRenderer::createLogicalDevice()
 {
 	// Get queue family indices for selected physical device
-	VkUtils::QueueFamilyIndices indices = getQueueFamilies(this->vkPhysicalDevice);
+	VkUtils::QueueFamilyIndices indices = getQueueFamilies(physicalDevice);
 
 	// Creating queue family info for queue family creation (considering that some indices may point
 	// out to the same queue family so we create infos for only distinct ones ensuring using set)
@@ -272,23 +272,23 @@ void VulkanRenderer::createLogicalDevice()
 	vulkanRobustness2Features.nullDescriptor = VK_TRUE;
 	deviceCreateInfo.pNext = &vulkanRobustness2Features;
 
-	VkResult result = vkCreateDevice(this->vkPhysicalDevice, &deviceCreateInfo, nullptr, &this->vkLogicalDevice);
+	VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &logicalDevice);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create a Logical Device.");
 	}
 
 	// Save queues as they are created at the same time as the logical device
-	vkGetDeviceQueue(this->vkLogicalDevice, indices.graphicsFamily, 0, &this->vkGraphicsQueue);
-	vkGetDeviceQueue(this->vkLogicalDevice, indices.presentationFamily, 0, &this->vkPresentationQueue);
+	vkGetDeviceQueue(logicalDevice, indices.graphicsFamily, 0, &graphicsQueue);
+	vkGetDeviceQueue(logicalDevice, indices.presentationFamily, 0, &presentationQueue);
 
-	context.logicalDevice = vkLogicalDevice;
-	context.graphicsQueue = vkGraphicsQueue;
+	context.logicalDevice = logicalDevice;
+	context.graphicsQueue = graphicsQueue;
 }
 
 void VulkanRenderer::createSurface()
 {
-	if (glfwCreateWindowSurface(this->vkInstance, this->window, nullptr, &this->vkSurface) != VK_SUCCESS)
+	if (glfwCreateWindowSurface(vkInstance, window, nullptr, &surface) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create window surface.");
 	}
@@ -298,7 +298,7 @@ void VulkanRenderer::createSurface()
 void VulkanRenderer::createSwapChain()
 {
 	// Get Swap Chain details so we can pick best settings
-	VkUtils::SwapChainDetails swapChainDetails = getSwapChainDetails(this->vkPhysicalDevice);
+	VkUtils::SwapChainDetails swapChainDetails = getSwapChainDetails(physicalDevice);
 
 	// Find optimal surface values for our swap chain
 	VkSurfaceFormatKHR surfaceFormat = defineSurfaceFormat(swapChainDetails.surfaceFormats);
@@ -314,7 +314,7 @@ void VulkanRenderer::createSwapChain()
 	// Creation information for swap chain
 	VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
 	swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	swapChainCreateInfo.surface = this->vkSurface;												// Swapchain surface
+	swapChainCreateInfo.surface = surface;												// Swapchain surface
 	swapChainCreateInfo.imageFormat = surfaceFormat.format;										// Swapchain format
 	swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;								// Swapchain color space
 	swapChainCreateInfo.presentMode = presentMode;												// Swapchain presentation mode
@@ -327,7 +327,7 @@ void VulkanRenderer::createSwapChain()
 	swapChainCreateInfo.clipped = VK_TRUE;														// Whether to clip parts of image not in view (e.g. behind another window, off screen, etc)
 
 	// Get Queue Family Indices
-	VkUtils::QueueFamilyIndices indices = getQueueFamilies(this->vkPhysicalDevice);
+	VkUtils::QueueFamilyIndices indices = getQueueFamilies(physicalDevice);
 
 	// If Graphics and Presentation families are different, then swapchain must let images be shared between families
 	if (indices.graphicsFamily != indices.presentationFamily)
@@ -353,7 +353,7 @@ void VulkanRenderer::createSwapChain()
 	swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
 	// Create Swapchain
-	VkResult result = vkCreateSwapchainKHR(this->vkLogicalDevice, &swapChainCreateInfo, nullptr, &this->vkSwapchain);
+	VkResult result = vkCreateSwapchainKHR(logicalDevice, &swapChainCreateInfo, nullptr, &swapchain);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create a Swapchain!");
@@ -365,9 +365,9 @@ void VulkanRenderer::createSwapChain()
 
 	// Get swap chain images (first count, then values)
 	uint32_t swapChainImageCount;
-	vkGetSwapchainImagesKHR(this->vkLogicalDevice, this->vkSwapchain, &swapChainImageCount, nullptr);
+	vkGetSwapchainImagesKHR(logicalDevice, swapchain, &swapChainImageCount, nullptr);
 	std::vector<VkImage> images(swapChainImageCount);
-	vkGetSwapchainImagesKHR(this->vkLogicalDevice, this->vkSwapchain, &swapChainImageCount, images.data());
+	vkGetSwapchainImagesKHR(logicalDevice, swapchain, &swapChainImageCount, images.data());
 
 	for (VkImage image : images)
 	{
@@ -377,7 +377,7 @@ void VulkanRenderer::createSwapChain()
 		swapChainImage.imageView = VkUtils::createImageView(image, swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
 
 		// Add to swapchain image list
-		this->swapchainImages.push_back(swapChainImage);
+		swapchainImages.push_back(swapChainImage);
 	}
 }
 
@@ -390,7 +390,7 @@ void VulkanRenderer::createRenderPass()
 
 	// Color attachment (Input)
 	VkAttachmentDescription colorAttachment = {};
- 	colorAttachment.format = this->colorFormat;
+ 	colorAttachment.format = colorFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;							// clear attachment on render pass load
 	// don't care what to do with attachmnet after render pass finished
@@ -510,7 +510,7 @@ void VulkanRenderer::createRenderPass()
 	renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(subpassDependencies.size());
 	renderPassCreateInfo.pDependencies = subpassDependencies.data();
 
-	VkResult result = vkCreateRenderPass(this->vkLogicalDevice, &renderPassCreateInfo, nullptr, &this->vkRenderPass);
+	VkResult result = vkCreateRenderPass(logicalDevice, &renderPassCreateInfo, nullptr, &renderPass);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create a Render Pass.");
@@ -597,14 +597,14 @@ void VulkanRenderer::createGraphicsPipeline()
 		VkViewport viewport = {};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = (float)this->swapChainExtent.width;
-		viewport.height = (float)this->swapChainExtent.height;
+		viewport.width = (float)swapChainExtent.width;
+		viewport.height = (float)swapChainExtent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
 		VkRect2D scissor = {};
 		scissor.offset = { 0,0 };
-		scissor.extent = this->swapChainExtent;
+		scissor.extent = swapChainExtent;
 
 		viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		viewportStateCreateInfo.viewportCount = 1;
@@ -683,10 +683,10 @@ void VulkanRenderer::createGraphicsPipeline()
 		// Each layout should correspond to the Descriptor Set type of the same index in shader
 		// Example: layout(set = 0) == layout at index 0 here
 		std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = {
-			this->vpUniforms[0]->getDescriptorLayout(),
-			this->vkSamplerDescriptorSetLayout,
-			this->lightUniforms[0]->getDescriptorLayout(),
-			this->colorUniformsDynamic[0]->getDescriptorLayout()
+			vpUniforms[0]->getDescriptorLayout(),
+			samplerDescriptorSetLayout,
+			lightUniforms[0]->getDescriptorLayout(),
+			colorUniformsDynamic[0]->getDescriptorLayout()
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
@@ -694,10 +694,10 @@ void VulkanRenderer::createGraphicsPipeline()
 		pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
 		pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
 		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-		pipelineLayoutCreateInfo.pPushConstantRanges = &this->vkPushConstantRange;
+		pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
 		// Create Pipeline Layout
-		VkResult result = vkCreatePipelineLayout(this->vkLogicalDevice, &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout);
+		VkResult result = vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create Pipeline Layout!");
@@ -728,8 +728,8 @@ void VulkanRenderer::createGraphicsPipeline()
 	pipelineCreateInfo.pMultisampleState = &multisamplingCreateInfo;
 	pipelineCreateInfo.pColorBlendState = &colorBlendingCreateInfo;
 	pipelineCreateInfo.pDepthStencilState = &depthStencilCreateInfo;
-	pipelineCreateInfo.layout = this->vkPipelineLayout;							// Pipeline Layout pipeline should use
-	pipelineCreateInfo.renderPass = this->vkRenderPass;							// Render pass description the pipeline is compatible with
+	pipelineCreateInfo.layout = pipelineLayout;							// Pipeline Layout pipeline should use
+	pipelineCreateInfo.renderPass = renderPass;							// Render pass description the pipeline is compatible with
 	pipelineCreateInfo.subpass = 0;							 			// Subpass of render pass to use with pipeline
 
 	// Pipeline Derivatives : Can create multiple pipelines that derive from one another for optimisation
@@ -737,15 +737,15 @@ void VulkanRenderer::createGraphicsPipeline()
 	pipelineCreateInfo.basePipelineIndex = -1;				// or index of pipeline being created to derive from (in case creating multiple at once)
 
 	// Create Graphics Pipeline
-	VkResult result = vkCreateGraphicsPipelines(this->vkLogicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &this->vkGraphicsPipeline);
+	VkResult result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &graphicsPipeline);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create a Graphics Pipeline!");
 	}
 
 	// Shader modules are no longer needed once pipeline is created
-	vkDestroyShaderModule(this->vkLogicalDevice, fragmentShaderModule, nullptr);
-	vkDestroyShaderModule(this->vkLogicalDevice, vertexShaderModule, nullptr);
+	vkDestroyShaderModule(logicalDevice, fragmentShaderModule, nullptr);
+	vkDestroyShaderModule(logicalDevice, vertexShaderModule, nullptr);
 
 	///////////////////////////////////
 	// ----- SECOND PASS PIPELINE -----
@@ -773,39 +773,39 @@ void VulkanRenderer::createGraphicsPipeline()
 	VkPipelineLayoutCreateInfo secondPipelineLayoutCreateInfo = {};
 	secondPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	secondPipelineLayoutCreateInfo.setLayoutCount = 1;
-	secondPipelineLayoutCreateInfo.pSetLayouts = &this->vkInputDescriptorSetLayout;
+	secondPipelineLayoutCreateInfo.pSetLayouts = &inputDescriptorSetLayout;
 	secondPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	secondPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
-	result = vkCreatePipelineLayout(this->vkLogicalDevice, &secondPipelineLayoutCreateInfo, nullptr, &this->vkSecondPipelineLayout);
+	result = vkCreatePipelineLayout(logicalDevice, &secondPipelineLayoutCreateInfo, nullptr, &secondPipelineLayout);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create second pipeline layout.");
 	}
 
 	pipelineCreateInfo.pStages = secondShaderStages;
-	pipelineCreateInfo.layout = this->vkSecondPipelineLayout;
+	pipelineCreateInfo.layout = secondPipelineLayout;
 	pipelineCreateInfo.subpass = 1;								// second subpass
 
 	// Create second pipeline
-	result = vkCreateGraphicsPipelines(this->vkLogicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &this->vkSecondPipeline);
+	result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &secondPipeline);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create second graphics pipeline.");
 	}
 
-	vkDestroyShaderModule(this->vkLogicalDevice, secondVertexShaderModule, nullptr);
-	vkDestroyShaderModule(this->vkLogicalDevice, secondFragmentShaderModule, nullptr);
+	vkDestroyShaderModule(logicalDevice, secondVertexShaderModule, nullptr);
+	vkDestroyShaderModule(logicalDevice, secondFragmentShaderModule, nullptr);
 }
 
 void VulkanRenderer::createColorBufferImage()
 {
-	this->colorBufferImage.resize(IMAGE_COUNT);
-	this->colorBufferImageView.resize(IMAGE_COUNT);
-	this->colorBufferImageMemory.resize(IMAGE_COUNT);
+	colorBufferImage.resize(IMAGE_COUNT);
+	colorBufferImageView.resize(IMAGE_COUNT);
+	colorBufferImageMemory.resize(IMAGE_COUNT);
 
 	// Get supported format for depth buffer
-	this->colorFormat = defineSupportedFormat(
+	colorFormat = defineSupportedFormat(
 		{ VK_FORMAT_R8G8B8A8_UNORM },
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
@@ -813,17 +813,17 @@ void VulkanRenderer::createColorBufferImage()
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		// Create color buffer image
-		this->colorBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
+		colorBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->colorBufferImageMemory[i], context);
-		this->colorBufferImageView[i] = VkUtils::createImageView(this->colorBufferImage[i], colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &colorBufferImageMemory[i], context);
+		colorBufferImageView[i] = VkUtils::createImageView(colorBufferImage[i], colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
 	}
 }
 
 void VulkanRenderer::createFramebuffers()
 {
-	vkSwapchainFramebuffers.resize(IMAGE_COUNT);
-	for (int i = 0; i < vkSwapchainFramebuffers.size(); i++)
+	swapchainFramebuffers.resize(IMAGE_COUNT);
+	for (int i = 0; i < swapchainFramebuffers.size(); i++)
 	{
 		std::array<VkImageView, 3> attachments = {
 			swapchainImages[i].imageView,
@@ -833,14 +833,14 @@ void VulkanRenderer::createFramebuffers()
 
 		VkFramebufferCreateInfo framebufferCreateInfo = {};
 		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferCreateInfo.renderPass = this->vkRenderPass;
+		framebufferCreateInfo.renderPass = renderPass;
 		framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		framebufferCreateInfo.pAttachments = attachments.data();								// list of attachements 1:1 with render pass
 		framebufferCreateInfo.width = swapChainExtent.width;
 		framebufferCreateInfo.height = swapChainExtent.height;
 		framebufferCreateInfo.layers = 1;
 
-		VkResult result = vkCreateFramebuffer(this->vkLogicalDevice, &framebufferCreateInfo, nullptr, &vkSwapchainFramebuffers[i]);
+		VkResult result = vkCreateFramebuffer(logicalDevice, &framebufferCreateInfo, nullptr, &swapchainFramebuffers[i]);
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create framebuffers.");
@@ -853,29 +853,29 @@ void VulkanRenderer::createCommandPool()
 	VkCommandPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = getQueueFamilies(this->vkPhysicalDevice).graphicsFamily;
+	poolInfo.queueFamilyIndex = getQueueFamilies(physicalDevice).graphicsFamily;
 	
-	VkResult result = vkCreateCommandPool(this->vkLogicalDevice, &poolInfo, nullptr, &vkGraphicsCommandPool);
+	VkResult result = vkCreateCommandPool(logicalDevice, &poolInfo, nullptr, &graphicsCommandPool);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create Graphics Command Pool.");
 	}
 
-	context.graphicsCommandPool = vkGraphicsCommandPool;
+	context.graphicsCommandPool = graphicsCommandPool;
 }
 
 void VulkanRenderer::createCommandBuffers()
 {
-	this->vkCommandBuffers.resize(IMAGE_COUNT);
+	commandBuffers.resize(IMAGE_COUNT);
 
 	VkCommandBufferAllocateInfo cbAllocInfo = {};
 	cbAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	cbAllocInfo.commandPool = vkGraphicsCommandPool;
+	cbAllocInfo.commandPool = graphicsCommandPool;
 	cbAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;					// VK_COMMAND_BUFFER_LEVEL_PRIMARY		: buffer you submit directly to the queue. Can't be called by other buffers
 																			// VK_COMMAND_BUFFER_LEVEL_SECONDARY	: buffer can't be called directly. Can be called from other buffers via vkCmdExecuteCommands when recording commands in primary buffer
-	cbAllocInfo.commandBufferCount = static_cast<uint32_t>(this->vkCommandBuffers.size());
+	cbAllocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-	VkResult result = vkAllocateCommandBuffers(this->vkLogicalDevice, &cbAllocInfo, this->vkCommandBuffers.data());
+	VkResult result = vkAllocateCommandBuffers(logicalDevice, &cbAllocInfo, commandBuffers.data());
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to allocate command buffers");
@@ -884,9 +884,9 @@ void VulkanRenderer::createCommandBuffers()
 
 void VulkanRenderer::createSyncTools()
 {
-	this->vkSemImageAvailable.resize(MAX_FRAME_DRAWS);
-	this->vkSemRenderFinished.resize(MAX_FRAME_DRAWS);
-	this->vkDrawFences.resize(MAX_FRAME_DRAWS);
+	semImageAvailable.resize(MAX_FRAME_DRAWS);
+	semRenderFinished.resize(MAX_FRAME_DRAWS);
+	drawFences.resize(MAX_FRAME_DRAWS);
 
 	VkSemaphoreCreateInfo semCreateInfo = {};
 	semCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -897,9 +897,9 @@ void VulkanRenderer::createSyncTools()
 
 	for (int i = 0; i < MAX_FRAME_DRAWS; i++)
 	{
-		if (vkCreateSemaphore(this->vkLogicalDevice, &semCreateInfo, nullptr, &vkSemImageAvailable[i]) != VK_SUCCESS
-			|| vkCreateSemaphore(this->vkLogicalDevice, &semCreateInfo, nullptr, &vkSemRenderFinished[i]) != VK_SUCCESS
-			|| vkCreateFence(this->vkLogicalDevice, &fenceCreateInfo, nullptr, &this->vkDrawFences[i]) != VK_SUCCESS)
+		if (vkCreateSemaphore(logicalDevice, &semCreateInfo, nullptr, &semImageAvailable[i]) != VK_SUCCESS
+			|| vkCreateSemaphore(logicalDevice, &semCreateInfo, nullptr, &semRenderFinished[i]) != VK_SUCCESS
+			|| vkCreateFence(logicalDevice, &fenceCreateInfo, nullptr, &drawFences[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create semaphores and/or fence.");
 		}
@@ -931,8 +931,8 @@ void VulkanRenderer::createDescriptorSetLayout()
 		samplerDescriptorLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 		samplerDescriptorLayoutCreateInfo.pBindings = bindings.data();
 
-		VkResult result = vkCreateDescriptorSetLayout(this->vkLogicalDevice, &samplerDescriptorLayoutCreateInfo,
-			nullptr, &this->vkSamplerDescriptorSetLayout);
+		VkResult result = vkCreateDescriptorSetLayout(logicalDevice, &samplerDescriptorLayoutCreateInfo,
+			nullptr, &samplerDescriptorSetLayout);
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create Texture Samplers Descriptor Set Layout.");
@@ -962,8 +962,8 @@ void VulkanRenderer::createDescriptorSetLayout()
 		inputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(inputBindings.size());
 		inputLayoutCreateInfo.pBindings = inputBindings.data();
 
-		VkResult result = vkCreateDescriptorSetLayout(this->vkLogicalDevice, &inputLayoutCreateInfo,
-			nullptr, &this->vkInputDescriptorSetLayout);
+		VkResult result = vkCreateDescriptorSetLayout(logicalDevice, &inputLayoutCreateInfo,
+			nullptr, &inputDescriptorSetLayout);
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create Input Descriptor Set Layout.");
@@ -987,9 +987,9 @@ void VulkanRenderer::createUniforms()
 
 void VulkanRenderer::createDepthBuffer()
 {
-	this->depthBufferImage.resize(IMAGE_COUNT);
-	this->depthBufferImageView.resize(IMAGE_COUNT);
-	this->depthBufferImageMemory.resize(IMAGE_COUNT);
+	depthBufferImage.resize(IMAGE_COUNT);
+	depthBufferImageView.resize(IMAGE_COUNT);
+	depthBufferImageMemory.resize(IMAGE_COUNT);
 
 	// Get supported format for depth buffer
 	depthFormat = defineSupportedFormat(
@@ -1000,9 +1000,9 @@ void VulkanRenderer::createDepthBuffer()
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
 		// Create depth buffer image
-		this->depthBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->depthBufferImageMemory[i], context);
-		this->depthBufferImageView[i] = VkUtils::createImageView(this->depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, context);
+		depthBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &depthBufferImageMemory[i], context);
+		depthBufferImageView[i] = VkUtils::createImageView(depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, context);
 	}
 }   
 
@@ -1039,7 +1039,7 @@ void VulkanRenderer::createDescriptorPools()
 	inputPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(inputPoolSizes.size());
 	inputPoolCreateInfo.pPoolSizes = inputPoolSizes.data();
 
-	VkResult result = vkCreateDescriptorPool(this->vkLogicalDevice, &inputPoolCreateInfo, nullptr, &this->vkInputDescriptorPool);
+	VkResult result = vkCreateDescriptorPool(logicalDevice, &inputPoolCreateInfo, nullptr, &inputDescriptorPool);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create Input Descriptor pools.");
@@ -1048,17 +1048,17 @@ void VulkanRenderer::createDescriptorPools()
 
 void VulkanRenderer::createInputDescriptorSets()
 {
-	this->vkInputDescriptorSets.resize(IMAGE_COUNT);
+	inputDescriptorSets.resize(IMAGE_COUNT);
 
-	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, this->vkInputDescriptorSetLayout);
+	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, inputDescriptorSetLayout);
 
 	VkDescriptorSetAllocateInfo setAllocInfo = {};
 	setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	setAllocInfo.descriptorPool = this->vkInputDescriptorPool;
+	setAllocInfo.descriptorPool = inputDescriptorPool;
 	setAllocInfo.descriptorSetCount = static_cast<uint32_t>(IMAGE_COUNT);
 	setAllocInfo.pSetLayouts = setLayouts.data();
 
-	VkResult result = vkAllocateDescriptorSets(this->vkLogicalDevice, &setAllocInfo, this->vkInputDescriptorSets.data());
+	VkResult result = vkAllocateDescriptorSets(logicalDevice, &setAllocInfo, inputDescriptorSets.data());
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to allocate Input Attachment descriptor sets.");
@@ -1074,7 +1074,7 @@ void VulkanRenderer::createInputDescriptorSets()
 		// Color attachment descriptor write
 		VkWriteDescriptorSet colorWrite = {};
 		colorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		colorWrite.dstSet = this->vkInputDescriptorSets[i];
+		colorWrite.dstSet = inputDescriptorSets[i];
 		colorWrite.dstBinding = 0;
 		colorWrite.dstArrayElement = 0;
 		colorWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
@@ -1089,7 +1089,7 @@ void VulkanRenderer::createInputDescriptorSets()
 		// Color attachment descriptor write
 		VkWriteDescriptorSet depthWrite = {};
 		depthWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		depthWrite.dstSet = this->vkInputDescriptorSets[i];
+		depthWrite.dstSet = inputDescriptorSets[i];
 		depthWrite.dstBinding = 1;
 		depthWrite.dstArrayElement = 0;
 		depthWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
@@ -1097,16 +1097,16 @@ void VulkanRenderer::createInputDescriptorSets()
 		depthWrite.pImageInfo = &depthAttachmentDescriptor;
 
 		std::vector<VkWriteDescriptorSet> setWrites = { colorWrite, depthWrite };
-		vkUpdateDescriptorSets(this->vkLogicalDevice, static_cast<uint32_t>(setWrites.size()), setWrites.data(), 0, nullptr);
+		vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(setWrites.size()), setWrites.data(), 0, nullptr);
 	}
 }
 
 void VulkanRenderer::createPushConstantRange()
 {
 	// Defines push constant values
-	this->vkPushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	this->vkPushConstantRange.offset = 0;
-	this->vkPushConstantRange.size = sizeof(PushConstant);
+	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	pushConstantRange.offset = 0;
+	pushConstantRange.size = sizeof(PushConstant);
 }
 	
 
@@ -1181,7 +1181,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	// Information about how to begin a render pass (only required for graphical apps)
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassBeginInfo.renderPass = this->vkRenderPass;
+	renderPassBeginInfo.renderPass = renderPass;
 	renderPassBeginInfo.renderArea.offset = { 0,0 };						// start point of render pass
 	renderPassBeginInfo.renderArea.extent = swapChainExtent;
 	
@@ -1194,49 +1194,49 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	renderPassBeginInfo.pClearValues = clearValues.data();							// list of clear values
 	renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 
-	renderPassBeginInfo.framebuffer = this->vkSwapchainFramebuffers[currentImage];
+	renderPassBeginInfo.framebuffer = swapchainFramebuffers[currentImage];
 
 	// Start recording commands to command buffer 
-	VkResult result = vkBeginCommandBuffer(this->vkCommandBuffers[currentImage], &bufferBeginInfo);
+	VkResult result = vkBeginCommandBuffer(commandBuffers[currentImage], &bufferBeginInfo);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to start recording a command buffer.");
 	}
 
 	// Begin render pass
-	vkCmdBeginRenderPass(this->vkCommandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
+	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
 
 	// bind pipeline to be used with render pass
-	vkCmdBindPipeline(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkGraphicsPipeline);
+	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
 	// bind (static) uniforms
-	vpUniforms[currentImage]->cmdBind(0, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
+	vpUniforms[currentImage]->cmdBind(0, commandBuffers[currentImage], pipelineLayout);
 	// sets 1 and 2 are diffuseMap and specularMap
-	lightUniforms[currentImage]->cmdBind(2, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
+	lightUniforms[currentImage]->cmdBind(2, commandBuffers[currentImage], pipelineLayout);
 
 	int meshCount = 0;
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
-		colorUniformsDynamic[currentImage]->cmdBind(i, 3, this->vkCommandBuffers[currentImage], this->vkPipelineLayout);
-		modelsToRender[i]->draw(this->vkCommandBuffers[currentImage], this->vkPipelineLayout, this->mainCamera);
+		colorUniformsDynamic[currentImage]->cmdBind(i, 3, commandBuffers[currentImage], pipelineLayout);
+		modelsToRender[i]->draw(commandBuffers[currentImage], pipelineLayout, mainCamera);
 	}
 
 	// Start second subpass
-	vkCmdNextSubpass(this->vkCommandBuffers[currentImage], VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdNextSubpass(commandBuffers[currentImage], VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkSecondPipeline);
-	vkCmdBindDescriptorSets(this->vkCommandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkSecondPipelineLayout,
-		0, 1, &this->vkInputDescriptorSets[currentImage], 0, nullptr);
-	vkCmdDraw(this->vkCommandBuffers[currentImage], 3, 1, 0, 0);
+	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipeline);
+	vkCmdBindDescriptorSets(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipelineLayout,
+		0, 1, &inputDescriptorSets[currentImage], 0, nullptr);
+	vkCmdDraw(commandBuffers[currentImage], 3, 1, 0, 0);
 
-	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, this->vkCommandBuffers[currentImage]);
+	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, commandBuffers[currentImage]);
 
 	// End render pass
-	vkCmdEndRenderPass(this->vkCommandBuffers[currentImage]);
+	vkCmdEndRenderPass(commandBuffers[currentImage]);
 
 	// Stop recording commands to command buffer 
-	result = vkEndCommandBuffer(this->vkCommandBuffers[currentImage]);
+	result = vkEndCommandBuffer(commandBuffers[currentImage]);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to stop recording a command buffer.");
@@ -1296,9 +1296,9 @@ void VulkanRenderer::draw()
 	// 3 Present image to screen when it has signalled finished rendering
 
 	// Wait for given fence to signal open from last draw before continuing
-	vkWaitForFences(this->vkLogicalDevice, 1, &vkDrawFences[currentFrame], VK_TRUE, std::numeric_limits<InputState>::max());
+	vkWaitForFences(logicalDevice, 1, &drawFences[currentFrame], VK_TRUE, std::numeric_limits<InputState>::max());
 	// Reset fence
-	vkResetFences(this->vkLogicalDevice, 1, &vkDrawFences[currentFrame]);
+	vkResetFences(logicalDevice, 1, &drawFences[currentFrame]);
 
 	if (!modelsToDestroy.empty())
 	{
@@ -1312,7 +1312,7 @@ void VulkanRenderer::draw()
 
 	// -- 1
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(this->vkLogicalDevice, this->vkSwapchain, std::numeric_limits<InputState>::max(), this->vkSemImageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	vkAcquireNextImageKHR(logicalDevice, swapchain, std::numeric_limits<InputState>::max(), semImageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 	updateUniformBuffers(imageIndex);
 	recordCommands(imageIndex, *imguiDrawData);
@@ -1321,17 +1321,17 @@ void VulkanRenderer::draw()
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.waitSemaphoreCount = 1;									// num of semaphores to wait for
-	submitInfo.pWaitSemaphores = &vkSemImageAvailable[currentFrame];					// list of semaphores
+	submitInfo.pWaitSemaphores = &semImageAvailable[currentFrame];					// list of semaphores
 	VkPipelineStageFlags waitStages[] = {				
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 	};
 	submitInfo.pWaitDstStageMask = waitStages;							// stages to check semaphores at
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &this->vkCommandBuffers[imageIndex];
+	submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
 	submitInfo.signalSemaphoreCount = 1;								// number of semaphores to signal
-	submitInfo.pSignalSemaphores = &this->vkSemRenderFinished[currentFrame];
+	submitInfo.pSignalSemaphores = &semRenderFinished[currentFrame];
 
-	VkResult result = vkQueueSubmit(this->vkGraphicsQueue, 1, &submitInfo, vkDrawFences[currentFrame]);
+	VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, drawFences[currentFrame]);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to submit Comand buffer to Graphics Queue.");
@@ -1341,12 +1341,12 @@ void VulkanRenderer::draw()
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &vkSemRenderFinished[currentFrame];
+	presentInfo.pWaitSemaphores = &semRenderFinished[currentFrame];
 	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &this->vkSwapchain;
+	presentInfo.pSwapchains = &swapchain;
 	presentInfo.pImageIndices = &imageIndex;					// index of images in swapchain to present
 
-	result = vkQueuePresentKHR(this->vkPresentationQueue, &presentInfo);
+	result = vkQueuePresentKHR(presentationQueue, &presentInfo);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to present image.");
@@ -1383,8 +1383,8 @@ bool VulkanRenderer::addToRendererTextured(const Model& model)
 	if (!isModelInRenderer(model.id))
 	{
 		VkUtils::VkSamplerDescriptorSetCreateInfo createInfo = {};
-		createInfo.sampler = this->vkTextureSampler;
-		createInfo.samplerDescriptorSetLayout = this->vkSamplerDescriptorSetLayout;
+		createInfo.sampler = textureSampler;
+		createInfo.samplerDescriptorSetLayout = samplerDescriptorSetLayout;
 
 		VkModel* vkModel = new VkModel(model.id, model, context, createInfo);
 		modelsToRender.push_back(vkModel);
@@ -1408,7 +1408,7 @@ bool VulkanRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
 
 void VulkanRenderer::setCamera(BaseCamera* camera)
 {
-	this->mainCamera = camera;
+	mainCamera = camera;
 }
 
 bool VulkanRenderer::addLightSource(Light* light)
@@ -1444,7 +1444,7 @@ void VulkanRenderer::setupDebugMessenger()
 	VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
 	VkUtils::populateDebugMessengerCreateInfo(createInfo);
 
-	if (VkUtils::createDebugUtilsMessengerEXT(this->vkInstance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+	if (VkUtils::createDebugUtilsMessengerEXT(vkInstance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to set up debug messenger.");
 	}
@@ -1542,22 +1542,22 @@ void VulkanRenderer::setupImgui()
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	this->imguiIO = ImGui::GetIO(); (void)imguiIO;
+	imguiIO = ImGui::GetIO(); (void)imguiIO;
 	imguiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
 	ImGui::StyleColorsDark();
 
 	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForVulkan(this->window, true);
+	ImGui_ImplGlfw_InitForVulkan(window, true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.ApiVersion = VK_API_VERSION_1_4;              // Pass in your value of VkApplicationInfo::apiVersion, otherwise will default to header version.
-	init_info.Instance = this->vkInstance;
-	init_info.PhysicalDevice = this->vkPhysicalDevice;
-	init_info.Device = this->vkLogicalDevice;
-	init_info.QueueFamily = this->getQueueFamilies(vkPhysicalDevice).graphicsFamily;
-	init_info.Queue = this->vkGraphicsQueue;
-	init_info.DescriptorPool = this->imguiDescriptorPool;
-	init_info.RenderPass = this->vkRenderPass;
+	init_info.Instance = vkInstance;
+	init_info.PhysicalDevice = physicalDevice;
+	init_info.Device = logicalDevice;
+	init_info.QueueFamily = getQueueFamilies(physicalDevice).graphicsFamily;
+	init_info.Queue = graphicsQueue;
+	init_info.DescriptorPool = imguiDescriptorPool;
+	init_info.RenderPass = renderPass;
 	init_info.Subpass = 1;
 	init_info.MinImageCount = 2;
 	init_info.ImageCount = 3;
@@ -1577,7 +1577,7 @@ ImDrawData* VulkanRenderer::drawImgui()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	this->imguiCallback();
+	imguiCallback();
 
 	// Rendering
 	ImGui::Render();
@@ -1603,7 +1603,7 @@ void VulkanRenderer::createImguiDescriptorPool()
 		pool_info.maxSets += pool_size.descriptorCount;
 	pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 	pool_info.pPoolSizes = pool_sizes;
-	VkResult result  = vkCreateDescriptorPool(this->vkLogicalDevice, &pool_info, nullptr, &this->imguiDescriptorPool);
+	VkResult result  = vkCreateDescriptorPool(logicalDevice, &pool_info, nullptr, &imguiDescriptorPool);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create IMGUI Descriptor pool.");
@@ -1616,7 +1616,7 @@ void VulkanRenderer::cleanupImgui()
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 
-	vkDestroyDescriptorPool(this->vkLogicalDevice, this->imguiDescriptorPool, nullptr);
+	vkDestroyDescriptorPool(logicalDevice, imguiDescriptorPool, nullptr);
 }
 
 /*
@@ -1644,7 +1644,7 @@ VkFormat VulkanRenderer::defineSupportedFormat(const std::vector<VkFormat>& form
 	for (VkFormat format : formats)
 	{
 		VkFormatProperties properties;
-		vkGetPhysicalDeviceFormatProperties(this->vkPhysicalDevice, format, &properties);
+		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &properties);
 		if ((tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures & featureFlags) == featureFlags)
 			|| (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures & featureFlags) == featureFlags))
 		{
@@ -1680,7 +1680,7 @@ VkUtils::QueueFamilyIndices VulkanRenderer::getQueueFamilies(VkPhysicalDevice de
 
 		// Checking if current Queue Family supports presentation (which is not a distinct queue family, can be graphics one)
 		VkBool32 presentationSupport;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, this->vkSurface, &presentationSupport);
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentationSupport);
 		if (queueFamily.queueCount > 0 && presentationSupport)
 		{
 			indices.presentationFamily = i;
@@ -1715,7 +1715,7 @@ void VulkanRenderer::createTextureSampler()
 	createInfo.anisotropyEnable = VK_FALSE;
 	createInfo.maxAnisotropy = 16;
 
-	VkResult result = vkCreateSampler(this->vkLogicalDevice, &createInfo, nullptr, &this->vkTextureSampler);
+	VkResult result = vkCreateSampler(logicalDevice, &createInfo, nullptr, &textureSampler);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create texture sampler.");
@@ -1726,22 +1726,22 @@ VkUtils::SwapChainDetails VulkanRenderer::getSwapChainDetails(VkPhysicalDevice d
 {
 	VkUtils::SwapChainDetails details = {};
 
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, this->vkSurface, &details.surfaceCapabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.surfaceCapabilities);
 	
 	uint32_t formatCount = 0;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, this->vkSurface, &formatCount, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
 	if (formatCount != 0)
 	{
 		details.surfaceFormats.resize(formatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(device, this->vkSurface, &formatCount, details.surfaceFormats.data());
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.surfaceFormats.data());
 	}
 
 	uint32_t presentationModesCount = 0;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, this->vkSurface, &presentationModesCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentationModesCount, nullptr);
 	if (presentationModesCount > 0)
 	{
 		details.presentationModes.resize(presentationModesCount);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(device, this->vkSurface, &presentationModesCount, details.presentationModes.data());
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentationModesCount, details.presentationModes.data());
 	}
 
 	return details;
@@ -1811,7 +1811,7 @@ VkShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code)
 	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
 	VkShaderModule shaderModule;
-	VkResult result = vkCreateShaderModule(this->vkLogicalDevice, &shaderModuleCreateInfo, nullptr, &shaderModule);
+	VkResult result = vkCreateShaderModule(logicalDevice, &shaderModuleCreateInfo, nullptr, &shaderModule);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create shader module.");
