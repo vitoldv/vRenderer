@@ -56,7 +56,7 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		{
 			PushConstant push = {};
 			push.model = mesh->getTransformMat();
-			push.useTexture = textured;
+			push.textured = textured;
 			push.normalMatrix = glm::transpose(glm::inverse(mesh->getTransformMat()));
 			push.viewPosition = camera.getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,

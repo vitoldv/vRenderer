@@ -3,7 +3,7 @@
 layout(input_attachment_index = 0, binding = 0) uniform subpassInput inputColor;        // Color ouput from subpass 1
 layout(input_attachment_index = 1, binding = 1) uniform subpassInput inputDepth;        // Depth ouput from subpass 1
 
-layout(location = 0) out vec4 color;
+layout(location = 0) out vec4 FragColor;
 
 void main()
 {
@@ -12,5 +12,5 @@ void main()
     // subpassLoad([input_image]).rgba - is a way to grab this color
     //color = subpassLoad(inputColor).rgba;   
     
-    color = subpassLoad(inputColor).rgba;   
+    FragColor = subpassLoad(inputColor).rgba;   
 }

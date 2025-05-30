@@ -4,10 +4,10 @@ precision highp float;
 
 #define MAX_LIGHT_SOURCES 10
 
-in vec3 outColor;
-in vec2 outTexCoord;
-in vec3 outNormal;
-in vec3 outFragPos;
+in vec3 fragColor;
+in vec2 fragUv;
+in vec3 fragNormal;
+in vec3 fragPos;
 
 out vec4 FragColor;
 
@@ -67,9 +67,9 @@ vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 
 void main()
 {
     // Fragment's normal in view space
-    vec3 norm = normalize(outNormal);
+    vec3 norm = normalize(fragNormal);
     // Viewing direction
-    vec3 viewDir = normalize(-outFragPos);
+    vec3 viewDir = normalize(-fragPos);
 
     vec3 shading;
     for(int i = 0; i < MAX_LIGHT_SOURCES; i++)
@@ -92,7 +92,7 @@ void main()
     vec3 result = vec3(1.0);
     if(useMaterial && !useDiffuseColor)
     {
-        result = texture(material.diffuseMap, outTexCoord).xyz;
+        result = texture(material.diffuseMap, fragUv).xyz;
     }
     else
     {
@@ -116,7 +116,7 @@ vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir)
     // Specular calculation
     vec3 reflectDir = reflect(-lightDir, normal);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), light.shininess);
-    vec3 specular = texture(material.specularMap, outTexCoord).xyz * light.specularStrength * spec * light.color;
+    vec3 specular = texture(material.specularMap, fragUv).xyz * light.specularStrength * spec * light.color;
     
     return ambient + diffuse + specular;
 }
@@ -142,7 +142,7 @@ vec3 applyDirectionalLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos
 // Returns a shading impact of a Point light source (light.type == 1)
 vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection)
 {
-    vec3 lightDir = lightPos - outFragPos; 
+    vec3 lightDir = lightPos - fragPos; 
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 
@@ -154,7 +154,7 @@ vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3
 // Returns a shading impact of a Spot (Flashlight) light source (light.type == 2)
 vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection)
 {
-    vec3 lightDir = lightPos - outFragPos; 
+    vec3 lightDir = lightPos - fragPos; 
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 

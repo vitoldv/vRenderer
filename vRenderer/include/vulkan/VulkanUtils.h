@@ -31,8 +31,8 @@ namespace VkUtils
 
 	struct UboViewProjection
 	{
-		glm::mat4 projection;
 		glm::mat4 view;
+		glm::mat4 projection;
 	};
 
 	/// <summary>
@@ -104,7 +104,7 @@ namespace VkUtils
 		// the position of a viewer (camera)
 		glm::vec3 viewPosition;
 		// flag to inform whether model is textured
-		uint8_t useTexture;
+		uint8_t textured;
 	};
 
 	const std::vector<glm::vec3> meshVertices = {
