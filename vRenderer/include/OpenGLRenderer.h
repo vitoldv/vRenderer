@@ -36,8 +36,8 @@ public:
 	bool removeFromRenderer(int modelId) override;
 	bool isModelInRenderer(uint32_t id) override;
 	bool updateModelTransform(int modelId, glm::mat4 newTransform) override;
-	void setCamera(BaseCamera* camera) override;
-	bool addLightSource(Light* light) override;
+	void setCamera(const std::shared_ptr<BaseCamera> camera) override;
+	bool addLightSources(const std::shared_ptr<Light> lights[], uint32_t count) override;
 	void cleanup() override;
 	void setImguiCallback(std::function<void()> callback) override;
 
@@ -45,9 +45,9 @@ private:
 
 	GLShader* shader;
 
-	BaseCamera* camera;
+	std::shared_ptr<BaseCamera> camera;
 	std::vector<GLModel*> modelsToRender;
-	std::vector<Light*> lightSources;
+	std::vector<std::shared_ptr<Light>> lightSources;
 
 	GLModel* getModel(uint32_t id);
 

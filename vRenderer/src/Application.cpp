@@ -61,7 +61,7 @@ int Application::initApplication()
 
 	setSceneCamera(CameraType::ORBIT);
 
-	Light* light = new Light(1, Light::Type::DIRECTIONAL);
+	auto light = std::make_shared<Light>(1, Light::Type::DIRECTIONAL);
 	light->color = { 1.0f, 1.0f, 1.0f };
 	light->position = { 1.8f, 0.9f, 0.0f };
 	light->direction = { 0, -1.0f, 0 };
@@ -75,7 +75,7 @@ int Application::initApplication()
 	light->outerCutOff = 27.0f;
 	lightSources.push_back(light);
 
-	Light* light2 = new Light(2, Light::Type::POINT);
+	auto light2 = std::make_shared<Light>(2, Light::Type::POINT);
 	light2->color = { 1.0f, 1.0f, 1.0f };
 	light2->position = { 0.0f, 0.9f, 1.8f };
 	light2->direction = { 0.0f, 0, -1.0f };
@@ -89,8 +89,7 @@ int Application::initApplication()
 	light2->outerCutOff = 27.0f;
 	lightSources.push_back(light2);
 
-	renderer->addLightSource(light);
-	renderer->addLightSource(light2);
+	renderer->addLightSources(lightSources.data(), lightSources.size());
 
 	return 0;
 }
@@ -150,9 +149,6 @@ void Application::render()
 
 void Application::cleanup()
 {
-	delete camera;
-	camera = nullptr;
-
 	delete modelToRender;
 	modelToRender = nullptr;
 
@@ -183,10 +179,10 @@ void Application::onLightSettingsChanged()
 
 void Application::setSceneCamera(CameraType cameraType)
 {
-	BaseCamera* oldCamera = nullptr;
+	std::shared_ptr<BaseCamera> oldCamera = nullptr;
 	if (this->camera != nullptr)
 	{
-		oldCamera = this->camera;
+		oldCamera = std::move(this->camera);
 	}
 
 	bool flipY = currentApi == RenderSettings::API::VULKAN;
@@ -194,27 +190,24 @@ void Application::setSceneCamera(CameraType cameraType)
 	switch (this->cameraType)
 	{
 	case CameraType::ORBIT:
- 		this->camera = new OrbitCamera(cameraFov, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, flipY);
+ 		this->camera = std::make_shared<OrbitCamera>(cameraFov, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, flipY);
 		break;
 	case CameraType::FPV:
-		this->camera = new FpvCamera(cameraFov, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, flipY);
+		this->camera = std::make_shared<FpvCamera>(cameraFov, Z_NEAR, Z_FAR, WINDOW_WIDTH, WINDOW_HEIGHT, flipY);
 		break;
 	}
 
 	// Copy previous camera state and delete it
 	if (oldCamera != nullptr)
 	{
-		EventBinder::Unbind(&BaseCamera::onMouseMove, oldCamera, inp::onMouseMove);
-		EventBinder::Unbind(&BaseCamera::onMouseScroll, oldCamera, inp::onMouseScroll);
-		EventBinder::Unbind(&BaseCamera::onKey, oldCamera, inp::onKey);
-
-		delete oldCamera;
-		oldCamera = nullptr;
+		EventBinder::Unbind(&BaseCamera::onMouseMove, oldCamera.get(), inp::onMouseMove);
+		EventBinder::Unbind(&BaseCamera::onMouseScroll, oldCamera.get(), inp::onMouseScroll);
+		EventBinder::Unbind(&BaseCamera::onKey, oldCamera.get(), inp::onKey);
 	}
 
-	EventBinder::Bind(&BaseCamera::onMouseMove, camera, inp::onMouseMove);
-	EventBinder::Bind(&BaseCamera::onMouseScroll, camera, inp::onMouseScroll);
-	EventBinder::Bind(&BaseCamera::onKey, camera, inp::onKey);
+	EventBinder::Bind(&BaseCamera::onMouseMove, camera.get(), inp::onMouseMove);
+	EventBinder::Bind(&BaseCamera::onMouseScroll, camera.get(), inp::onMouseScroll);
+	EventBinder::Bind(&BaseCamera::onKey, camera.get(), inp::onKey);
 
 	renderer->setCamera(camera);
 }

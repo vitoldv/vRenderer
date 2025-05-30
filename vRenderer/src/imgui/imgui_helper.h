@@ -125,11 +125,11 @@ namespace imgui_helper
 	}
 
 	const char* lightTypeLabels[] = { "Directional", "Point", "Spot"};
-	void ShowLightSettingsTab(std::vector<Light*>& lights, bool& settingsChanged)
+	void ShowLightSettingsTab(const std::vector<std::shared_ptr<Light>>& lights, bool& settingsChanged)
 	{
 		for (int i = 0; i < lights.size(); i++)
 		{
-			Light* light = lights[i];
+			Light* light = lights[i].get();
 			std::string header = "Source #" + std::to_string(i) + " (" + lightTypeLabels[light->type - 1] + ")";
 			if (ImGui::CollapsingHeader(header.c_str()))
 			{

@@ -122,11 +122,11 @@ private:
 	std::vector<VkFence> drawFences;
 
 	// Scene
-	BaseCamera* mainCamera;
+	std::shared_ptr<BaseCamera> sceneCamera;
 	std::vector<VkModel*> modelsToRender;
 	std::vector<VkModel*> modelsToDestroy;
 
-	std::vector<Light*> lightSources;
+	std::vector<std::shared_ptr<Light>> lightSources;
 	struct UboLightArray {
 		UboLight lights[MAX_LIGHT_SOURCES];       // Total size: 96 * 10 = 960 bytes
 	} uboLightArray;
@@ -159,8 +159,8 @@ public:
 	bool isModelInRenderer(uint32_t id);
 
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
-	void setCamera(BaseCamera* camera);
-	bool addLightSource(Light* light);
+	void setCamera(const std::shared_ptr<BaseCamera> camera);
+	bool addLightSources(const std::shared_ptr<Light> light[], uint32_t count);
 
 	void cleanup();
 

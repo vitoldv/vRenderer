@@ -1136,8 +1136,8 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 	// Update ViewProjection uniform
 	{
 		UboViewProjection mvp = {};
-		mvp.projection = mainCamera->getProjectionMatrix();
-		mvp.view = mainCamera->getViewMatrix();
+		mvp.projection = sceneCamera->getProjectionMatrix();
+		mvp.view = sceneCamera->getViewMatrix();
 
 		vpUniforms[imageIndex]->update(mvp);
 	}
@@ -1219,7 +1219,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	{
 		// bind dynamic uniforms (unique per object)
 		colorUniformsDynamic[currentImage]->cmdBind(i, 3, commandBuffers[currentImage], pipelineLayout);
-		modelsToRender[i]->draw(commandBuffers[currentImage], pipelineLayout, mainCamera);
+		modelsToRender[i]->draw(commandBuffers[currentImage], pipelineLayout, *sceneCamera);
 	}
 
 	// Start second subpass
@@ -1406,16 +1406,19 @@ bool VulkanRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
 	return model != nullptr;
 }
 
-void VulkanRenderer::setCamera(BaseCamera* camera)
+void VulkanRenderer::setCamera(const std::shared_ptr<BaseCamera> camera)
 {
-	mainCamera = camera;
+	sceneCamera = camera;
 }
 
-bool VulkanRenderer::addLightSource(Light* light)
+bool VulkanRenderer::addLightSources(const std::shared_ptr<Light> lights[], uint32_t count)
 {
-	if (lightSources.size() < MAX_LIGHT_SOURCES)
+	if (lightSources.size() + count <= MAX_LIGHT_SOURCES)  // Changed < to <=
 	{
-		lightSources.push_back(light);
+		for (int i = 0; i < count; i++)
+		{
+			lightSources.push_back(lights[i]);  // Add each light individually
+		}
 		return true;
 	}
 	return false;
