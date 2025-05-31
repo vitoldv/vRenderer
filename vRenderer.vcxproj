@@ -162,6 +162,7 @@
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />
     <ClCompile Include="vRenderer\src\VkModel.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkTexture.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="vRenderer\include\stb_image.h" />
     <ClInclude Include="vRenderer\include\utils.h" />
     <ClInclude Include="vRenderer\include\VkModel.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMesh.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkTexture.h" />

@@ -30,8 +30,8 @@
 #include "VulkanUtils.h"
 #include "VkUniform.hpp"
 #include "VkUniformDynamic.hpp"
+#include "VkImageWrapper.h"
 #include "BaseCamera.h"
-#include "Lighting.h"
 
 #ifdef NDEBUG
 #define ENABLE_VALIDATION_LAYERS false
@@ -48,7 +48,6 @@
 
 #define IMAGE_COUNT 3			// the number of images in swapchain
 #define MAX_FRAME_DRAWS 2
-#define MAX_LIGHT_SOURCES 10
 
 // Names of extensions required to run the application
 const std::vector<const char*> deviceExtensions = {
@@ -94,18 +93,11 @@ private:
 	VkCommandPool graphicsCommandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 
-	std::vector<VkImage> colorBufferImage;
-	std::vector<VkDeviceMemory> colorBufferImageMemory;
-	std::vector<VkImageView> colorBufferImageView;
-	VkFormat colorFormat;
-
-	std::vector<VkImage> depthBufferImage;
-	std::vector<VkDeviceMemory> depthBufferImageMemory;
-	std::vector<VkImageView> depthBufferImageView;
-	VkFormat depthFormat;
-
 	// Extension Vulkan Components
 	VkDebugUtilsMessengerEXT debugMessenger;
+
+	std::unique_ptr<VkImageWrapper> depthImage;
+	std::unique_ptr<VkImageWrapper> colorImage;
 
 	// Descriptors
 	VkDescriptorSetLayout inputDescriptorSetLayout;		// input to subpass 2
@@ -128,17 +120,14 @@ private:
 	std::shared_ptr<BaseCamera> sceneCamera;
 	std::vector<VkModel*> modelsToRender;
 	std::vector<VkModel*> modelsToDestroy;
-
 	std::vector<std::shared_ptr<Light>> lightSources;
-	struct UboLightArray {
-		UboLight lights[MAX_LIGHT_SOURCES];       // Total size: 96 * 10 = 960 bytes
-	} uboLightArray;
+	UboLightArray uboLightArray;
 
 	// Uniforms
 	std::vector<std::unique_ptr<VkUniform<UboLightArray>>> lightUniforms;
 	std::vector<std::unique_ptr<VkUniform<UboViewProjection>>> vpUniforms;
-		
 	std::vector<std::unique_ptr<VkUniformDynamic<UboDynamicColor>>> colorUniformsDynamic;
+
 	// Textures
 	VkSampler textureSampler;
 

@@ -108,6 +108,9 @@
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Mesh.h">
@@ -225,6 +228,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkUniformDynamic.ipp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

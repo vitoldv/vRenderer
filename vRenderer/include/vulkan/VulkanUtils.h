@@ -18,6 +18,7 @@
 
 // How many MODELS can be rendered
 #define MAX_OBJECTS 1
+#define MAX_LIGHT_SOURCES 10
 
 namespace VkUtils
 {
@@ -82,6 +83,11 @@ namespace VkUtils
 			outerCutOff = genericLight.outerCutOff;
 			return *this;
 		}
+	};
+
+	struct UboLightArray
+	{
+		UboLight lights[MAX_LIGHT_SOURCES];       // Total size: 96 * 10 = 960 bytes
 	};
 
 	struct ALIGN_STD140 UboDynamicColor

@@ -68,19 +68,8 @@ void VulkanRenderer::cleanup()
 
 	vkDestroySampler(logicalDevice, textureSampler, nullptr);
 	 
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		vkDestroyImageView(logicalDevice, colorBufferImageView[i], nullptr);
-		vkDestroyImage(logicalDevice, colorBufferImage[i], nullptr);
-		vkFreeMemory(logicalDevice, colorBufferImageMemory[i], nullptr);
-	}
-
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		vkDestroyImageView(logicalDevice, depthBufferImageView[i], nullptr);
-		vkDestroyImage(logicalDevice, depthBufferImage[i], nullptr);
-		vkFreeMemory(logicalDevice, depthBufferImageMemory[i], nullptr);
-	}
+	depthImage->cleanup();
+	colorImage->cleanup();
 
 	for (int i = 0; i < setLayoutMap.size(); i++)
 	{
@@ -384,45 +373,28 @@ void VulkanRenderer::createSwapChain()
 
 void VulkanRenderer::createDepthBuffer()
 {
-	depthBufferImage.resize(IMAGE_COUNT);
-	depthBufferImageView.resize(IMAGE_COUNT);
-	depthBufferImageMemory.resize(IMAGE_COUNT);
-
 	// Get supported format for depth buffer
-	depthFormat = defineSupportedFormat(
+	VkFormat depthFormat = defineSupportedFormat(
 		{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT },
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		// Create depth buffer image
-		depthBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &depthBufferImageMemory[i], context);
-		depthBufferImageView[i] = VkUtils::createImageView(depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, context);
-	}
+	depthImage = std::make_unique<VkImageWrapper>(depthFormat, swapChainExtent, IMAGE_COUNT,
+		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, context);
 }
 
 void VulkanRenderer::createColorBufferImage()
 {
-	colorBufferImage.resize(IMAGE_COUNT);
-	colorBufferImageView.resize(IMAGE_COUNT);
-	colorBufferImageMemory.resize(IMAGE_COUNT);
-
 	// Get supported format for depth buffer
-	colorFormat = defineSupportedFormat(
+	VkFormat colorFormat = defineSupportedFormat(
 		{ VK_FORMAT_R8G8B8A8_UNORM },
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		// Create color buffer image
-		colorBufferImage[i] = VkUtils::createImage(swapChainExtent.width, swapChainExtent.height, colorFormat,
-			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &colorBufferImageMemory[i], context);
-		colorBufferImageView[i] = VkUtils::createImageView(colorBufferImage[i], colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, context);
-	}
+	colorImage = std::make_unique<VkImageWrapper>(colorFormat, swapChainExtent, IMAGE_COUNT,
+		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, context);
 }
 
 void VulkanRenderer::createRenderPass()
@@ -434,7 +406,7 @@ void VulkanRenderer::createRenderPass()
 
 	// Color attachment (Input)
 	VkAttachmentDescription colorAttachment = {};
- 	colorAttachment.format = colorFormat;
+	colorAttachment.format = colorImage->format;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;							// clear attachment on render pass load
 	// don't care what to do with attachmnet after render pass finished
@@ -447,7 +419,7 @@ void VulkanRenderer::createRenderPass()
 
 	// Depth attachment (Input)
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = depthFormat;
+	depthAttachment.format = depthImage->format;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -609,7 +581,6 @@ void VulkanRenderer::createPushConstantRange()
 	pushConstantRange.size = sizeof(PushConstant);
 }
 
-
 void VulkanRenderer::createDescriptorPools()
 {
 	dynamicUniformDescriptorPool = VkUtils::createDescriptorPool(
@@ -659,6 +630,7 @@ void VulkanRenderer::createUniforms()
 
 void VulkanRenderer::createSubpassInputDescriptorSets()
 {
+	// TODO: probably refactor this along with other places where descriptor sets are updated
 	inputDescriptorSets.resize(IMAGE_COUNT);
 
 	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, inputDescriptorSetLayout);
@@ -679,7 +651,7 @@ void VulkanRenderer::createSubpassInputDescriptorSets()
 	{
 		VkDescriptorImageInfo colorAttachmentDescriptor = {};
 		colorAttachmentDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		colorAttachmentDescriptor.imageView = colorBufferImageView[i];
+		colorAttachmentDescriptor.imageView = colorImage->getImageView(i);
 		colorAttachmentDescriptor.sampler = VK_NULL_HANDLE;
 
 		// Color attachment descriptor write
@@ -694,7 +666,7 @@ void VulkanRenderer::createSubpassInputDescriptorSets()
 
 		VkDescriptorImageInfo depthAttachmentDescriptor = {};
 		depthAttachmentDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		depthAttachmentDescriptor.imageView = depthBufferImageView[i];
+		depthAttachmentDescriptor.imageView = depthImage->getImageView(i);
 		depthAttachmentDescriptor.sampler = VK_NULL_HANDLE;
 
 		// Color attachment descriptor write
@@ -1002,8 +974,8 @@ void VulkanRenderer::createFramebuffers()
 	{
 		std::array<VkImageView, 3> attachments = {
 			swapchainImages[i].imageView,
-			colorBufferImageView[i],
-			depthBufferImageView[i]
+			colorImage->getImageView(i),
+			depthImage->getImageView(i)
 		};
 
 		VkFramebufferCreateInfo framebufferCreateInfo = {};
@@ -1196,7 +1168,6 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 		}
 	}
 }
-
 
 void VulkanRenderer::draw()
 {
