@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
 
 #include "RenderSettings.h"
 #include "OpenGLRenderer.h"
@@ -47,8 +48,9 @@ private:
 	std::string selectedModelName;
 	bool newSelection;
 
-	BaseCamera* camera;
-	std::vector<Light*> lightSources;
+	std::shared_ptr<BaseCamera> camera;
+	std::vector<std::shared_ptr<Light>> lightSources;
+
 	Model* modelToRender;
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);

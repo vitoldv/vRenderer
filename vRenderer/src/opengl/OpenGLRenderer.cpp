@@ -1,5 +1,10 @@
 #include "OpenGLRenderer.h"
 
+OpenGLRenderer::~OpenGLRenderer()
+{
+	cleanup();
+}
+
 int OpenGLRenderer::init(GLFWwindow* window)
 {
 	int width, height;
@@ -123,16 +128,19 @@ bool OpenGLRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
 	return model != nullptr;
 }
 
-void OpenGLRenderer::setCamera(BaseCamera* camera)
+void OpenGLRenderer::setCamera(const std::shared_ptr<BaseCamera> camera)
 {
 	this->camera = camera;
 }
 
-bool OpenGLRenderer::addLightSource(Light* light)
+bool OpenGLRenderer::addLightSources(const std::shared_ptr<Light> lights[], uint32_t count)
 {
-	if (lightSources.size() < MAX_LIGHT_SOURCES)
+	if (lightSources.size() + count <= MAX_LIGHT_SOURCES)  // Changed < to <=
 	{
-		lightSources.push_back(light);
+		for (int i = 0; i < count; i++)
+		{
+			lightSources.push_back(lights[i]);  // Add each light individually
+		}
 		return true;
 	}
 	return false;

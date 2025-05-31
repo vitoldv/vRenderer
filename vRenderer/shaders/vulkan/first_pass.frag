@@ -5,79 +5,82 @@
 layout(location = 0) in vec3 fragCol;
 layout(location = 1) in vec2 fragUv;
 layout(location = 2) in vec3 fragNormal;
-layout(location = 3) flat in uint fragTextured;
-layout(location = 4) flat in vec3 outViewPos;
-layout(location = 5) in vec3 outFragPos;
+layout(location = 3) in vec3 fragPos;
 
+layout(location = 4) flat in uint outTextured;
+layout(location = 5) flat in vec3 outViewPos;
+
+// Material (set = 1)
 layout(set = 1, binding = 0) uniform sampler2D diffuseMap;
-layout(set = 2, binding = 0) uniform sampler2D specularMap;
+layout(set = 1, binding = 1) uniform sampler2D specularMap;
 
 struct Light {
 
-    vec4 color;            // Offset: 0
-    vec4 position;         // Offset: 16
-    vec4 direction;        // Offset: 32
+    // Only xyz components matter in all three vectors
+    vec4 color;            
+    vec4 position;        
+    vec4 direction;      
     
     // 1 - directional
     // 2 - point
     // 3 - spot
-    int type;             // Offset: 60
-    float ambientStrength; // Offset: 48
-    float specularStrength;// Offset: 52
-    int shininess;         // Offset: 56
+    int type;            
+    float ambientStrength;
+    float specularStrength;
+    int shininess;         
     
-    float constant;        // Offset: 64
-    float linear;          // Offset: 68
-    float quadratic;       // Offset: 72
-    float cutOff;          // Offset: 76
+    float constant;        
+    float linear;         
+    float quadratic;     
+    float cutOff;          
     
-    float outerCutOff;     // Offset: 80
+    float outerCutOff;   
 };
 
-layout(set = 3, binding = 0) uniform LightsUniform {
+layout(set = 2, binding = 0) uniform UboLight {
     Light lights[MAX_LIGHT_SOURCES];
-} lightUniform;
+} uboLight;
 
-layout(location = 0) out vec4 outColor;     // final output color
+layout(set = 3, binding = 0) uniform UboDynamicColor {
+    vec4 color;
+} uboColor;
+
+layout(location = 0) out vec4 FragColor; 
 
 vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir);
 float getAttenuationFactor(Light light, float lightDistance);
 
-vec3 applyDirectionalLight(Light ligth, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection);
-vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection);
-vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection);
+vec3 applyDirectionalLight(Light ligth, vec3 normal, vec3 viewDir);
+vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir);
+vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir);
 
 void main()
 {
     // Fragment's normal in view space
     vec3 norm = normalize(fragNormal);
     // Viewing direction
-    vec3 viewDir = normalize(outViewPos - outFragPos);
+    vec3 viewDir = normalize(outViewPos - fragPos);
 
     vec3 shading = vec3(0);
-    vec3 branch = vec3(0);
     for(int i = 0; i < MAX_LIGHT_SOURCES; i++)
     {
-        if(lightUniform.lights[i].type == 1)
+        if(uboLight.lights[i].type == 1)
         {
-            branch.x = 1.0;
-            shading += applyDirectionalLight(lightUniform.lights[i], norm, viewDir, lightUniform.lights[i].position.xyz, lightUniform.lights[i].direction.xyz);
+            shading += applyDirectionalLight(uboLight.lights[i], norm, viewDir);
         }
-        else if(lightUniform.lights[i].type == 2)
+        else if(uboLight.lights[i].type == 2)
         {
-            branch.y = 1.0;
-            shading += applyPointLight(lightUniform.lights[i], norm, viewDir, lightUniform.lights[i].position.xyz, lightUniform.lights[i].direction.xyz);
+            shading += applyPointLight(uboLight.lights[i], norm, viewDir);
         }
-        else if(lightUniform.lights[i].type == 3)
+        else if(uboLight.lights[i].type == 3)
         {
-            branch.z = 1.0;
-            shading += applySpotLight(lightUniform.lights[i], norm, viewDir, lightUniform.lights[i].position.xyz, lightUniform.lights[i].direction.xyz);
+            shading += applySpotLight(uboLight.lights[i], norm, viewDir);
         }
     }
 
     // Unshaded fragment color calculation
     vec3 result = vec3(1.0);
-    if(fragTextured != 0)
+    if(outTextured != 0)
     {      
         result = texture(diffuseMap, fragUv).xyz;
     }
@@ -89,7 +92,7 @@ void main()
     // Light application
     result = shading * result;
 
-    outColor = vec4(result, 1.0);
+    FragColor = vec4(result, 1.0);
 }
 
 // Returns a vector of Phong shading impact
@@ -120,16 +123,16 @@ float getAttenuationFactor(Light light, float lightDistance)
 }
 
 // Returns a shading impact of a Directional light source (light.type == 0)
-vec3 applyDirectionalLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection)
+vec3 applyDirectionalLight(Light light, vec3 normal, vec3 viewDir)
 {
-    vec3 lightDir = normalize(-lightDirection);
+    vec3 lightDir = normalize(-light.direction.xyz);
     return getPhongComponent(light, lightDir, normal, viewDir);
 }
 
 // Returns a shading impact of a Point light source (light.type == 1)
-vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection)
+vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir)
 {
-    vec3 lightDir = lightPos - outFragPos; 
+    vec3 lightDir = light.position.xyz - fragPos; 
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 
@@ -139,14 +142,14 @@ vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3
 }
 
 // Returns a shading impact of a Spot (Flashlight) light source (light.type == 2)
-vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection)
+vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir)
 {
-    vec3 lightDir = lightPos - outFragPos; 
+    vec3 lightDir = light.position.xyz - fragPos; 
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 
     // Spotlight calculation
-    float theta = dot(lightDir, normalize(-lightDirection));
+    float theta = dot(lightDir, normalize(-light.direction.xyz));
     
     if(theta > light.outerCutOff) 
     {       

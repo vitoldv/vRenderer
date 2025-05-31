@@ -16,6 +16,10 @@
 // Macro to be used on uniform struct declaration to satisfy std140 alignment
 #define ALIGN_STD140 alignas(16)
 
+// How many MODELS can be rendered
+#define MAX_OBJECTS 1
+#define MAX_LIGHT_SOURCES 10
+
 namespace VkUtils
 {
 	struct Vertex
@@ -26,10 +30,10 @@ namespace VkUtils
 		glm::vec2 uv;
 	};
 
-	struct UboProjectionView
+	struct UboViewProjection
 	{
-		glm::mat4 projection;
 		glm::mat4 view;
+		glm::mat4 projection;
 	};
 
 	/// <summary>
@@ -48,12 +52,12 @@ namespace VkUtils
 		// 1 - directional
 		// 2 - point
 		// 3 - spot
-		Light::Type type;
+		uint32_t type;
 
 		// Phong
 		float ambientStrength;
 		float specularStrength;
-		int shininess;
+		uint32_t shininess;
 
 		// Attenuation
 		float constant;
@@ -62,6 +66,33 @@ namespace VkUtils
 		// Spotlight components
 		float cutOff;
 		float outerCutOff;
+
+		UboLight& operator = (const Light& genericLight)
+		{
+			type = static_cast<uint32_t>(genericLight.type);
+			color = glm::vec4(genericLight.color, 0.0f);
+			direction = glm::vec4(genericLight.direction, 0.0f);		// w = 0.0 for directions (though)
+			position = glm::vec4(genericLight.position, 1.0f);			// w = 1.0 for position
+			ambientStrength = genericLight.ambientStrength;
+			specularStrength = genericLight.specularStrength;
+			shininess = genericLight.shininess;
+			constant = genericLight.constant;
+			linear = genericLight.linear;
+			quadratic = genericLight.quadratic;
+			cutOff = genericLight.cutOff;
+			outerCutOff = genericLight.outerCutOff;
+			return *this;
+		}
+	};
+
+	struct UboLightArray
+	{
+		UboLight lights[MAX_LIGHT_SOURCES];       // Total size: 96 * 10 = 960 bytes
+	};
+
+	struct ALIGN_STD140 UboDynamicColor
+	{
+		glm::vec4 color;
 	};
 
 	/*
@@ -79,7 +110,7 @@ namespace VkUtils
 		// the position of a viewer (camera)
 		glm::vec3 viewPosition;
 		// flag to inform whether model is textured
-		uint8_t useTexture;
+		uint8_t textured;
 	};
 
 	const std::vector<glm::vec3> meshVertices = {
@@ -122,9 +153,14 @@ namespace VkUtils
 		VkQueue graphicsQueue;
 		VkCommandPool graphicsCommandPool;
 
+		VkDescriptorPool uniformDescriptorPool;
+		VkDescriptorPool dynamicUniformDescriptorPool;
+		
 		//// Texturing
 		//VkSampler vkTextureSampler;
 		//VkDescriptorSetLayout samplerDescriptorSetLayout;
+
+		VkDeviceSize minUniformBufferOffset;
 	};
 
 	struct VkSamplerDescriptorSetCreateInfo
@@ -448,15 +484,15 @@ namespace VkUtils
 		return imageView;
 	}
 
-	static VkDescriptorPool createDescriptorPool(VkDescriptorType type, uint32_t count, VkDescriptorPoolCreateFlagBits flags, VkContext context)
+	static VkDescriptorPool createDescriptorPool(VkDescriptorType type, uint32_t size, VkDescriptorPoolCreateFlagBits flags, VkContext context)
 	{
 		VkDescriptorPoolSize poolSize = {};
 		poolSize.type = type;
-		poolSize.descriptorCount = count;
+		poolSize.descriptorCount = size;
 
 		VkDescriptorPoolCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		createInfo.maxSets = count;
+		createInfo.maxSets = size;
 		createInfo.poolSizeCount = 1;
 		createInfo.pPoolSizes = &poolSize;
 		createInfo.flags = flags;
@@ -518,5 +554,57 @@ namespace VkUtils
 		vkBindImageMemory(context.logicalDevice, image, *imageMemory, 0);
 
 		return image;
+	}
+
+	static VkDescriptorSetLayout createDescriptorSetLayout(
+		uint32_t bindingCount,
+		VkShaderStageFlags shaderStage,
+		VkDescriptorType descriptopType,
+		VkContext context)
+	{
+		VkDescriptorSetLayout layout;
+		std::vector<VkDescriptorSetLayoutBinding> bindings(bindingCount);
+		for (int i = 0; i < bindingCount; i++)
+		{
+			VkDescriptorSetLayoutBinding binding;
+			binding.binding = i;												// bindings specified in shader
+			binding.descriptorType = descriptopType;			// type of descriptor (simple uniform in this case)
+			binding.descriptorCount = 1;										// number of binded values
+			binding.stageFlags = shaderStage;									// specifies shader stage
+			binding.pImmutableSamplers = nullptr;
+			bindings[i] = binding;
+		}
+
+		// Create descriptor set layout with given bindings
+		VkDescriptorSetLayoutCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		createInfo.bindingCount = bindingCount;
+		createInfo.pBindings = bindings.data();
+
+		VkResult result = vkCreateDescriptorSetLayout(context.logicalDevice, &createInfo, nullptr, &layout);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create descriptor set layout.");
+		}
+
+		return layout;
+	}
+
+
+	static VkShaderModule createShaderModule(const std::vector<char>& code, VkContext context)
+	{
+		VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
+		shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shaderModuleCreateInfo.codeSize = code.size();
+		shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+		VkShaderModule shaderModule;
+		VkResult result = vkCreateShaderModule(context.logicalDevice, &shaderModuleCreateInfo, nullptr, &shaderModule);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create shader module.");
+		}
+
+		return shaderModule;
 	}
 }

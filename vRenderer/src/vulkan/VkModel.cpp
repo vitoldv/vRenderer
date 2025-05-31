@@ -38,7 +38,7 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 	return meshes;
 }
 
-void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, BaseCamera* camera)
+void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera)
 {
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -50,31 +50,25 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);								// Command to bind vertex buffer before deawing with them
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-		// LEFT FOR REFERENCE ON DYNAMIC UNIFORM BUFFERS
-		//// Dynamic offset amount
-		//uint32_t dynamicOffset = static_cast<uint32_t>(modelUniformAlignment) * meshCount;
-		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipelineLayout,
-		//	0, 1, &this->vkDescriptorSets[currentImage], 1, &dynamicOffset);
-
 		bool textured = materials[i] != nullptr && materials[i]->textureCount > 0;
 
 		// PUSH CONSTANTS
 		{
 			PushConstant push = {};
 			push.model = mesh->getTransformMat();
-			push.useTexture = textured;
+			push.textured = textured;
 			push.normalMatrix = glm::transpose(glm::inverse(mesh->getTransformMat()));
-			push.viewPosition = camera->getPosition();
+			push.viewPosition = camera.getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
-		}
+		} 
 
 		if (textured)
 		{
 			auto* material = materials[i];
 			// Material sampler uniforms
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-				1, material->textureCount, material->getSamplerDescriptorSets().data(), 0, nullptr);
+				material->descriptorSetIndex, 1, &material->getSamplerDescriptorSet(), 0, nullptr);
 		}
 
 		// execute pipeline

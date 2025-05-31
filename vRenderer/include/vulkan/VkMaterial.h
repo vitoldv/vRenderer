@@ -12,6 +12,7 @@ public:
 
 	const std::string name;	
 	const uint32_t textureCount = 2;
+	const uint32_t descriptorSetIndex = 1;
 
 	// The order of texture creation affects the order of sampler descriptors in samplerDescriptorSets vector,
 	// and, accordingly, what texture is passed in shader.
@@ -24,18 +25,18 @@ public:
 
 	void cleanup();
 
-	const std::vector<VkDescriptorSet>& getSamplerDescriptorSets() const;
+	const VkDescriptorSet& getSamplerDescriptorSet() const;
 
 private:
 
 	VkContext context;
 	VkDescriptorPool samplerDescriptorPool;
-	std::vector<VkDescriptorSet> samplerDescriptorSets;
+	VkDescriptorSet samplerDescriptorSet;
 
 	// Storage for dummy buffers and their memory used for null descriptors initialization
 	std::vector<VkBuffer> dummyBuffers;
 	std::vector<VkDeviceMemory> dummyBuffersMemory;
 	
 	void createFromGenericMaterial(const Material& material, VkSamplerDescriptorSetCreateInfo createInfo);
-	VkDescriptorSet createNullSamplerDescriptor(VkSamplerDescriptorSetCreateInfo createInfo);
+	void createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo createInfo);
 };
