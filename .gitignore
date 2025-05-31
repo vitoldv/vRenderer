@@ -72,3 +72,4 @@ dlldata.c
 *.vspscc
 *.vssscc
 .builds
+*.slnf
