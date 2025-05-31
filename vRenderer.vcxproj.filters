@@ -13,102 +13,114 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\opengl">
+      <UniqueIdentifier>{8b5a9bb8-a5e0-4d29-9c59-3b561aa595a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\vulkan">
+      <UniqueIdentifier>{0fcbd706-756b-494d-a1c4-a7e733e80bf2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\general">
+      <UniqueIdentifier>{3a782eb4-eea9-4267-8364-9ad8880af604}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\imgui_src">
+      <UniqueIdentifier>{543b4d15-03ad-4209-b183-46f919122637}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="vRenderer\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\Model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\vulkan\VulkanRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_glfw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_vulkan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\imgui.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\imgui_demo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\imgui_draw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\imgui_stdlib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\imgui_tables.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\imgui_widgets.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\OrbitCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\AppContext.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\VkModel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\vulkan\VkTexture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\BaseCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\FpvCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\input_handler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="vRenderer\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\src\OpenGLRenderer.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="vRenderer\src\opengl\GLMaterial.cpp">
+      <Filter>Source Files\opengl</Filter>
     </ClCompile>
     <ClCompile Include="vRenderer\src\opengl\GLMesh.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\opengl</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\src\opengl\GLTexture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\src\GLModel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_opengl3.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="vRenderer\src\opengl\GLModel.cpp">
+      <Filter>Source Files\opengl</Filter>
     </ClCompile>
     <ClCompile Include="vRenderer\include\opengl\GLShader.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\opengl</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\include\Material.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="vRenderer\src\opengl\GLTexture.cpp">
+      <Filter>Source Files\opengl</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\include\GLMaterial.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="vRenderer\src\opengl\OpenGLRenderer.cpp">
+      <Filter>Source Files\opengl</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="vRenderer\src\vulkan\VulkanRenderer.cpp">
+      <Filter>Source Files\vulkan</Filter>
     </ClCompile>
     <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp">
+      <Filter>Source Files\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp">
+      <Filter>Source Files\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp">
+      <Filter>Source Files\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkModel.cpp">
+      <Filter>Source Files\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkTexture.cpp">
+      <Filter>Source Files\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\OrbitCamera.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\include\Material.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\Mesh.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\Model.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\input_handler.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\FpvCamera.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\BaseCamera.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\AppContext.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\Application.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\imgui.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\imgui_demo.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\imgui_draw.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\backends\imgui_impl_vulkan.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\imgui_stdlib.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\imgui_tables.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\externals\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\imgui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -155,9 +167,6 @@
     <ClInclude Include="vRenderer\include\AppContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\VkModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -176,9 +185,6 @@
     <ClInclude Include="vRenderer\include\IRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\OpenGLRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\opengl\GLUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -186,9 +192,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\opengl\GLTexture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\src\GLModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\externals\imgui\backends\imgui_impl_opengl3.h">
@@ -212,9 +215,6 @@
     <ClInclude Include="vRenderer\include\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\GLMaterial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -231,6 +231,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\opengl\GLModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\opengl\GLMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\opengl\OpenGLRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
