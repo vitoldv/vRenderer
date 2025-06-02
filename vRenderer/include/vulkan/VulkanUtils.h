@@ -73,9 +73,6 @@ namespace VkUtils
 			color = glm::vec4(genericLight.color, 0.0f);
 			direction = glm::vec4(genericLight.direction, 0.0f);		// w = 0.0 for directions (though)
 			position = glm::vec4(genericLight.position, 1.0f);			// w = 1.0 for position
-			ambientStrength = genericLight.ambientStrength;
-			specularStrength = genericLight.specularStrength;
-			shininess = genericLight.shininess;
 			constant = genericLight.constant;
 			linear = genericLight.linear;
 			quadratic = genericLight.quadratic;

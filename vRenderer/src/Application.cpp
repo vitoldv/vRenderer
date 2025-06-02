@@ -66,9 +66,6 @@ int Application::initApplication()
 	light->color = { 1.0f, 1.0f, 1.0f };
 	light->position = { 1.8f, 0.9f, 0.0f };
 	light->direction = { 0, -1.0f, 0 };
-	light->ambientStrength = 0.1f;
-	light->specularStrength = 0.5f;
-	light->shininess = 32;
 	light->constant = 1.0f;
 	light->linear = 0.09f;
 	light->quadratic = 0.032f;
@@ -80,9 +77,6 @@ int Application::initApplication()
 	light2->color = { 1.0f, 1.0f, 1.0f };
 	light2->position = { 0.0f, 0.9f, 1.8f };
 	light2->direction = { 0.0f, 0, -1.0f };
-	light2->ambientStrength = 0.1f;
-	light2->specularStrength = 0.5f;
-	light2->shininess = 32;
 	light2->constant = 1.0f;
 	light2->linear = 0.09f;
 	light2->quadratic = 0.032f;

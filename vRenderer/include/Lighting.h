@@ -16,11 +16,6 @@ struct Light
 	const int id;
 	const Type type;
 
-	// Phong shading parameters
-	float ambientStrength;
-	float specularStrength;
-	int shininess;
-
 	// Attenuation terms
 	float constant;
 	float linear;

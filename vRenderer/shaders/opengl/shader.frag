@@ -3,6 +3,7 @@
 precision highp float;
 
 #define MAX_LIGHT_SOURCES 10
+#define GLOBAL_AMBIENT_STRENGTH 0.1
 
 in vec3 fragColor;
 in vec2 fragUv;
@@ -10,9 +11,6 @@ in vec3 fragNormal;
 in vec3 fragPos;
 
 out vec4 FragColor;
-
-uniform bool useMaterial;
-uniform bool useDiffuseColor;
 
 struct Material
 {
@@ -24,9 +22,9 @@ struct Material
     vec3 ambientColor;
     vec3 diffuseColor;
     vec3 specularColor;
+    float opacity;
 
     float shininess;
-    float opacity;          // not currently used
 };
 
 struct Light
@@ -37,13 +35,7 @@ struct Light
     // 3 - spot
 
     int type;
-
     vec3 color;
-
-    // Phong
-    float ambientStrength;
-    float specularStrength;
-    int shininess;
 
     // Attenuation
     float constant;
@@ -65,8 +57,8 @@ in vec3 outLightDir[10];
 uniform Light lightSources[MAX_LIGHT_SOURCES];
 uniform Material material;
 
-vec4 selectBetween(vec4 color1, vec4 color2);
-vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir);
+vec4 selectBetween(sampler2D map, vec3 color);
+vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 viewDir);
 float getAttenuationFactor(Light light, float lightDistance);
 
 vec3 applyDirectionalLight(Light ligth, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection);
@@ -80,16 +72,11 @@ void main()
     // Viewing direction
     vec3 viewDir = normalize(-fragPos);
 
-    // Unshaded fragment color calculation  
-    vec4 result;
-    // pick between ambientMap color and ambientColor
-    result = selectBetween(texture(material.ambientMap, fragUv), vec4(material.ambientColor, material.opacity));
+    // Default fragment color
+    vec3 result = selectBetween(material.diffuseMap, material.diffuseColor).xyz;
     
-    // Defining fragment's opacity (both approaches work)
-    //result.a = selectBetween(texture(material.opacityMap, fragUv), vec4(material.opacity, 0.0, 0.0, 0.0)).r;
-    result.a = max(texture(material.opacityMap, fragUv).r, material.opacity);
-    
-    vec3 shading;
+    // Ambient shading is global and do not come from all lighting sources
+    vec3 shading = GLOBAL_AMBIENT_STRENGTH * selectBetween(material.ambientMap, material.ambientColor).xyz;
     for(int i = 0; i < MAX_LIGHT_SOURCES; i++)
     {
         if(lightSources[i].type == 1)
@@ -106,33 +93,32 @@ void main()
         }
     }
 
-    FragColor = result * vec4(shading, 1.0);
+    FragColor = vec4(result * shading, 1.0);
+
+    // Applying fragment's opacity. It comes either from texture map or set universally for material
+    FragColor.a = max(texture(material.opacityMap, fragUv).r, material.opacity);
 }
 
-vec4 selectBetween(vec4 color1, vec4 color2)
+// Define what color to use between texture and its fallback color
+// (if texture is present - color should be nulled)
+vec4 selectBetween(sampler2D map, vec3 color)
 {
-    return mix(color1, color2, float(length(color2.xyz) > 0.0));
+    return mix(texture(map, fragUv), vec4(color, 0.0), float(length(color) > 0.0));
 }
 
-// Returns a vector of Phong shading impact
-vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir)
+// Returns a vector of Phong diffuse and specular shading impact
+vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 viewDir)
 {
-    // Ambient calculation
-    vec3 ambient = light.ambientStrength * light.color;
-
     // Diffuse calculation
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec4 diffuseColor = selectBetween(texture(material.diffuseMap, fragUv), vec4(material.diffuseColor, material.opacity));
-    vec3 diffuse = diffuseColor.xyz * diff * light.color;
+    float diffuse = max(dot(normal, lightDir), 0.0);
 
     // Specular calculation
     vec3 reflectDir = reflect(-lightDir, normal);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), light.shininess);
-    //float specMat = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec4 specColor = selectBetween(texture(material.specularMap, fragUv), vec4(material.specularColor, material.opacity));
-    vec3 specular = specColor.xyz * light.specularStrength * spec * light.color;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), max(material.shininess, 2.0));
+    vec3 specColor = selectBetween(material.specularMap, material.specularColor).xyz;
+    vec3 specular = specColor.xyz * spec;
     
-    return ambient + diffuse + specular;
+    return (diffuse + specular) * light.color;
 }
 
 // Returns a factor of light intensity decreased over distance
@@ -150,7 +136,7 @@ float getAttenuationFactor(Light light, float lightDistance)
 vec3 applyDirectionalLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 lightDirection)
 {
     vec3 lightDir = normalize(-lightDirection);
-    return getPhongComponent(light, lightDir, normal, viewDir);
+    return getDiffuseSpecularImpact(light, lightDir, normal, viewDir);
 }
 
 // Returns a shading impact of a Point light source (light.type == 1)
@@ -160,7 +146,7 @@ vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 
-    vec3 phong = getPhongComponent(light, lightDir, normal, viewDir);
+    vec3 phong = getDiffuseSpecularImpact(light, lightDir, normal, viewDir);
     phong *= getAttenuationFactor(light, lightDistance);
     return phong;
 }
@@ -180,7 +166,7 @@ vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir, vec3 lightPos, vec3 
         float epsilon = light.cutOff - light.outerCutOff;
         float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
         float attenuation = getAttenuationFactor(light, lightDistance);
-        return attenuation * intensity * getPhongComponent(light, lightDir, normal, viewDir);
+        return attenuation * intensity * getDiffuseSpecularImpact(light, lightDir, normal, viewDir);
     }
 
     return vec3(0);

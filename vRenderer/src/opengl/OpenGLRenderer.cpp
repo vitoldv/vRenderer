@@ -210,9 +210,6 @@ void OpenGLRenderer::applyLighting()
 
 		shader->setUniform((uniformBase + "type").c_str(), static_cast<int>(light.type));
 		shader->setUniform((uniformBase + "color").c_str(), light.color);
-		shader->setUniform((uniformBase + "ambientStrength").c_str(), light.ambientStrength);
-		shader->setUniform((uniformBase + "specularStrength").c_str(), light.specularStrength);
-		shader->setUniform((uniformBase + "shininess").c_str(), light.shininess);
 		shader->setUniform((uniformBase + "constant").c_str(), light.constant);
 		shader->setUniform((uniformBase + "linear").c_str(), light.linear);
 		shader->setUniform((uniformBase + "quadratic").c_str(), light.quadratic);
