@@ -13,7 +13,7 @@ public:
 	const std::string name;
 
 	float shininess;
-	float opacity;
+	float opacity = 0;
 	glm::vec3 ambientColor = {};
 	glm::vec3 diffuseColor = {};
 	glm::vec3 specularColor = {};
@@ -24,6 +24,8 @@ public:
 	std::string ambientTexture = {};
 	std::string diffuseTexture = {};
 	std::string specularTexture = {};
+
+	std::string opacityMap = {};
 	std::string emissionMap = {};
 
 	std::string normalMap = {};			// not used

@@ -100,10 +100,12 @@ void Model::importModel(std::string filePath)
 			material->ambientTexture = getTexture(aiTextureType_AMBIENT);
 			material->emissionMap = getTexture(aiTextureType_EMISSIVE);
 			material->normalMap = getTexture(aiTextureType_NORMALS);
+			material->opacityMap = getTexture(aiTextureType_OPACITY);
 
 			mat->Get(AI_MATKEY_SHININESS, material->shininess);
 			mat->Get(AI_MATKEY_REFRACTI, material->refraction);
-			mat->Get(AI_MATKEY_OPACITY, material->opacity);
+			if(material->opacityMap.empty())
+				mat->Get(AI_MATKEY_OPACITY, material->opacity);
 
 			auto getColor = [&](const char* key, uint32_t type, uint32_t idx, glm::vec3& color) {
 				aiColor3D aiColor;

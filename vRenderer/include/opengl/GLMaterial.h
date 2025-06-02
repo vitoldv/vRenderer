@@ -14,6 +14,7 @@ public:
 	GLTexture* ambient;
 	GLTexture* diffuse;
 	GLTexture* specular;
+	GLTexture* opacityMap;
 
 	float shininess;
 	float opacity;
@@ -32,6 +33,7 @@ private:
 	const char* AMBIENT_SAMPLER_UNIFORM_NAME = "material.ambientMap";
 	const char* DIFFUSE_SAMPLER_UNIFORM_NAME = "material.diffuseMap";
 	const char* SPECULAR_SAMPLER_UNIFORM_NAME = "material.specularMap";
+	const char* OPACITY_SAMPLER_UNIFORM_NAME = "material.opacityMap";
 
 	const char* AMBIENT_COLOR_UNIFORM_NAME = "material.ambientColor";
 	const char* DIFFUSE_COLOR_UNIFORM_NAME = "material.diffuseColor";

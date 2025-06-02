@@ -36,6 +36,7 @@ void GLMaterial::apply(GLShader& shader)
 	applyTexture(AMBIENT_SAMPLER_UNIFORM_NAME, ambient, 0);
 	applyTexture(DIFFUSE_SAMPLER_UNIFORM_NAME, diffuse, 1);
 	applyTexture(SPECULAR_SAMPLER_UNIFORM_NAME, specular, 2);
+	applyTexture(OPACITY_SAMPLER_UNIFORM_NAME, opacityMap, 3);
 }
 
 void GLMaterial::cleanup()

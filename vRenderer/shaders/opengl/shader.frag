@@ -19,6 +19,7 @@ struct Material
     sampler2D ambientMap;
     sampler2D diffuseMap;
     sampler2D specularMap;
+    sampler2D opacityMap;
 
     vec3 ambientColor;
     vec3 diffuseColor;
@@ -79,15 +80,15 @@ void main()
     // Viewing direction
     vec3 viewDir = normalize(-fragPos);
 
-    // Unshaded fragment color calculation
+    // Unshaded fragment color calculation  
     vec4 result;
     // pick between ambientMap color and ambientColor
-    result = selectBetween(texture(material.ambientMap, fragUv), vec4(material.ambientColor, 0.0));
-    // if(result.a < 0.1)
-    // {
-    //     discard;
-    // }
-
+    result = selectBetween(texture(material.ambientMap, fragUv), vec4(material.ambientColor, material.opacity));
+    
+    // Defining fragment's opacity (both approaches work)
+    //result.a = selectBetween(texture(material.opacityMap, fragUv), vec4(material.opacity, 0.0, 0.0, 0.0)).r;
+    result.a = max(texture(material.opacityMap, fragUv).r, material.opacity);
+    
     vec3 shading;
     for(int i = 0; i < MAX_LIGHT_SOURCES; i++)
     {
@@ -105,12 +106,12 @@ void main()
         }
     }
 
-    FragColor = vec4(result.xyz * shading, 1.0);
+    FragColor = result * vec4(shading, 1.0);
 }
 
 vec4 selectBetween(vec4 color1, vec4 color2)
 {
-    return mix(color1, color2, float(length(color2) > 0.0));
+    return mix(color1, color2, float(length(color2.xyz) > 0.0));
 }
 
 // Returns a vector of Phong shading impact
@@ -121,14 +122,14 @@ vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir)
 
     // Diffuse calculation
     float diff = max(dot(normal, lightDir), 0.0);
-    vec4 diffuseColor = selectBetween(texture(material.diffuseMap, fragUv), vec4(material.diffuseColor, 0.0));
+    vec4 diffuseColor = selectBetween(texture(material.diffuseMap, fragUv), vec4(material.diffuseColor, material.opacity));
     vec3 diffuse = diffuseColor.xyz * diff * light.color;
 
     // Specular calculation
     vec3 reflectDir = reflect(-lightDir, normal);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), light.shininess);
     //float specMat = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec4 specColor = selectBetween(texture(material.specularMap, fragUv), vec4(material.specularColor, 0.0));
+    vec4 specColor = selectBetween(texture(material.specularMap, fragUv), vec4(material.specularColor, material.opacity));
     vec3 specular = specColor.xyz * light.specularStrength * spec * light.color;
     
     return ambient + diffuse + specular;
