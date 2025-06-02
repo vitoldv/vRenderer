@@ -79,6 +79,8 @@ void Model::importModel(std::string filePath)
 		{
 			auto mat = scene->mMaterials[meshData->mMaterialIndex];
 			std::string folderPath = this->folderPath;
+
+			// Texture loading lambda
 			auto getTexture = [mat, folderPath](aiTextureType type) {
 				aiString path;
 				if (mat->GetTexture(type, 0, &path) == aiReturn_SUCCESS)
@@ -92,8 +94,31 @@ void Model::importModel(std::string filePath)
 			};
 
 			Material* material = new Material(mat->GetName().C_Str());
+
 			material->diffuseTexture = getTexture(aiTextureType_DIFFUSE);
 			material->specularTexture = getTexture(aiTextureType_SPECULAR);
+			material->ambientTexture = getTexture(aiTextureType_AMBIENT);
+			material->emissionMap = getTexture(aiTextureType_EMISSIVE);
+			material->normalMap = getTexture(aiTextureType_NORMALS);
+
+			mat->Get(AI_MATKEY_SHININESS, material->shininess);
+			mat->Get(AI_MATKEY_REFRACTI, material->refraction);
+			mat->Get(AI_MATKEY_OPACITY, material->opacity);
+
+			auto getColor = [&](const char* key, uint32_t type, uint32_t idx, glm::vec3& color) {
+				aiColor3D aiColor;
+				mat->Get(key, type, idx, aiColor);
+				color = glm::vec3(aiColor.r, aiColor.g, aiColor.b);
+			};
+
+			if(material->ambientTexture.empty())
+				getColor(AI_MATKEY_COLOR_AMBIENT, material->ambientColor);
+			if (material->diffuseTexture.empty())
+				getColor(AI_MATKEY_COLOR_DIFFUSE, material->diffuseColor);
+			if (material->specularTexture.empty())
+				getColor(AI_MATKEY_COLOR_SPECULAR, material->specularColor);
+			if (material->emissionMap.empty())
+				getColor(AI_MATKEY_COLOR_EMISSIVE, material->emmissiveColor);
 
 			this->materials[i] = material;
 			this->materialsCount++;

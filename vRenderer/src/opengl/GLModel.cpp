@@ -65,6 +65,10 @@ void GLModel::createFromGenericModel(const Model& model)
 			materialCount++;
 			GLMaterial* glMaterial = new GLMaterial(material->name.c_str());
 
+			if (!material->ambientTexture.empty())
+			{
+				glMaterial->ambient = new GLTexture(material->ambientTexture);
+			}
 			if (!material->diffuseTexture.empty())
 			{
 				glMaterial->diffuse = new GLTexture(material->diffuseTexture);
@@ -73,6 +77,13 @@ void GLModel::createFromGenericModel(const Model& model)
 			{
 				glMaterial->specular = new GLTexture(material->specularTexture);
 			}
+
+			glMaterial->ambientColor = material->ambientColor;
+			glMaterial->diffuseColor = material->diffuseColor;
+			glMaterial->specularColor = material->specularColor;
+
+			glMaterial->opacity = material->opacity;
+			glMaterial->shininess = material->shininess;
 
 			materials[i] = glMaterial;
 		}
