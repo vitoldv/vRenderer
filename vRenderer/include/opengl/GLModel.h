@@ -30,7 +30,6 @@ private:
 	
 	const char* MODEL_UNIFORM_NAME = "model";
 	const char* NORMAL_MATRIX_UNIFORM_NAME = "normalMatrix";
-	const char* USE_MATERIAL_UNIFORM_NAME = "useMaterial";
 
 	uint32_t meshCount;
 	uint32_t materialCount;

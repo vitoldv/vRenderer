@@ -35,13 +35,11 @@ void GLModel::draw(GLShader& shader, BaseCamera& camera)
 	
 	for (int i = 0; i < meshes.size(); i++)
 	{
-		bool useMaterial = materials[i] != nullptr;
-		if (useMaterial)
+		if (materials[i] != nullptr)
 		{
 			materials[i]->apply(shader);
 		}
-		shader.setUniform(USE_MATERIAL_UNIFORM_NAME, useMaterial ? GL_TRUE : GL_FALSE);
-
+			
 		meshes[i]->draw();
 	}
 }
@@ -63,35 +61,9 @@ void GLModel::createFromGenericModel(const Model& model)
 		if (material != nullptr)
 		{
 			materialCount++;
-			GLMaterial* glMaterial = new GLMaterial(material->name.c_str());
-
-			if (!material->ambientTexture.empty())
-			{
-				glMaterial->ambient = new GLTexture(material->ambientTexture);
-			}
-			if (!material->diffuseTexture.empty())
-			{
-				glMaterial->diffuse = new GLTexture(material->diffuseTexture);
-			}
-			if (!material->specularTexture.empty())
-			{
-				glMaterial->specular = new GLTexture(material->specularTexture);
-			}
-			if (!material->opacityMap.empty())
-			{
-				glMaterial->opacityMap = new GLTexture(material->opacityMap);
-			}
-
-			glMaterial->ambientColor = material->ambientColor;
-			glMaterial->diffuseColor = material->diffuseColor;
-			glMaterial->specularColor = material->specularColor;
-
-			glMaterial->opacity = material->opacity;
-			glMaterial->shininess = material->shininess;
-
+			GLMaterial* glMaterial = new GLMaterial(*material);
 			materials[i] = glMaterial;
 		}
-
 		meshes[i] = glMesh;
 	}
 

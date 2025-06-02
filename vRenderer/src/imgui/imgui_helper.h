@@ -137,9 +137,6 @@ namespace imgui_helper
 				ImGui::PushID(i);
 				settingsChanged = false;
 				settingsChanged |= ImGui::DragFloat3("Position", static_cast<float*>(&light->position[0]), 0.1f, -100.0f, 100.0f);
-				settingsChanged |= ImGui::DragFloat("Ambient", &light->ambientStrength, 0.05f, 0, 1.0f);
-				settingsChanged |= ImGui::DragFloat("Specular", &light->specularStrength, 0.05f, 0, 1.0f);
-				settingsChanged |= ImGui::DragInt("Shininess", &light->shininess, 1, 1, 256);
 				settingsChanged |= ImGui::DragFloat3("Direction", static_cast<float*>(&light->direction[0]), 0.1f, -100.0f, 100.0f);
 				settingsChanged |= ImGui::DragFloat("Constant", &light->constant, 0.05f, 0, 1.0f);
 				settingsChanged |= ImGui::DragFloat("Linear", &light->linear, 0.05f, 0, 1.0f);

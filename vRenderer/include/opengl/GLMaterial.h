@@ -4,6 +4,7 @@
 
 #include "GLShader.h"
 #include "GLTexture.h"
+#include "Material.h"
 
 class GLMaterial
 {
@@ -11,22 +12,20 @@ public:
 	
 	const std::string name;
 
-	GLTexture* ambient;
-	GLTexture* diffuse;
-	GLTexture* specular;
-	GLTexture* opacityMap;
+	std::unique_ptr<GLTexture> ambient		= nullptr;
+	std::unique_ptr<GLTexture> diffuse		= nullptr;
+	std::unique_ptr<GLTexture> specular		= nullptr;
+	std::unique_ptr<GLTexture> opacityMap	= nullptr;
 
-	float shininess;
-	float opacity;
-	glm::vec3 ambientColor;
-	glm::vec3 diffuseColor;
-	glm::vec3 specularColor;
+	float shininess							= 1.0f;
+	float opacity							= 1.0f;
+	glm::vec3 ambientColor					= {};
+	glm::vec3 diffuseColor					= {};
+	glm::vec3 specularColor					= {};
 
-	GLMaterial(const char* name);
-	~GLMaterial();
+	GLMaterial(const Material& material);
 
 	void apply(GLShader& shader);
-	void cleanup();
 
 private:
 
@@ -41,4 +40,6 @@ private:
 
 	const char* OPACITY_UNIFORM_NAME = "material.opacity";
 	const char* SHININESS_UNIFORM_NAME = "material.shininess";
+
+	void createFromGenericMaterial(const Material& material);
 };
