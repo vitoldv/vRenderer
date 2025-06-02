@@ -1303,6 +1303,11 @@ bool VulkanRenderer::addLightSources(const std::shared_ptr<Light> lights[], uint
 	return false;
 }
 
+void VulkanRenderer::bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings)
+{
+	this->renderSettings = renderSettings;
+}
+
 bool VulkanRenderer::removeFromRenderer(int modelId)
 {
 	auto it = std::find_if(modelsToRender.begin(), modelsToRender.end(),

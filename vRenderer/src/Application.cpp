@@ -55,6 +55,7 @@ int Application::initApplication()
 	else
 	{
 		renderer->setImguiCallback(std::bind(&Application::imguiMenu, this));
+		renderer->bindRenderSettings(renderSettings);
 	}   
 
 	initInput(window);
@@ -96,12 +97,13 @@ int Application::initApplication()
 
 void Application::loadUserPrefs()
 {
-	GetPrefs("Render_settings", this->renderSettings);
+	renderSettings = std::make_unique<RenderSettings>();
+	GetPrefs("Render_settings", *renderSettings);
 }
 
 void Application::saveUserPrefs()
 {
-	SavePrefs("Render_settings", this->renderSettings);
+	SavePrefs("Render_settings", *renderSettings);
 }
 
 void Application::processInput()
@@ -224,7 +226,7 @@ void Application::imguiMenu()
 			}
 			if (ImGui::BeginTabItem("Renderer"))
 			{
-				imgui_helper::ShowRendererSettingsTab(renderSettings);
+				imgui_helper::ShowRendererSettingsTab(*renderSettings.get());
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Camera"))
@@ -266,7 +268,7 @@ void Application::imguiMenu()
 int Application::run()
 {
 	loadUserPrefs();
-	currentApi = renderSettings.api;
+	currentApi = renderSettings->api;
 
 	initWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -284,8 +286,8 @@ int Application::run()
 		currentFrameTime = glfwGetTime() * 1000.0f;
 		frameTime = currentFrameTime - previousFrameTime;
 
-		float TARGET_FRAME_TIME = 1000 / renderSettings.targetFps;
-		if (renderSettings.fpsLimit && frameTime < TARGET_FRAME_TIME) continue;
+		float TARGET_FRAME_TIME = 1000 / renderSettings->targetFps;
+		if (renderSettings->fpsLimit && frameTime < TARGET_FRAME_TIME) continue;
 
 		context->deltaTime = frameTime / 1000.0f;
 		previousFrameTime = currentFrameTime;

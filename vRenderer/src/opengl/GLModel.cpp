@@ -19,6 +19,11 @@ void GLModel::setTransform(glm::mat4 transform)
 	}
 }
 
+const glm::mat4 GLModel::getTransform() const
+{
+	return transform;
+}
+
 void GLModel::draw(GLShader& shader, BaseCamera& camera)
 {
 	// Calculate Normal matrix (required for proper normals transformation)

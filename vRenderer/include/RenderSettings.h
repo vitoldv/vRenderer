@@ -23,6 +23,7 @@ struct RenderSettings
     uint32_t backgroundColor = 0xAABBCCFF;
     bool fpsLimit = true;
     int targetFps = 60;
+    bool enableOutline;
 
     // Automatically generates to_json/from_json
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(RenderSettings, api, backgroundColor, fpsLimit, targetFps);

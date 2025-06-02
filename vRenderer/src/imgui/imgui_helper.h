@@ -113,6 +113,7 @@ namespace imgui_helper
 		ImGui::Text("General");
 		ImGui::Checkbox("FPS limit", &renderSettings.fpsLimit);
 		ImGui::SliderInt("FPS target", &renderSettings.targetFps, 1, 165);
+		ImGui::Checkbox("Object outline", &renderSettings.enableOutline);
 	}
 
 	const char* cameraTypeLabels[] = { "Orbit", "FPV" };

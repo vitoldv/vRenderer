@@ -15,6 +15,7 @@ int OpenGLRenderer::init(GLFWwindow* window)
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	// IMGUI
 	{
@@ -31,8 +32,36 @@ int OpenGLRenderer::init(GLFWwindow* window)
 
 	// SHADERS
 	shader = new GLShader("vRenderer\\shaders\\opengl\\shader.vert", "vRenderer\\shaders\\opengl\\shader.frag");
+	outlineShader = std::make_unique<GLShader>("vRenderer\\shaders\\opengl\\outline.vert", "vRenderer\\shaders\\opengl\\outline.frag");
 
 	return 0;
+}
+
+void enableOutline()
+{
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_DEPTH_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilMask(0xFF);
+}
+
+void OpenGLRenderer::drawOutline()
+{
+	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+	glStencilMask(0x00);
+	glDisable(GL_DEPTH_TEST);
+	outlineShader->enable();
+	outlineShader->setUniform("view", this->camera->getViewMatrix());
+	outlineShader->setUniform("projection", this->camera->getProjectionMatrix());
+	for (int i = 0; i < modelsToRender.size(); i++)
+	{
+		modelsToRender[i]->draw(*outlineShader, *camera);
+	}
+
+	glStencilMask(0xFF);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void OpenGLRenderer::draw()
@@ -49,21 +78,25 @@ void OpenGLRenderer::draw()
 
 	auto clearColor = GLUtils::getRGBANormalized(BACKGROUND_COLOR);
 	glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	if (renderSettings->enableOutline)
+		enableOutline();
 
 	// Attach shader program
 	shader->enable();
-	
 	// Setting uniforms
 	shader->setUniform("view", this->camera->getViewMatrix());
 	shader->setUniform("projection", this->camera->getProjectionMatrix());
-
 	applyLighting();
 
 	for (auto* model : modelsToRender)
 	{
 		model->draw(*shader, *camera);
 	}
+
+	if (renderSettings->enableOutline)
+		drawOutline();
 
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -158,6 +191,11 @@ void OpenGLRenderer::cleanup()
 void OpenGLRenderer::setImguiCallback(std::function<void()> callback)
 {
 	this->imguiCallback = callback;
+}
+
+void OpenGLRenderer::bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings)
+{
+	this->renderSettings = renderSettings;
 }
 
 void OpenGLRenderer::applyLighting()

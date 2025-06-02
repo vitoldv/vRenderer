@@ -40,10 +40,14 @@ public:
 	bool addLightSources(const std::shared_ptr<Light> lights[], uint32_t count) override;
 	void cleanup() override;
 	void setImguiCallback(std::function<void()> callback) override;
+	void bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings);
 
 private:
 
+	std::shared_ptr<RenderSettings> renderSettings;
+
 	GLShader* shader;
+	std::unique_ptr<GLShader> outlineShader;
 
 	std::shared_ptr<BaseCamera> camera;
 	std::vector<GLModel*> modelsToRender;
@@ -52,7 +56,7 @@ private:
 	GLModel* getModel(uint32_t id);
 
 	void applyLighting();
-
+	void drawOutline();
 	/*
 	---- IMGUI fields -----
 	*/

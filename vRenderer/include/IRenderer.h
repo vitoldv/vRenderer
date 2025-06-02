@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 
+#include "RenderSettings.h"
 #include "Lighting.h"
 #include "Model.h"
 #include "BaseCamera.h"
@@ -27,6 +28,7 @@ public:
 	virtual bool removeFromRenderer(int modelId) = 0;
 	virtual bool isModelInRenderer(uint32_t id) = 0;
 
+	virtual void bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings) = 0;
 	virtual void setCamera(const std::shared_ptr<BaseCamera> camera) = 0;
 	virtual bool addLightSources(const std::shared_ptr<Light> lights[], uint32_t count) = 0;
 

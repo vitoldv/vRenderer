@@ -31,7 +31,7 @@ private:
 
 	GLFWwindow* window;
 	IRenderer* renderer;
-	RenderSettings renderSettings;
+	std::shared_ptr<RenderSettings> renderSettings;
 	AppContext* context;
 
 	// Currently utilized graphics api. The one in renderSettings is one selected by user and will be applied after app restart.
