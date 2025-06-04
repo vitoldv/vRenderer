@@ -35,6 +35,10 @@ void GLModel::draw(GLShader& shader, BaseCamera& camera)
 	
 	for (int i = 0; i < meshes.size(); i++)
 	{
+		if ((1 << i & meshMask) == 0)
+		{
+			continue;
+		}
 		if (materials[i] != nullptr)
 		{
 			materials[i]->apply(shader);
@@ -66,44 +70,6 @@ void GLModel::createFromGenericModel(const Model& model)
 		}
 		meshes[i] = glMesh;
 	}
-
-
-	// Assuming GLMaterial has a member 'opacity' (float or similar)
-	auto sortByOpacity = [](std::vector<GLMesh*>& meshes, std::vector<GLMaterial*>& materials) {
-		// Check if vectors are the same size (1:1 relation)
-		if (meshes.size() != materials.size()) {
-			throw std::runtime_error("Vectors must have the same size for sorting");
-		}
-
-		// Create a vector of indices to sort
-		std::vector<size_t> indices(meshes.size());
-		std::iota(indices.begin(), indices.end(), 0); // Fill with 0, 1, 2, ..., N-1
-
-		// Sort indices based on material opacity (ascending)
-		std::sort(indices.begin(), indices.end(),
-			[&materials](size_t a, size_t b) {
-				return materials[a]->opacity > materials[b]->opacity; // Higher opacity comes first
-			}
-		);
-
-		// Apply the sorted indices to both vectors
-		std::vector<GLMesh*> sortedMeshes;
-		std::vector<GLMaterial*> sortedMaterials;
-		sortedMeshes.reserve(meshes.size());
-		sortedMaterials.reserve(materials.size());
-
-		for (size_t i : indices) {
-			sortedMeshes.push_back(meshes[i]);
-			sortedMaterials.push_back(materials[i]);
-		}
-
-		// Swap the original vectors with the sorted ones
-		meshes.swap(sortedMeshes);
-		materials.swap(sortedMaterials);
-	};
-
-	// Usage:
-	sortByOpacity(meshes, materials);
 }
 
 void GLModel::cleanup()

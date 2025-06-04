@@ -139,4 +139,41 @@ void Model::importModel(std::string filePath)
 			}
 		}
 	}
+
+	// Assuming GLMaterial has a member 'opacity' (float or similar)
+	auto sortByOpacity = [](std::vector<Mesh>& meshes, std::vector<Material*>& materials) {
+		// Check if vectors are the same size (1:1 relation)
+		if (meshes.size() != materials.size()) {
+			throw std::runtime_error("Vectors must have the same size for sorting");
+		}
+
+		// Create a vector of indices to sort
+		std::vector<size_t> indices(meshes.size());
+		std::iota(indices.begin(), indices.end(), 0); // Fill with 0, 1, 2, ..., N-1
+
+		// Sort indices based on material opacity (ascending)
+		std::sort(indices.begin(), indices.end(),
+			[&materials](size_t a, size_t b) {
+				return materials[a]->opacity > materials[b]->opacity; // Higher opacity comes first
+			}
+		);
+
+		// Apply the sorted indices to both vectors
+		std::vector<Mesh> sortedMeshes;
+		std::vector<Material*> sortedMaterials;
+		sortedMeshes.reserve(meshes.size());
+		sortedMaterials.reserve(materials.size());
+
+		for (size_t i : indices) {
+			sortedMeshes.push_back(meshes[i]);
+			sortedMaterials.push_back(materials[i]);
+		}
+
+		// Swap the original vectors with the sorted ones
+		meshes.swap(sortedMeshes);
+		materials.swap(sortedMaterials);
+		};
+
+	// Usage:
+	sortByOpacity(meshes, materials);
 }

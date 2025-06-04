@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <numeric>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
