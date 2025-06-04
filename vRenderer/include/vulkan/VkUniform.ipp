@@ -1,14 +1,11 @@
 #pragma once
 template<typename T>
-inline VkUniform<T>::VkUniform(uint32_t descriptorSetIndex, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
+inline VkUniform<T>::VkUniform(uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
 	descriptorSetIndex(descriptorSetIndex)
 {
-	//lightUniformBuffers.resize(frameCount);
-	//lightUniformMemory.resize(frameCount);
-	//vkLightDescriptorSetLayout = VK_NULL_HANDLE;
-	//vkLightDescriptorSets.resize(frameCount);
 	this->context = context;
 	this->descriptorSetLayout = descriptorSetLayout;
+	this->descriptorPool = descriptorPool;
 
 	create();
 }
@@ -71,7 +68,7 @@ inline void VkUniform<T>::create()
 	{
 		VkDescriptorSetAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = context.uniformDescriptorPool;						// pool to allocate sets from
+		allocInfo.descriptorPool = descriptorPool;						// pool to allocate sets from
 		allocInfo.descriptorSetCount = 1;						// number of sets to allocate
 		allocInfo.pSetLayouts = &descriptorSetLayout;								// layouts to use to allocate sets (1:1)
 

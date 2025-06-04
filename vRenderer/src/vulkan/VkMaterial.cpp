@@ -14,9 +14,13 @@ VkMaterial::~VkMaterial()
 	cleanup();
 }
 
-const VkDescriptorSet& VkMaterial::getSamplerDescriptorSet() const
+void VkMaterial::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 {
-	return samplerDescriptorSet;
+	// Bind sampler descriptor set
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+		samplerDescriptorSetIndex, 1, &samplerDescriptorSet, 0, nullptr);
+
+	componentsUniform->cmdBind(uniformDescriptorSetIndex, commandBuffer, pipelineLayout);
 }
 
 /// <summary>
@@ -27,27 +31,47 @@ const VkDescriptorSet& VkMaterial::getSamplerDescriptorSet() const
 /// <param name="createInfo"></param>
 void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDescriptorSetCreateInfo createInfo)
 {
-	// Create sampler pool
-	samplerDescriptorPool = createDescriptorPool(
-		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		textureCount,
-		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+	uniformDescriptorPool = createDescriptorPool(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, context);
+
+	components.ambientColor = glm::vec4(material.ambientColor, 1.0f);
+	components.diffuseColor = glm::vec4(material.diffuseColor, 1.0f);
+	components.specularColor = glm::vec4(material.specularColor, 1.0f);
+	components.opacity = material.opacity;
+	components.shininess = material.shininess;
+	componentsUniformLayout = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
+	componentsUniform = std::make_unique<VkUniform<UboMaterial>>(
+		uniformDescriptorSetIndex,
+		uniformDescriptorPool,
+		// TODO get rid of these embarassment
+		componentsUniformLayout,
 		context);
-	createInfo.descriptorPool = samplerDescriptorPool;
+	componentsUniform->update(components);
 
-	// Lambda for texture creation
-	VkContext& ctx = this->context;
-	auto createTexture = [&](std::string textureStr, std::unique_ptr<VkTexture>& vkTexture) {
-		if (!textureStr.empty())
-		{
-			vkTexture = std::make_unique<VkTexture>(textureStr, ctx);
-		}
-	};
+	// SAMPLER DESCRIPTOR SET CREATION
+	{
+		// Create sampler pool
+		samplerDescriptorPool = createDescriptorPool(
+			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			textureCount,
+			VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+			context);
 
-	createTexture(material.diffuseTexture, diffuse);
-	createTexture(material.specularTexture, specular);
+		// Lambda for texture creation
+		VkContext& ctx = this->context;
+		auto createTexture = [&](std::string textureStr, std::unique_ptr<VkTexture>& vkTexture) {
+			if (!textureStr.empty())
+			{
+				vkTexture = std::make_unique<VkTexture>(textureStr, ctx);
+			}
+			};
 
-	createSamplerDescriptorSet(createInfo);
+		createTexture(material.ambientTexture, ambient);
+		createTexture(material.diffuseTexture, diffuse);
+		createTexture(material.specularTexture, specular);
+		createTexture(material.opacityMap, opacityMap);
+
+		createSamplerDescriptorSet(createInfo);
+	}
 }
 
 /// <summary>
@@ -61,7 +85,7 @@ void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo cre
 {
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = createInfo.descriptorPool;
+	allocInfo.descriptorPool = samplerDescriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &createInfo.samplerDescriptorSetLayout;
 
@@ -71,8 +95,8 @@ void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo cre
 		throw std::runtime_error("Failed to allocate texture sampler descriptor sets.");
 	}
 
-	std::array<VkWriteDescriptorSet, 2> setWrites;
-	std::array<VkDescriptorImageInfo, 2> imageInfos;	// required for avoiding lifetime issues
+	std::array<VkWriteDescriptorSet, 4> setWrites;
+	std::array<VkDescriptorImageInfo, 4> imageInfos;	// required for avoiding lifetime issues
 	auto createDescriptorForTexture = [&](const VkTexture* texture, uint32_t binding) {
 		
 		// If texture exists - we bind its imageView an descriptor's resource
@@ -116,14 +140,19 @@ void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo cre
 	};
 
 	// Passed bindings should match the ones in shader (as well as order of calling here)
-	createDescriptorForTexture(diffuse.get(), 0);
-	createDescriptorForTexture(specular.get(), 1);
+	createDescriptorForTexture(ambient.get(), 0);
+	createDescriptorForTexture(diffuse.get(), 1);
+	createDescriptorForTexture(specular.get(), 2);
+	createDescriptorForTexture(opacityMap.get(), 3);
 
 	vkUpdateDescriptorSets(context.logicalDevice, textureCount, setWrites.data(), 0, nullptr);
 }
 
 void VkMaterial::cleanup()
 {
+	componentsUniform->cleanup();
+	vkDestroyDescriptorSetLayout(context.logicalDevice, componentsUniformLayout, nullptr);
+	vkDestroyDescriptorPool(context.logicalDevice, uniformDescriptorPool, nullptr);
 	vkDestroyDescriptorPool(context.logicalDevice, samplerDescriptorPool, nullptr);
 	for (int i = 0; i < dummyBuffers.size(); i++)
 	{

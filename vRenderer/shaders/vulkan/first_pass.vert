@@ -14,7 +14,6 @@ layout(push_constant) uniform Push {
     mat4 model;
     mat4 normalMatrix;
     vec3 viewPos;
-    uint textured;
 } push;
 
 // Interpolated values
@@ -24,8 +23,7 @@ layout(location = 2) out vec3 fragNormal;
 layout(location = 3) out vec3 fragPos;
 
 // Flat values (mesh related)
-layout(location = 4) flat out uint outTextured;
-layout(location = 5) flat out vec3 outViewPos;
+layout(location = 4) flat out vec3 outViewPos;
 
 void main() {
     gl_Position = uboProjectionView.projection * uboProjectionView.view * push.model * vec4(aPos, 1.0);
@@ -35,6 +33,5 @@ void main() {
     fragNormal = (push.normalMatrix * vec4(aNormal, 1.0)).xyz;
     fragPos = (push.model * vec4(aPos, 1.0)).xyz;
 
-    outTextured = push.textured;
     outViewPos = push.viewPos;
 }

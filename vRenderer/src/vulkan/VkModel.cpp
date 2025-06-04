@@ -56,7 +56,6 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		{
 			PushConstant push = {};
 			push.model = mesh->getTransformMat();
-			push.textured = textured;
 			push.normalMatrix = glm::transpose(glm::inverse(mesh->getTransformMat()));
 			push.viewPosition = camera.getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
@@ -67,8 +66,7 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		{
 			auto* material = materials[i];
 			// Material sampler uniforms
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-				material->descriptorSetIndex, 1, &material->getSamplerDescriptorSet(), 0, nullptr);
+			material->bind(commandBuffer, pipelineLayout);
 		}
 
 		// execute pipeline

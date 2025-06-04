@@ -13,7 +13,7 @@ public:
 
 	const uint32_t descriptorSetIndex;
 
-	VkUniform(uint32_t descriptorSetIndex, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
+	VkUniform(uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
 	~VkUniform();
 
 	void update(const T& data);
@@ -28,6 +28,7 @@ protected:
 	VkDeviceMemory memory;
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorSet descriptorSet;
+	VkDescriptorPool descriptorPool;
 
 	VkContext context;
 

@@ -54,11 +54,6 @@ namespace VkUtils
 		// 3 - spot
 		uint32_t type;
 
-		// Phong
-		float ambientStrength;
-		float specularStrength;
-		uint32_t shininess;
-
 		// Attenuation
 		float constant;
 		float linear;
@@ -66,6 +61,7 @@ namespace VkUtils
 		// Spotlight components
 		float cutOff;
 		float outerCutOff;
+		float padding[2];    // offset 72 (8 bytes of padding)
 
 		UboLight& operator = (const Light& genericLight)
 		{
@@ -78,6 +74,8 @@ namespace VkUtils
 			quadratic = genericLight.quadratic;
 			cutOff = genericLight.cutOff;
 			outerCutOff = genericLight.outerCutOff;
+			padding[0] = 0.0f;  // Initialize padding to zero
+			padding[1] = 0.0f;  // Initialize padding to zero
 			return *this;
 		}
 	};
@@ -106,8 +104,6 @@ namespace VkUtils
 		glm::mat4 normalMatrix;
 		// the position of a viewer (camera)
 		glm::vec3 viewPosition;
-		// flag to inform whether model is textured
-		uint8_t textured;
 	};
 
 	const std::vector<glm::vec3> meshVertices = {
@@ -162,7 +158,6 @@ namespace VkUtils
 
 	struct VkSamplerDescriptorSetCreateInfo
 	{
-		VkDescriptorPool descriptorPool;
 		VkDescriptorSetLayout samplerDescriptorSetLayout;
 		VkSampler sampler;
 	};

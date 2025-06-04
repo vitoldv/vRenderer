@@ -78,7 +78,7 @@ private:
 	VkSwapchainKHR swapchain;
 	std::vector<VkUtils::SwapChainImage> swapchainImages;
 
-	std::array<VkDescriptorSetLayout, 4> setLayoutMap;
+	std::array<VkDescriptorSetLayout, 5> setLayoutMap;
 	VkSamplerDescriptorSetCreateInfo samplerDescriptorCreateInfo;
 
 	// Graphics pipeline

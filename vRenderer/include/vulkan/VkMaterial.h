@@ -5,33 +5,55 @@
 
 #include "Material.h"
 #include "VkTexture.h"
+#include "VkUniform.hpp"
 
 class VkMaterial
 {
 public:
 
 	const std::string name;	
-	const uint32_t textureCount = 2;
-	const uint32_t descriptorSetIndex = 1;
+
+	// Should match the amount of textures declared below
+	const uint32_t textureCount = 4;
+	const uint32_t samplerDescriptorSetIndex = 1;
+	const uint32_t uniformDescriptorSetIndex = 2;
 
 	// The order of texture creation affects the order of sampler descriptors in samplerDescriptorSets vector,
 	// and, accordingly, what texture is passed in shader.
 	// This way, let the order of declaration here match the order of creation and the declaration order in shader.
+	std::unique_ptr<VkTexture> ambient;
 	std::unique_ptr<VkTexture> diffuse;
 	std::unique_ptr<VkTexture> specular;
+	std::unique_ptr<VkTexture> opacityMap;
+
+	struct ALIGN_STD140 UboMaterial
+	{
+		glm::vec4 ambientColor;
+		glm::vec4 diffuseColor;
+		glm::vec4 specularColor;
+		float opacity;
+		float shininess;
+	};
+
+	UboMaterial components;
 
 	VkMaterial(const Material& material, VkContext context, VkSamplerDescriptorSetCreateInfo createInfo);
 	~VkMaterial();
 
 	void cleanup();
 
-	const VkDescriptorSet& getSamplerDescriptorSet() const;
+	void bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 
 private:
 
 	VkContext context;
 	VkDescriptorPool samplerDescriptorPool;
+	VkDescriptorPool uniformDescriptorPool;
 	VkDescriptorSet samplerDescriptorSet;
+
+	VkDescriptorSetLayout componentsUniformLayout;
+
+	std::unique_ptr<VkUniform<UboMaterial>> componentsUniform;
 
 	// Storage for dummy buffers and their memory used for null descriptors initialization
 	std::vector<VkBuffer> dummyBuffers;

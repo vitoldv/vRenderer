@@ -537,9 +537,10 @@ void VulkanRenderer::createDescriptorSetLayouts()
 {
 	// Index here must match set's index in shader
 	setLayoutMap[0] = createDescriptorSetLayout(1, VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
-	setLayoutMap[1] = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context);
+	setLayoutMap[1] = createDescriptorSetLayout(4, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context);
 	setLayoutMap[2] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
-	setLayoutMap[3] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, context);
+	setLayoutMap[3] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
+	setLayoutMap[4] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, context);
 
 	samplerDescriptorCreateInfo.samplerDescriptorSetLayout = setLayoutMap[1];
 
@@ -618,12 +619,12 @@ void VulkanRenderer::createUniforms()
 		uint32_t descriptorSetIndex;
 
 		descriptorSetIndex = 0;
-		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
-
-		descriptorSetIndex = 2;
-		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
+		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(descriptorSetIndex, uniformDescriptorPool, setLayoutMap[descriptorSetIndex], context);
 
 		descriptorSetIndex = 3;
+		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(descriptorSetIndex, uniformDescriptorPool, setLayoutMap[descriptorSetIndex], context);
+
+		descriptorSetIndex = 4;
 		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
 	}
 }

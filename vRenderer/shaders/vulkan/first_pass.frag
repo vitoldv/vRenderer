@@ -1,18 +1,27 @@
 #version 450
 
 #define MAX_LIGHT_SOURCES 10
+#define GLOBAL_AMBIENT_STRENGTH 0.1
 
 layout(location = 0) in vec3 fragCol;
 layout(location = 1) in vec2 fragUv;
 layout(location = 2) in vec3 fragNormal;
 layout(location = 3) in vec3 fragPos;
 
-layout(location = 4) flat in uint outTextured;
-layout(location = 5) flat in vec3 outViewPos;
+layout(location = 4) flat in vec3 outViewPos;
 
-// Material (set = 1)
-layout(set = 1, binding = 0) uniform sampler2D diffuseMap;
-layout(set = 1, binding = 1) uniform sampler2D specularMap;
+// Material (sets 1 & 2)
+layout(set = 1, binding = 0) uniform sampler2D ambientMap;
+layout(set = 1, binding = 1) uniform sampler2D diffuseMap;
+layout(set = 1, binding = 2) uniform sampler2D specularMap;
+layout(set = 1, binding = 3) uniform sampler2D opacityMap;
+layout(set = 2, binding = 0) uniform UboMaterial {
+    vec4 ambientColor;
+    vec4 diffuseColor;
+    vec4 specularColor;
+    float opacity;
+    float shininess;
+} uboMaterial;
 
 struct Light {
 
@@ -24,30 +33,28 @@ struct Light {
     // 1 - directional
     // 2 - point
     // 3 - spot
-    int type;            
-    float ambientStrength;
-    float specularStrength;
-    int shininess;         
+    int type;                   
     
     float constant;        
     float linear;         
     float quadratic;     
+
     float cutOff;          
-    
     float outerCutOff;   
 };
 
-layout(set = 2, binding = 0) uniform UboLight {
+layout(set = 3, binding = 0) uniform UboLight {
     Light lights[MAX_LIGHT_SOURCES];
 } uboLight;
 
-layout(set = 3, binding = 0) uniform UboDynamicColor {
+layout(set = 4, binding = 0) uniform UboDynamicColor {
     vec4 color;
 } uboColor;
 
 layout(location = 0) out vec4 FragColor; 
 
-vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir);
+vec4 selectBetween(sampler2D map, vec4 color);
+vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 viewDir);
 float getAttenuationFactor(Light light, float lightDistance);
 
 vec3 applyDirectionalLight(Light ligth, vec3 normal, vec3 viewDir);
@@ -61,7 +68,10 @@ void main()
     // Viewing direction
     vec3 viewDir = normalize(outViewPos - fragPos);
 
-    vec3 shading = vec3(0);
+    // Default fragment color
+    vec3 result = selectBetween(diffuseMap, uboMaterial.diffuseColor).xyz;
+
+    vec3 shading = GLOBAL_AMBIENT_STRENGTH * selectBetween(ambientMap, uboMaterial.ambientColor).xyz;
     for(int i = 0; i < MAX_LIGHT_SOURCES; i++)
     {
         if(uboLight.lights[i].type == 1)
@@ -78,37 +88,34 @@ void main()
         }
     }
 
-    // Unshaded fragment color calculation
-    vec3 result = vec3(1.0);
-    if(outTextured != 0)
-    {      
-        result = texture(diffuseMap, fragUv).xyz;
-    }
-    else
-    {
-        result = vec3(1.0, 1.0, 1.0);
-    }
+    FragColor = vec4(result * shading, 1.0);
 
-    // Light application
-    result = shading * result;
+    // Applying fragment's opacity. It comes either from texture map or set universally for material
+    FragColor.a = max(texture(opacityMap, fragUv).r, uboMaterial.opacity);
+}
 
-    FragColor = vec4(result, 1.0);
+// Define what color to use between texture and its fallback color
+// (if texture is present - color should be nulled)
+vec4 selectBetween(sampler2D map, vec4 color)
+{
+    return mix(texture(map, fragUv), vec4(color.xyz, 0.0), float(length(color.xyz) > 0.0));
 }
 
 // Returns a vector of Phong shading impact
-vec3 getPhongComponent(Light light, vec3 lightDir, vec3 normal, vec3 viewDir)
+vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 viewDir)
 {
-    // Ambient calculation
-    vec3 ambient = light.ambientStrength * light.color.xyz;
     // Diffuse calculation
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * light.color.xyz;
+    vec3 diffuse = vec3(max(dot(normal, lightDir), 0.0));
+
     // Specular calculation
     vec3 reflectDir = reflect(-lightDir, normal);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), light.shininess);
-    vec3 specular = texture(specularMap, fragUv).xyz * light.specularStrength * spec * light.color.xyz;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), max(uboMaterial.shininess, 2.0));
+    vec3 specColor = selectBetween(specularMap, uboMaterial.specularColor).xyz;
+    vec3 specular = specColor.xyz * spec;
     
-    return ambient + diffuse + specular;
+    // TODO inspect this closely
+
+    return  (diffuse + specular) * light.color.xyz;
 }
 
 // Returns a factor of light intensity decreased over distance
@@ -126,7 +133,7 @@ float getAttenuationFactor(Light light, float lightDistance)
 vec3 applyDirectionalLight(Light light, vec3 normal, vec3 viewDir)
 {
     vec3 lightDir = normalize(-light.direction.xyz);
-    return getPhongComponent(light, lightDir, normal, viewDir);
+    return getDiffuseSpecularImpact(light, lightDir, normal, viewDir);
 }
 
 // Returns a shading impact of a Point light source (light.type == 1)
@@ -136,7 +143,7 @@ vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir)
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 
-    vec3 phong = getPhongComponent(light, lightDir, normal, viewDir);
+    vec3 phong = getDiffuseSpecularImpact(light, lightDir, normal, viewDir);
     phong *= getAttenuationFactor(light, lightDistance);
     return phong;
 }
@@ -156,7 +163,7 @@ vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir)
         float epsilon = light.cutOff - light.outerCutOff;
         float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
         float attenuation = getAttenuationFactor(light, lightDistance);
-        return attenuation * intensity * getPhongComponent(light, lightDir, normal, viewDir);
+        return attenuation * intensity * getDiffuseSpecularImpact(light, lightDir, normal, viewDir);
     }
 
     return vec3(0);
