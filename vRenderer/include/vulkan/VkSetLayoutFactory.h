@@ -12,8 +12,8 @@ using namespace VkUtils;
 enum class DESC_SET_LAYOUT
 {
 	CAMERA			= 0,
-	MATERIAL		= 1,
-	MATERIAL_2		= 2,
+	MATERIAL_SAMPLER		= 1,
+	MATERIAL_UNIFORM		= 2,
 	LIGHT			= 3,		
 	DYNAMIC_COLOR	= 4
 };
