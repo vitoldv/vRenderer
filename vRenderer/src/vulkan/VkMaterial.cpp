@@ -32,25 +32,39 @@ void VkMaterial::bind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipe
 void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDescriptorSetCreateInfo createInfo)
 {
 	auto& setLayoutFactory = VkSetLayoutFactory::instance();
-	
 	samplerDescriptorSetIndex = setLayoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::MATERIAL_SAMPLER);
 	uniformDescriptorSetIndex = setLayoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM);
 
-	uniformDescriptorPool = createDescriptorPool(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, context);
-
-	components.ambientColor = glm::vec4(material.ambientColor, 1.0f);
-	components.diffuseColor = glm::vec4(material.diffuseColor, 1.0f);
-	components.specularColor = glm::vec4(material.specularColor, 1.0f);
-	components.opacity = material.opacity;
-	components.shininess = material.shininess;
-	componentsUniform = std::make_unique<VkUniform<UboMaterial>>(
-		3,		// IMAGE_COUNT
-		uniformDescriptorSetIndex,
-		uniformDescriptorPool,
-		// TODO get rid of these embarassment
-		setLayoutFactory.getSetLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM),
+	// Create descriptor pool for material components uniform
+	// Each swapchain image requires its own uniform i.e. descriptor
+	uint32_t descriptorCount = context.imageCount;
+	uniformDescriptorPool = createDescriptorPool(
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		descriptorCount,
+		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, 
 		context);
-	componentsUniform->updateAll(components);
+
+	// UNIFORM CREATION
+	{
+		// Copy data from material template
+		components.ambientColor = glm::vec4(material.ambientColor, 1.0f);
+		components.diffuseColor = glm::vec4(material.diffuseColor, 1.0f);
+		components.specularColor = glm::vec4(material.specularColor, 1.0f);
+		components.opacity = material.opacity;
+		components.shininess = material.shininess;
+
+		// Create uniform to hold material components data
+		componentsUniform = std::make_unique<VkUniform<UboMaterial>>(
+			context.imageCount,
+			uniformDescriptorSetIndex,
+			uniformDescriptorPool,
+			// TODO get rid of these embarassment
+			setLayoutFactory.getSetLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM),
+			context);
+
+		// Update uniform with data
+		componentsUniform->updateAll(components);
+	}
 
 	// SAMPLER DESCRIPTOR SET CREATION
 	{
@@ -68,7 +82,7 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 			{
 				vkTexture = std::make_unique<VkTexture>(textureStr, ctx);
 			}
-			};
+		};
 
 		createTexture(material.ambientTexture, ambient);
 		createTexture(material.diffuseTexture, diffuse);

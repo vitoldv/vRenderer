@@ -145,14 +145,10 @@ namespace VkUtils
 		VkDevice logicalDevice;
 		VkQueue graphicsQueue;
 		VkCommandPool graphicsCommandPool;
-
-		VkDescriptorPool uniformDescriptorPool;
-		VkDescriptorPool dynamicUniformDescriptorPool;
 		
-		//// Texturing
-		//VkSampler vkTextureSampler;
-		//VkDescriptorSetLayout samplerDescriptorSetLayout;
-
+		// Amount of images in swapchain
+		uint32_t imageCount;
+		
 		VkDeviceSize minUniformBufferOffset;
 	};
 

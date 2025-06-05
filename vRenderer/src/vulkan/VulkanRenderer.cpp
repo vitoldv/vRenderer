@@ -366,6 +366,8 @@ void VulkanRenderer::createSwapChain()
 		// Add to swapchain image list
 		swapchainImages.push_back(swapChainImage);
 	}
+
+	context.imageCount = IMAGE_COUNT;
 }
 
 void VulkanRenderer::createDepthBuffer()
