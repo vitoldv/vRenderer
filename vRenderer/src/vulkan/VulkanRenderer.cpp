@@ -532,7 +532,11 @@ void VulkanRenderer::createRenderPass()
 void VulkanRenderer::createDescriptorSetLayouts()
 {
 	VkSetLayoutFactory::initialize(context);
+
 	// layout for second pass input attachment
+	// TODO: think of how it could be moved to VkSetLayoutFactory
+	// probably the idea for a solution will arise after shader manager implementation along
+	// with per-pass shader selection 
 	inputDescriptorSetLayout = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, context);
 }
 
@@ -572,16 +576,16 @@ void VulkanRenderer::createPushConstantRange()
 
 void VulkanRenderer::createDescriptorPools()
 {
-	dynamicUniformDescriptorPool = VkUtils::createDescriptorPool(
-		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-		IMAGE_COUNT,
-		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-		context);
-
 	// UNIFORM descriptor pool
 	uniformDescriptorPool = VkUtils::createDescriptorPool(
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		(3 + MAX_LIGHT_SOURCES) * IMAGE_COUNT,
+		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		context);
+
+	dynamicUniformDescriptorPool = VkUtils::createDescriptorPool(
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+		IMAGE_COUNT,
 		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
 		context);
 
