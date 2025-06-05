@@ -30,7 +30,7 @@ public:
 	const VkMesh* getMesh(uint32_t id) const;
 	const std::vector<VkMesh*>& getMeshes() const;
 
-	void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera);
+	void draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera);
 
 	void setTransform(glm::mat4 transform);
 

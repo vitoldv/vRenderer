@@ -31,6 +31,7 @@
 #include "VkUniform.hpp"
 #include "VkUniformDynamic.hpp"
 #include "VkImageWrapper.h"
+#include "VkSetLayoutFactory.h"
 #include "BaseCamera.h"
 
 #ifdef NDEBUG
@@ -78,7 +79,6 @@ private:
 	VkSwapchainKHR swapchain;
 	std::vector<VkUtils::SwapChainImage> swapchainImages;
 
-	std::array<VkDescriptorSetLayout, 5> setLayoutMap;
 	VkSamplerDescriptorSetCreateInfo samplerDescriptorCreateInfo;
 
 	// Graphics pipeline
@@ -124,8 +124,8 @@ private:
 	UboLightArray uboLightArray;
 
 	// Uniforms
-	std::vector<std::unique_ptr<VkUniform<UboLightArray>>> lightUniforms;
-	std::vector<std::unique_ptr<VkUniform<UboViewProjection>>> vpUniforms;
+	std::unique_ptr<VkUniform<UboLightArray>> lightUniform;
+	std::unique_ptr<VkUniform<UboViewProjection>> vpUniform;
 	std::vector<std::unique_ptr<VkUniformDynamic<UboDynamicColor>>> colorUniformsDynamic;
 
 	// Textures

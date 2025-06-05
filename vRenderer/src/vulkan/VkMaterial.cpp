@@ -14,13 +14,13 @@ VkMaterial::~VkMaterial()
 	cleanup();
 }
 
-void VkMaterial::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
+void VkMaterial::bind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 {
 	// Bind sampler descriptor set
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
 		samplerDescriptorSetIndex, 1, &samplerDescriptorSet, 0, nullptr);
 
-	componentsUniform->cmdBind(uniformDescriptorSetIndex, commandBuffer, pipelineLayout);
+	componentsUniform->cmdBind(imageIndex, uniformDescriptorSetIndex, commandBuffer, pipelineLayout);
 }
 
 /// <summary>
@@ -31,21 +31,21 @@ void VkMaterial::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLa
 /// <param name="createInfo"></param>
 void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDescriptorSetCreateInfo createInfo)
 {
-	uniformDescriptorPool = createDescriptorPool(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, context);
+	uniformDescriptorPool = createDescriptorPool(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, context);
 
 	components.ambientColor = glm::vec4(material.ambientColor, 1.0f);
 	components.diffuseColor = glm::vec4(material.diffuseColor, 1.0f);
 	components.specularColor = glm::vec4(material.specularColor, 1.0f);
 	components.opacity = material.opacity;
 	components.shininess = material.shininess;
-	componentsUniformLayout = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
 	componentsUniform = std::make_unique<VkUniform<UboMaterial>>(
+		3,		// IMAGE_COUNT
 		uniformDescriptorSetIndex,
 		uniformDescriptorPool,
 		// TODO get rid of these embarassment
-		componentsUniformLayout,
+		VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::MATERIAL_2),
 		context);
-	componentsUniform->update(components);
+	componentsUniform->updateAll(components);
 
 	// SAMPLER DESCRIPTOR SET CREATION
 	{
@@ -84,10 +84,11 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo createInfo)
 {
 	VkDescriptorSetAllocateInfo allocInfo = {};
+	VkDescriptorSetLayout samplerSetLayout = VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::MATERIAL);
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = samplerDescriptorPool;
 	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &createInfo.samplerDescriptorSetLayout;
+	allocInfo.pSetLayouts = &samplerSetLayout;
 
 	VkResult result = vkAllocateDescriptorSets(context.logicalDevice, &allocInfo, &samplerDescriptorSet);
 	if (result != VK_SUCCESS)
@@ -151,7 +152,6 @@ void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo cre
 void VkMaterial::cleanup()
 {
 	componentsUniform->cleanup();
-	vkDestroyDescriptorSetLayout(context.logicalDevice, componentsUniformLayout, nullptr);
 	vkDestroyDescriptorPool(context.logicalDevice, uniformDescriptorPool, nullptr);
 	vkDestroyDescriptorPool(context.logicalDevice, samplerDescriptorPool, nullptr);
 	for (int i = 0; i < dummyBuffers.size(); i++)

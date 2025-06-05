@@ -6,6 +6,8 @@
 #include "Material.h"
 #include "VkTexture.h"
 #include "VkUniform.hpp"
+#include "VulkanUtils.h"
+#include "VkSetLayoutFactory.h"
 
 class VkMaterial
 {
@@ -42,7 +44,7 @@ public:
 
 	void cleanup();
 
-	void bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+	void bind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 
 private:
 
@@ -50,8 +52,6 @@ private:
 	VkDescriptorPool samplerDescriptorPool;
 	VkDescriptorPool uniformDescriptorPool;
 	VkDescriptorSet samplerDescriptorSet;
-
-	VkDescriptorSetLayout componentsUniformLayout;
 
 	std::unique_ptr<VkUniform<UboMaterial>> componentsUniform;
 

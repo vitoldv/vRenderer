@@ -71,17 +71,14 @@ void VulkanRenderer::cleanup()
 	depthImage->cleanup();
 	colorImage->cleanup();
 
-	for (int i = 0; i < setLayoutMap.size(); i++)
-	{
-		vkDestroyDescriptorSetLayout(logicalDevice, setLayoutMap[i], nullptr);
-	}
-
+	vpUniform->cleanup();
+	lightUniform->cleanup();
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
-		vpUniforms[i]->cleanup();
-		lightUniforms[i]->cleanup();
 		colorUniformsDynamic[i]->cleanup();
 	}
+
+	VkSetLayoutFactory::instance().cleanup();
 
 	vkDestroyDescriptorPool(logicalDevice, uniformDescriptorPool, nullptr);
 	vkDestroyDescriptorPool(logicalDevice, dynamicUniformDescriptorPool, nullptr);
@@ -535,15 +532,7 @@ void VulkanRenderer::createRenderPass()
 
 void VulkanRenderer::createDescriptorSetLayouts()
 {
-	// Index here must match set's index in shader
-	setLayoutMap[0] = createDescriptorSetLayout(1, VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
-	setLayoutMap[1] = createDescriptorSetLayout(4, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context);
-	setLayoutMap[2] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
-	setLayoutMap[3] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, context);
-	setLayoutMap[4] = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, context);
-
-	samplerDescriptorCreateInfo.samplerDescriptorSetLayout = setLayoutMap[1];
-
+	VkSetLayoutFactory::initialize(context);
 	// layout for second pass input attachment
 	inputDescriptorSetLayout = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, context);
 }
@@ -594,7 +583,7 @@ void VulkanRenderer::createDescriptorPools()
 	// UNIFORM descriptor pool
 	uniformDescriptorPool = VkUtils::createDescriptorPool(
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		3 + MAX_LIGHT_SOURCES,
+		(3 + MAX_LIGHT_SOURCES) * IMAGE_COUNT,
 		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
 		context);
 	context.uniformDescriptorPool = uniformDescriptorPool;
@@ -610,22 +599,29 @@ void VulkanRenderer::createDescriptorPools()
 
 void VulkanRenderer::createUniforms()
 {
-	vpUniforms.resize(IMAGE_COUNT);
-	lightUniforms.resize(IMAGE_COUNT);
-	colorUniformsDynamic.resize(IMAGE_COUNT);
+	auto& layoutFactory = VkSetLayoutFactory::instance();
 
+	vpUniform = std::make_unique<VkUniform<UboViewProjection>>(
+		IMAGE_COUNT,
+		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::CAMERA),
+		uniformDescriptorPool,
+		layoutFactory.getSetLayout(DESC_SET_LAYOUT::CAMERA),
+		context);
+
+	lightUniform = std::make_unique<VkUniform<UboLightArray>>(
+		IMAGE_COUNT,
+		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::LIGHT),
+		uniformDescriptorPool,
+		layoutFactory.getSetLayout(DESC_SET_LAYOUT::LIGHT), 
+		context);
+
+	uint32_t descriptorSetIndex;
+	colorUniformsDynamic.resize(IMAGE_COUNT);
 	for (int i = 0; i < IMAGE_COUNT; i++)
 	{
-		uint32_t descriptorSetIndex;
-
-		descriptorSetIndex = 0;
-		vpUniforms[i] = std::make_unique<VkUniform<UboViewProjection>>(descriptorSetIndex, uniformDescriptorPool, setLayoutMap[descriptorSetIndex], context);
-
-		descriptorSetIndex = 3;
-		lightUniforms[i] = std::make_unique<VkUniform<UboLightArray>>(descriptorSetIndex, uniformDescriptorPool, setLayoutMap[descriptorSetIndex], context);
-
-		descriptorSetIndex = 4;
-		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>(descriptorSetIndex, setLayoutMap[descriptorSetIndex], context);
+		descriptorSetIndex = static_cast<uint32_t>(DESC_SET_LAYOUT::DYNAMIC_COLOR);
+		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>
+			(descriptorSetIndex, layoutFactory.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR), context);
 	}
 }
 
@@ -857,12 +853,11 @@ void VulkanRenderer::createGraphicsPipeline()
 		//	colorUniformsDynamic[0]->getDescriptorLayout()
 		//};
 
-
-
+		auto setLayouts = VkSetLayoutFactory::instance().getLayouts();
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(setLayoutMap.size());
-		pipelineLayoutCreateInfo.pSetLayouts = setLayoutMap.data();
+		pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();
+		pipelineLayoutCreateInfo.pSetLayouts = setLayouts.data();
 		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 		pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
@@ -1091,11 +1086,8 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
 	// bind (static) uniforms
-	if (vpUniforms.size() == IMAGE_COUNT)
-		vpUniforms[currentImage]->cmdBind(vpUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
-
-	if (lightUniforms.size() == IMAGE_COUNT)
-		lightUniforms[currentImage]->cmdBind(lightUniforms[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
+	vpUniform->cmdBind(currentImage, vpUniform->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
+	lightUniform->cmdBind(currentImage, lightUniform->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
 
 	int meshCount = 0;
 	for (int i = 0; i < modelsToRender.size(); i++)
@@ -1104,7 +1096,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 		if (colorUniformsDynamic.size() == IMAGE_COUNT)
 			colorUniformsDynamic[currentImage]->cmdBind(i, colorUniformsDynamic[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
 
-		modelsToRender[i]->draw(commandBuffers[currentImage], pipelineLayout, *sceneCamera);
+		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera);
 	}
 
 	// Start second subpass
@@ -1136,7 +1128,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 		mvp.projection = sceneCamera->getProjectionMatrix();
 		mvp.view = sceneCamera->getViewMatrix();
 
-		vpUniforms[imageIndex]->update(mvp);
+		vpUniform->update(imageIndex, mvp);
 	}
 
 	// Update light uniform
@@ -1153,7 +1145,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 			}
 		}
 
-		lightUniforms[imageIndex]->update(uboLightArray);
+		lightUniform->update(imageIndex, uboLightArray);
 	}
 
 	// UPDATE DYNAMIC UNIFORMS

@@ -38,7 +38,7 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 	return meshes;
 }
 
-void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera)
+void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera)
 {
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -50,8 +50,6 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);								// Command to bind vertex buffer before deawing with them
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-		bool textured = materials[i] != nullptr && materials[i]->textureCount > 0;
-
 		// PUSH CONSTANTS
 		{
 			PushConstant push = {};
@@ -60,14 +58,12 @@ void VkModel::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayou
 			push.viewPosition = camera.getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
-		} 
-
-		if (textured)
-		{
-			auto* material = materials[i];
-			// Material sampler uniforms
-			material->bind(commandBuffer, pipelineLayout);
 		}
+
+		auto* material = materials[i];
+		// Material sampler uniforms
+		material->bind(imageIndex, commandBuffer, pipelineLayout);
+
 
 		// execute pipeline
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->getIndexCount()), 1, 0, -VERTEX_INDEX_OFFSET, 0);
