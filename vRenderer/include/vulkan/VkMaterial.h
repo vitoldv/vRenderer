@@ -42,7 +42,7 @@ public:
 
 	void cleanup();
 
-	void bind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+	void cmdBind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 
 private:
 

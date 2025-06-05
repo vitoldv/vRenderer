@@ -73,10 +73,7 @@ void VulkanRenderer::cleanup()
 
 	vpUniform->cleanup();
 	lightUniform->cleanup();
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		colorUniformsDynamic[i]->cleanup();
-	}
+	colorUniformsDynamic->cleanup();
 
 	VkSetLayoutFactory::instance().cleanup();
 
@@ -580,7 +577,6 @@ void VulkanRenderer::createDescriptorPools()
 		IMAGE_COUNT,
 		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
 		context);
-	context.dynamicUniformDescriptorPool = dynamicUniformDescriptorPool;
 
 	// UNIFORM descriptor pool
 	uniformDescriptorPool = VkUtils::createDescriptorPool(
@@ -588,7 +584,6 @@ void VulkanRenderer::createDescriptorPools()
 		(3 + MAX_LIGHT_SOURCES) * IMAGE_COUNT,
 		VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
 		context);
-	context.uniformDescriptorPool = uniformDescriptorPool;
 
 	// CREATE INPUT ATTACHMENT DESCRIPTOR POOL
 	inputDescriptorPool = createDescriptorPool(
@@ -604,27 +599,22 @@ void VulkanRenderer::createUniforms()
 	auto& layoutFactory = VkSetLayoutFactory::instance();
 
 	vpUniform = std::make_unique<VkUniform<UboViewProjection>>(
-		IMAGE_COUNT,
 		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::CAMERA),
 		uniformDescriptorPool,
 		layoutFactory.getSetLayout(DESC_SET_LAYOUT::CAMERA),
 		context);
 
 	lightUniform = std::make_unique<VkUniform<UboLightArray>>(
-		IMAGE_COUNT,
 		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::LIGHT),
 		uniformDescriptorPool,
-		layoutFactory.getSetLayout(DESC_SET_LAYOUT::LIGHT), 
+		layoutFactory.getSetLayout(DESC_SET_LAYOUT::LIGHT),
 		context);
 
-	uint32_t descriptorSetIndex;
-	colorUniformsDynamic.resize(IMAGE_COUNT);
-	for (int i = 0; i < IMAGE_COUNT; i++)
-	{
-		descriptorSetIndex = static_cast<uint32_t>(DESC_SET_LAYOUT::DYNAMIC_COLOR);
-		colorUniformsDynamic[i] = std::make_unique<VkUniformDynamic<UboDynamicColor>>
-			(descriptorSetIndex, layoutFactory.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR), context);
-	}
+	colorUniformsDynamic = std::make_unique<VkUniformDynamic<UboDynamicColor>>(
+		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
+		dynamicUniformDescriptorPool,
+		layoutFactory.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR), 
+		context);
 }
 
 void VulkanRenderer::createSubpassInputDescriptorSets()
@@ -1088,16 +1078,14 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
 	// bind (static) uniforms
-	vpUniform->cmdBind(currentImage, vpUniform->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
-	lightUniform->cmdBind(currentImage, lightUniform->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
+	vpUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
+	lightUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
 
 	int meshCount = 0;
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
-		if (colorUniformsDynamic.size() == IMAGE_COUNT)
-			colorUniformsDynamic[currentImage]->cmdBind(i, colorUniformsDynamic[0]->descriptorSetIndex, commandBuffers[currentImage], pipelineLayout);
-
+		colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], pipelineLayout);
 		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera);
 	}
 
@@ -1158,7 +1146,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 			std::vector<UboDynamicColor> colorUbo(modelsToRender.size(), { glm::vec4(0.33f, 0.55f, 0.77f, 1.0f) });
 			for (int i = 0; i < modelsToRender.size(); i++)
 			{
-				colorUniformsDynamic[imageIndex]->update(colorUbo.data(), modelsToRender.size());
+				colorUniformsDynamic->update(imageIndex, colorUbo.data(), modelsToRender.size());
 			}
 		}
 	}

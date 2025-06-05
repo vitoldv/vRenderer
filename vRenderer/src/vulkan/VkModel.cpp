@@ -62,7 +62,7 @@ void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelin
 
 		auto* material = materials[i];
 		// Material sampler uniforms
-		material->bind(imageIndex, commandBuffer, pipelineLayout);
+		material->cmdBind(imageIndex, commandBuffer, pipelineLayout);
 
 
 		// execute pipeline

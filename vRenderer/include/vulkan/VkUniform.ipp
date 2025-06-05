@@ -1,9 +1,9 @@
 #include "VkUniform.hpp"
 #pragma once
 template<typename T>
-inline VkUniform<T>::VkUniform(uint32_t imageCount, uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
+inline VkUniform<T>::VkUniform(uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
 	descriptorSetIndex(descriptorSetIndex),
-	imageCount(imageCount)
+	imageCount(context.imageCount)
 {
 	this->context = context;
 	this->descriptorSetLayout = descriptorSetLayout;
@@ -51,10 +51,10 @@ inline void VkUniform<T>::updateAll(const T& data)
 }
 
 template<typename T>
-inline void VkUniform<T>::cmdBind(uint32_t imageIndex, uint32_t setNumber, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) const
+inline void VkUniform<T>::cmdBind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) const
 {
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-		setNumber, 1, &descriptorSet[imageIndex], 0, nullptr);
+		descriptorSetIndex, 1, &descriptorSet[imageIndex], 0, nullptr);
 }
 
 template<typename T>

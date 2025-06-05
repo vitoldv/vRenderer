@@ -126,7 +126,7 @@ private:
 	// Uniforms
 	std::unique_ptr<VkUniform<UboLightArray>> lightUniform;
 	std::unique_ptr<VkUniform<UboViewProjection>> vpUniform;
-	std::vector<std::unique_ptr<VkUniformDynamic<UboDynamicColor>>> colorUniformsDynamic;
+	std::unique_ptr<VkUniformDynamic<UboDynamicColor>> colorUniformsDynamic;
 
 	// Textures
 	VkSampler textureSampler;

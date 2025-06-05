@@ -14,13 +14,13 @@ VkMaterial::~VkMaterial()
 	cleanup();
 }
 
-void VkMaterial::bind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
+void VkMaterial::cmdBind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 {
 	// Bind sampler descriptor set
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
 		samplerDescriptorSetIndex, 1, &samplerDescriptorSet, 0, nullptr);
 
-	componentsUniform->cmdBind(imageIndex, uniformDescriptorSetIndex, commandBuffer, pipelineLayout);
+	componentsUniform->cmdBind(imageIndex, commandBuffer, pipelineLayout);
 }
 
 /// <summary>
@@ -55,7 +55,6 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 
 		// Create uniform to hold material components data
 		componentsUniform = std::make_unique<VkUniform<UboMaterial>>(
-			context.imageCount,
 			uniformDescriptorSetIndex,
 			uniformDescriptorPool,
 			// TODO get rid of these embarassment

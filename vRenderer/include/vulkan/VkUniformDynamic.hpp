@@ -16,28 +16,31 @@ class VkUniformDynamic
 {
 public:
 
-	const uint32_t descriptorSetIndex;
-
-	VkUniformDynamic(uint32_t descriptorSetIndex, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
+	VkUniformDynamic(uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
 	~VkUniformDynamic();
 
 	size_t getBufferSize() const;
-	void update(const T* data, uint32_t drawCount);
-	void cmdBind(uint32_t drawCount, uint32_t setNumber, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+	void update(uint32_t imageIndex, const T* data, uint32_t drawCount);
+	void updateAll(const T* data, uint32_t drawCount);
+	void cmdBind(uint32_t imageIndex, uint32_t drawIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 	const VkDescriptorSetLayout getDescriptorLayout() const;
 
 	void cleanup();
 
 private:
 
+	const uint32_t imageCount;
+	const uint32_t descriptorSetIndex;
+
 	T* transferSpace;
 	size_t alignment;
 
-	VkBuffer buffer;
-	VkDeviceMemory memory;
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkDescriptorSet descriptorSet;
+	std::vector<VkBuffer> buffer;
+	std::vector<VkDeviceMemory> memory;
+	std::vector<VkDescriptorSet> descriptorSet;
 
+	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorPool descriptorPool;
 	VkContext context;
 
 	void allocateDynamicBufferTransferSpace();
