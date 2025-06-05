@@ -110,7 +110,7 @@ vec4 selectBetween(sampler2D map, vec3 color)
 vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 viewDir)
 {
     // Diffuse calculation
-    float diffuse = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = vec3(max(dot(normal, lightDir), 0.0));
 
     // Specular calculation
     vec3 reflectDir = reflect(-lightDir, normal);  
@@ -118,6 +118,8 @@ vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 view
     vec3 specColor = selectBetween(material.specularMap, material.specularColor).xyz;
     vec3 specular = specColor.xyz * spec;
     
+    // wait what the fuck is with types here
+    // TODO inspect
     return (diffuse + specular) * light.color;
 }
 
