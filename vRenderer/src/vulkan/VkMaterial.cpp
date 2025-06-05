@@ -31,6 +31,11 @@ void VkMaterial::bind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipe
 /// <param name="createInfo"></param>
 void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDescriptorSetCreateInfo createInfo)
 {
+	auto& setLayoutFactory = VkSetLayoutFactory::instance();
+	
+	samplerDescriptorSetIndex = setLayoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::MATERIAL_SAMPLER);
+	uniformDescriptorSetIndex = setLayoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM);
+
 	uniformDescriptorPool = createDescriptorPool(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT, context);
 
 	components.ambientColor = glm::vec4(material.ambientColor, 1.0f);
@@ -43,7 +48,7 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 		uniformDescriptorSetIndex,
 		uniformDescriptorPool,
 		// TODO get rid of these embarassment
-		VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::MATERIAL_2),
+		setLayoutFactory.getSetLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM),
 		context);
 	componentsUniform->updateAll(components);
 
@@ -84,7 +89,7 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo createInfo)
 {
 	VkDescriptorSetAllocateInfo allocInfo = {};
-	VkDescriptorSetLayout samplerSetLayout = VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::MATERIAL);
+	VkDescriptorSetLayout samplerSetLayout = VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::MATERIAL_SAMPLER);
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = samplerDescriptorPool;
 	allocInfo.descriptorSetCount = 1;
@@ -96,8 +101,8 @@ void VkMaterial::createSamplerDescriptorSet(VkSamplerDescriptorSetCreateInfo cre
 		throw std::runtime_error("Failed to allocate texture sampler descriptor sets.");
 	}
 
-	std::array<VkWriteDescriptorSet, 4> setWrites;
-	std::array<VkDescriptorImageInfo, 4> imageInfos;	// required for avoiding lifetime issues
+	std::array<VkWriteDescriptorSet, textureCount> setWrites;
+	std::array<VkDescriptorImageInfo, textureCount> imageInfos;	// required for avoiding lifetime issues
 	auto createDescriptorForTexture = [&](const VkTexture* texture, uint32_t binding) {
 		
 		// If texture exists - we bind its imageView an descriptor's resource

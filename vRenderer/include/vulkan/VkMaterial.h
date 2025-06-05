@@ -16,9 +16,7 @@ public:
 	const std::string name;	
 
 	// Should match the amount of textures declared below
-	const uint32_t textureCount = 4;
-	const uint32_t samplerDescriptorSetIndex = 1;
-	const uint32_t uniformDescriptorSetIndex = 2;
+	static const uint32_t textureCount = 4;
 
 	// The order of texture creation affects the order of sampler descriptors in samplerDescriptorSets vector,
 	// and, accordingly, what texture is passed in shader.
@@ -54,6 +52,9 @@ private:
 	VkDescriptorSet samplerDescriptorSet;
 
 	std::unique_ptr<VkUniform<UboMaterial>> componentsUniform;
+
+	uint32_t samplerDescriptorSetIndex;
+	uint32_t uniformDescriptorSetIndex;
 
 	// Storage for dummy buffers and their memory used for null descriptors initialization
 	std::vector<VkBuffer> dummyBuffers;
