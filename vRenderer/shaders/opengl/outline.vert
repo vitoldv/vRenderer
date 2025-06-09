@@ -15,17 +15,18 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat3 normalMatrix;
 
-#define percent 0.04
+#define outline_scale_factor 0.01
 
 void main()
 {
-    vec3 normal = normalize(aNormal);
-    vec4 newPos = vec4(aPos + normal * percent, 1.0);
-    gl_Position = projection * view * model * newPos;
-
-    fragColor = aColor;
-    fragUv = aUv;
-    fragNormal = normalMatrix * aNormal;
-    // view space position of a fragment
-    fragPos = vec3(view * model * newPos);
+    mat4 modelViewMatrix = view * model;
+    vec4 pos_view_original = modelViewMatrix * vec4(aPos, 1.0);
+    vec3 model_normal_unit = normalize(aNormal);
+    vec3 world_normal_unit = normalize(mat3(normalMatrix) * model_normal_unit);
+    vec3 view_normal_unit = normalize(mat3(view) * world_normal_unit);
+    float distance_from_camera = abs(pos_view_original.z);
+    float view_space_extrusion = distance_from_camera * outline_scale_factor;
+    
+    vec4 new_pos_view = pos_view_original + vec4(view_normal_unit * view_space_extrusion, 0.0);
+    gl_Position = projection * new_pos_view;
 }
