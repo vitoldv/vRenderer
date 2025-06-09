@@ -22,19 +22,33 @@ VkShaderManager::VkShaderManager(VkContext context)
 /// </summary>
 /// <param name="pass"></param>
 /// <returns></returns>
-std::array<VkPipelineShaderStageCreateInfo, 2> VkShaderManager::getShaderStage(RenderPass pass)
+std::array<VkPipelineShaderStageCreateInfo, 2> VkShaderManager::getShaderStage(RenderPass pass, std::string* str)
 {
-    auto it = std::find_if(shaderModules.begin(), shaderModules.end(), [pass](ShaderModulePaths m) {return m.pass == pass;});
-    if (it == shaderModules.end())
+    ShaderModulePaths* shaderModule;
+    if (str == nullptr)
     {
-        throw std::runtime_error("There is no any loaded shader modules for required render pass.");
+        auto it = std::find_if(shaderModules.begin(), shaderModules.end(), [pass](ShaderModulePaths m) {return m.pass == pass;});
+        if (it == shaderModules.end())
+        {
+            throw std::runtime_error("There is no any loaded shader modules for required render pass.");
+        }
+        shaderModule = &(*it);
+    }
+    else
+    {
+        auto it = std::find_if(shaderModules.begin(), shaderModules.end(), [pass, str](ShaderModulePaths m) {                    
+            return m.pass == pass && m.name.find(*str) != std::string::npos;
+        });
+        if (it == shaderModules.end())
+        {
+            throw std::runtime_error("There is no any loaded shader modules for required render pass.");
+        }
+        shaderModule = &(*it);
     }
 
-    ShaderModulePaths& shaderModule = *it;
-
     // build shader modules to link to graphics pipeline
-    VkShaderModule vertexShaderModule = VkUtils::createShaderModule(VkUtils::readFile(shaderModule.vertSpvPath.string()), context);
-    VkShaderModule fragmentShaderModule = VkUtils::createShaderModule(VkUtils::readFile(shaderModule.fragSpvPath.string()), context);
+    VkShaderModule vertexShaderModule = VkUtils::createShaderModule(VkUtils::readFile(shaderModule->vertSpvPath.string()), context);
+    VkShaderModule fragmentShaderModule = VkUtils::createShaderModule(VkUtils::readFile(shaderModule->fragSpvPath.string()), context);
     vkShaderModules.push_back(vertexShaderModule);
     vkShaderModules.push_back(fragmentShaderModule);
 

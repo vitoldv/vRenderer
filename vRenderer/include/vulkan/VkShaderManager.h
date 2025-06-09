@@ -32,7 +32,7 @@ public:
         DEFAULT_SECOND_PASS
     };
 
-    std::array<VkPipelineShaderStageCreateInfo, 2> getShaderStage(RenderPass pass);
+    std::array<VkPipelineShaderStageCreateInfo, 2> getShaderStage(RenderPass pass, std::string* str = nullptr);
     void cleanup();
 
 protected:

@@ -97,7 +97,8 @@ void VulkanRenderer::cleanup()
 	
 	vkDestroyPipeline(logicalDevice, secondPipeline, nullptr);
 	vkDestroyPipelineLayout(logicalDevice, secondPipelineLayout, nullptr);
-	vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
+	vkDestroyPipeline(logicalDevice, outlinePipeline, nullptr);
+	vkDestroyPipeline(logicalDevice, mainPipeline, nullptr);
 	vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
 	vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
 	for (auto image : swapchainImages)
@@ -855,11 +856,22 @@ void VulkanRenderer::createGraphicsPipeline()
 	VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
 	{
 		depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		
 		depthStencilCreateInfo.depthTestEnable = VK_TRUE;
 		depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
 		depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
 		depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
-		depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
+
+		depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
+		VkStencilOpState stencilState = {};
+		stencilState.failOp = VK_STENCIL_OP_KEEP;
+		stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
+		stencilState.passOp = VK_STENCIL_OP_REPLACE;
+		stencilState.compareOp = VK_COMPARE_OP_ALWAYS;
+		stencilState.reference = 1;
+		stencilState.compareMask = 0xFF;
+		stencilState.writeMask = 0xFF;
+		depthStencilCreateInfo.front = stencilState;
 	}
 
 	// -- GRAPHICS PIPELINE CREATION --
@@ -884,12 +896,30 @@ void VulkanRenderer::createGraphicsPipeline()
 	pipelineCreateInfo.basePipelineIndex = -1;				// or index of pipeline being created to derive from (in case creating multiple at once)
 
 	// Create Graphics Pipeline
-	VkResult result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &graphicsPipeline);
+	VkResult result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &mainPipeline);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create a Graphics Pipeline!");
 	}
 
+	// outline pipeline
+	VkStencilOpState stencilState = {};
+	stencilState.failOp = VK_STENCIL_OP_KEEP;
+	stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
+	stencilState.passOp = VK_STENCIL_OP_REPLACE;
+	stencilState.compareOp = VK_COMPARE_OP_NOT_EQUAL;
+	stencilState.reference = 1;
+	stencilState.compareMask = 0xFF;
+	stencilState.writeMask = 0x00;
+	depthStencilCreateInfo.front = stencilState;
+	depthStencilCreateInfo.depthTestEnable = VK_FALSE;
+	std::string o = "outline";
+	pipelineCreateInfo.pStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::FIRST, &o).data();
+	result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &outlinePipeline);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create an outline Pipeline!");
+	}
 
 	///////////////////////////////////
 	// ----- SECOND PASS PIPELINE -----
@@ -1052,7 +1082,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
 
 	// bind pipeline to be used with render pass
-	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mainPipeline);
 
 	// bind (static) uniforms
 	vpUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
@@ -1064,6 +1094,22 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 		// bind dynamic uniforms (unique per object)
 		colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], pipelineLayout);
 		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera);
+	}
+
+	if (renderSettings->enableOutline)
+	{
+		vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, outlinePipeline);
+		// bind (static) uniforms
+		vpUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
+		lightUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
+
+		int meshCount = 0;
+		for (int i = 0; i < modelsToRender.size(); i++)
+		{
+			// bind dynamic uniforms (unique per object)
+			colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], pipelineLayout);
+			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera);
+		}
 	}
 
 	// Start second subpass
@@ -1197,14 +1243,6 @@ void VulkanRenderer::draw()
 
 	// Get next frame (use % MAX_FRAME_DRAWS to keep value below MAX_FRAME_DRAWS)
 	currentFrame = (currentFrame + 1) % MAX_FRAME_DRAWS;
-}
-
-void VulkanRenderer::applyLighting()
-{
-	for (int i = 0; i < lightSources.size(); i++)
-	{
-
-	}
 }
 
 bool VulkanRenderer::isModelInRenderer(uint32_t id)

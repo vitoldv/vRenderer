@@ -83,7 +83,8 @@ private:
 
 	// Graphics pipeline
 	VkRenderPass renderPass;
-	VkPipeline graphicsPipeline;
+	VkPipeline mainPipeline;
+	VkPipeline outlinePipeline;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline secondPipeline;
 	VkPipelineLayout secondPipelineLayout;
