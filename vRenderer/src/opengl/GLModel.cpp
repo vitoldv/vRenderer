@@ -35,10 +35,6 @@ void GLModel::draw(GLShader& shader, BaseCamera& camera)
 	
 	for (int i = 0; i < meshes.size(); i++)
 	{
-		if ((1 << i & meshMask) == 0)
-		{
-			continue;
-		}
 		if (materials[i] != nullptr)
 		{
 			materials[i]->apply(shader);
