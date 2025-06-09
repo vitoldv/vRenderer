@@ -166,6 +166,7 @@
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkModel.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkShaderManager.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkTexture.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VulkanRenderer.cpp" />
   </ItemGroup>
@@ -203,6 +204,7 @@
     <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMesh.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkModel.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkShaderManager.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkTexture.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkUniform.hpp" />
     <ClInclude Include="vRenderer\include\vulkan\VkUniform.ipp" />

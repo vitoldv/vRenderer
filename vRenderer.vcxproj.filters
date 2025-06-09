@@ -126,6 +126,9 @@
     <ClCompile Include="vRenderer\src\vulkan\VkSetLayoutFactory.cpp">
       <Filter>Source Files\vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkShaderManager.cpp">
+      <Filter>Source Files\vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Mesh.h">
@@ -252,6 +255,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\Singleton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

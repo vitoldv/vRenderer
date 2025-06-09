@@ -1,4 +1,5 @@
 #include "VulkanRenderer.h"
+#include "VkShaderManager.h"
 
 int VulkanRenderer::init(GLFWwindow* window)
 {
@@ -15,7 +16,7 @@ int VulkanRenderer::init(GLFWwindow* window)
 		createDepthBuffer();
 		createColorBufferImage();
 		createRenderPass();
-
+		
 		createDescriptorSetLayouts();
 		createTextureSampler();
 		createPushConstantRange();
@@ -35,7 +36,7 @@ int VulkanRenderer::init(GLFWwindow* window)
 	}
 	catch (const std::runtime_error &e)
 	{
-		printf("ERROR: %s\n", e.what());
+		printf("ERROR: %s\n", e.what());		
 		return EXIT_FAILURE;
 	}
 
@@ -76,6 +77,7 @@ void VulkanRenderer::cleanup()
 	colorUniformsDynamic->cleanup();
 
 	VkSetLayoutFactory::instance().cleanup();
+	VkShaderManager::instance().cleanup();
 
 	vkDestroyDescriptorPool(logicalDevice, uniformDescriptorPool, nullptr);
 	vkDestroyDescriptorPool(logicalDevice, dynamicUniformDescriptorPool, nullptr);
@@ -679,31 +681,15 @@ void VulkanRenderer::createSubpassInputDescriptorSets()
 
 void VulkanRenderer::createGraphicsPipeline()
 {
+	VkShaderManager::initialize(context);
+	auto& shaderManager = VkShaderManager::instance();
+
 	///////////////////////////////////
 	// ----- FIRST PASS PIPELINE -----
 	///////////////////////////////////
 
 	// SHADER STAGES SETUP
-
-	// build shader modules to link to graphics pipeline
-	VkShaderModule vertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_vert.spv"), context);
-	VkShaderModule fragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\first_pass_frag.spv"), context);
-
-	// VERTEX STAGE CREATION
-	VkPipelineShaderStageCreateInfo vertexShaderStageCreateInfo = {};
-	vertexShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	vertexShaderStageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;			// shader stage name
-	vertexShaderStageCreateInfo.module = vertexShaderModule;				// shader module to be used
-	vertexShaderStageCreateInfo.pName = "main";								// shader enter function
-
-	// FRAGMENT STAGE CREATION
-	VkPipelineShaderStageCreateInfo fragmentShaderStageCreateInfo = {};
-	fragmentShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragmentShaderStageCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;		// shader stage name
-	fragmentShaderStageCreateInfo.module = fragmentShaderModule;				// shader module to be used
-	fragmentShaderStageCreateInfo.pName = "main";								// shader enter function
-
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertexShaderStageCreateInfo, fragmentShaderStageCreateInfo };
+	auto shaderStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::FIRST);
 
 	// DEFINING VERTEX ATTRIBUTES LAYOUT
 	VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
@@ -880,7 +866,7 @@ void VulkanRenderer::createGraphicsPipeline()
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineCreateInfo.stageCount = 2;									// Number of shader stages
-	pipelineCreateInfo.pStages = shaderStages;							// List of shader stages
+	pipelineCreateInfo.pStages = shaderStages.data();							// List of shader stages
 	pipelineCreateInfo.pVertexInputState = &vertexInputCreateInfo;		// All the fixed function pipeline states
 	pipelineCreateInfo.pInputAssemblyState = &inputAssembly;
 	pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
@@ -904,22 +890,12 @@ void VulkanRenderer::createGraphicsPipeline()
 		throw std::runtime_error("Failed to create a Graphics Pipeline!");
 	}
 
-	// Shader modules are no longer needed once pipeline is created
-	vkDestroyShaderModule(logicalDevice, fragmentShaderModule, nullptr);
-	vkDestroyShaderModule(logicalDevice, vertexShaderModule, nullptr);
 
 	///////////////////////////////////
 	// ----- SECOND PASS PIPELINE -----
 	///////////////////////////////////
 
-	VkShaderModule secondVertexShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_vert.spv"), context);
-	VkShaderModule secondFragmentShaderModule = createShaderModule(VkUtils::readFile("vRenderer\\shaders\\vulkan\\second_pass_frag.spv"), context);
-
-	// reusing shader create infos for previous pipeline
-	vertexShaderStageCreateInfo.module = secondVertexShaderModule;
-	fragmentShaderStageCreateInfo.module = secondFragmentShaderModule;
-
-	VkPipelineShaderStageCreateInfo secondShaderStages[] = { vertexShaderStageCreateInfo, fragmentShaderStageCreateInfo };
+	shaderStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::SECOND);
 
 	// No vertex data for second pass
 	vertexInputCreateInfo.vertexBindingDescriptionCount = 0;
@@ -944,7 +920,7 @@ void VulkanRenderer::createGraphicsPipeline()
 		throw std::runtime_error("Failed to create second pipeline layout.");
 	}
 
-	pipelineCreateInfo.pStages = secondShaderStages;
+	pipelineCreateInfo.pStages = shaderStages.data();
 	pipelineCreateInfo.layout = secondPipelineLayout;
 	pipelineCreateInfo.subpass = 1;								// second subpass
 
@@ -954,9 +930,6 @@ void VulkanRenderer::createGraphicsPipeline()
 	{
 		throw std::runtime_error("Failed to create second graphics pipeline.");
 	}
-
-	vkDestroyShaderModule(logicalDevice, secondVertexShaderModule, nullptr);
-	vkDestroyShaderModule(logicalDevice, secondFragmentShaderModule, nullptr);
 }
 
 void VulkanRenderer::createFramebuffers()
