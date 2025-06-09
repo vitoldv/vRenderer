@@ -686,8 +686,10 @@ void VulkanRenderer::createGraphicsPipeline()
 	auto& shaderManager = VkShaderManager::instance();
 
 	///////////////////////////////////
-	// ----- FIRST PASS PIPELINE -----
+	// ----- FIRST PASS PIPELINES -----
 	///////////////////////////////////
+
+	// -------- MAIN PIPELINE --------
 
 	// SHADER STAGES SETUP
 	auto shaderStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::FIRST);
@@ -895,14 +897,18 @@ void VulkanRenderer::createGraphicsPipeline()
 	pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;	// Existing pipeline to derive from...
 	pipelineCreateInfo.basePipelineIndex = -1;				// or index of pipeline being created to derive from (in case creating multiple at once)
 
-	// Create Graphics Pipeline
+	// Create Main Pipeline
 	VkResult result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &mainPipeline);
 	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to create a Graphics Pipeline!");
+		throw std::runtime_error("Failed to create the Main Pipeline!");
 	}
 
-	// outline pipeline
+	// -------- OUTLINE PIPELINE --------
+
+	// reusing structs from previous pipeline creation
+
+	// Setup different stencil and depth testing rules
 	VkStencilOpState stencilState = {};
 	stencilState.failOp = VK_STENCIL_OP_KEEP;
 	stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
@@ -913,12 +919,16 @@ void VulkanRenderer::createGraphicsPipeline()
 	stencilState.writeMask = 0x00;
 	depthStencilCreateInfo.front = stencilState;
 	depthStencilCreateInfo.depthTestEnable = VK_FALSE;
+
+	// Setup outline shaders
 	std::string o = "outline";
 	pipelineCreateInfo.pStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::FIRST, &o).data();
+
+	// Create Outline Pipeline
 	result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &outlinePipeline);
 	if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to create an outline Pipeline!");
+		throw std::runtime_error("Failed to create the Outline Pipeline!");
 	}
 
 	///////////////////////////////////
@@ -1088,27 +1098,19 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	vpUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
 	lightUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
 
-	int meshCount = 0;
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
 		colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], pipelineLayout);
-		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera);
+		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera, true);
 	}
 
 	if (renderSettings->enableOutline)
 	{
 		vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, outlinePipeline);
-		// bind (static) uniforms
-		vpUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
-		lightUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
-
-		int meshCount = 0;
 		for (int i = 0; i < modelsToRender.size(); i++)
 		{
-			// bind dynamic uniforms (unique per object)
-			colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], pipelineLayout);
-			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera);
+			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera, false);
 		}
 	}
 

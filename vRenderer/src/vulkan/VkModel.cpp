@@ -38,7 +38,7 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 	return meshes;
 }
 
-void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera)
+void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera, bool bindMaterials)
 {
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -60,10 +60,12 @@ void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelin
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
 		}
 
-		auto* material = materials[i];
-		// Material sampler uniforms
-		material->cmdBind(imageIndex, commandBuffer, pipelineLayout);
-
+		if (bindMaterials)
+		{
+			auto* material = materials[i];
+			// Material sampler uniforms
+			material->cmdBind(imageIndex, commandBuffer, pipelineLayout);
+		}
 
 		// execute pipeline
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->getIndexCount()), 1, 0, -VERTEX_INDEX_OFFSET, 0);

@@ -22,9 +22,6 @@ layout(location = 1) out vec2 fragUv;
 layout(location = 2) out vec3 fragNormal;
 layout(location = 3) out vec3 fragPos;
 
-// Flat values (mesh related)
-layout(location = 4) flat out vec3 outViewPos;
-
 #define percent 0.04
 
 void main()
