@@ -44,8 +44,8 @@ void FpvCamera::onMouseMove(int xpos, int ypos, InputState input)
 
 		if (!glm::isnan(mouseDelta.x) && !glm::isnan(mouseDelta.y))
 		{
-			cameraRotation.y -= mouseDelta.x * CAMERA_FPV_SENSETIVITY_HORIZONTAL * AppContext::instance().deltaTime;
-			cameraRotation.x -= mouseDelta.y * CAMERA_FPV_SENSETIVITY_VERTICAL * AppContext::instance().deltaTime;
+			cameraRotation.y -= mouseDelta.x * CAMERA_FPV_SENSETIVITY_HORIZONTAL;
+			cameraRotation.x -= mouseDelta.y * CAMERA_FPV_SENSETIVITY_VERTICAL;
 		}
 		
 		// constrain pitch to avoid camera flip

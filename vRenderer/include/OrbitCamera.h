@@ -25,6 +25,7 @@ public:
 
 private:
 
+	bool firstClick = false;
 	glm::vec2 prevMousePos = { 0, 0 };
 	glm::vec2 currMousePos = { 0, 0 };
 

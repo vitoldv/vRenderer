@@ -47,23 +47,31 @@ void OrbitCamera::onMouseScroll(float amount, InputState input)
 	recalculateDirectionVectors();
 }
 
+
 void OrbitCamera::onMouseMove(int xpos, int ypos, InputState input)
 {
 	if (!isPressed(input, InputKeys::MOUSE_LEFT))
 	{
+		firstClick = false;
 		return;
+	}
+
+	if(!firstClick)
+	{
+		firstClick = true;
+		prevMousePos = glm::vec2(xpos, ypos);
 	}
 
 	// Orbiting camera implementation
 	{
 		currMousePos = glm::vec2(xpos, ypos);
 
-		glm::vec2 mouseDelta = glm::normalize(currMousePos - prevMousePos);
+		glm::vec2 mouseDelta = currMousePos - prevMousePos;
 
 		if (!glm::isnan(mouseDelta.x) && !glm::isnan(mouseDelta.y))
 		{
-			cameraRotation.y -= mouseDelta.x * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
-			cameraRotation.x -= mouseDelta.y * CAMERA_ROTATION_SPEED * AppContext::instance().deltaTime;
+			cameraRotation.y -= mouseDelta.x * CAMERA_ROTATION_SPEED;
+			cameraRotation.x -= mouseDelta.y * CAMERA_ROTATION_SPEED;
 		}
 
 		prevMousePos = currMousePos;
