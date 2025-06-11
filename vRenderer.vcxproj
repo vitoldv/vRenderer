@@ -175,6 +175,7 @@
     <ClInclude Include="vRenderer\externals\imgui\backends\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="vRenderer\include\AppContext.h" />
     <ClInclude Include="vRenderer\include\Application.h" />
+    <ClInclude Include="vRenderer\include\error_handling.h" />
     <ClInclude Include="vRenderer\include\Event.h" />
     <ClInclude Include="vRenderer\include\FpvCamera.h" />
     <ClInclude Include="vRenderer\include\input_handler.h" />

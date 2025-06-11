@@ -9,6 +9,14 @@
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
+#ifdef NDEBUG
+#define ENABLE_VALIDATION_LAYERS false
+#define ASSERTIONS_ENABLED 0
+#else
+#define ENABLE_VALIDATION_LAYERS true
+#define ASSERTIONS_ENABLED 1
+#endif
+
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -23,6 +31,7 @@
 #include <functional>
 
 #include "display_settings.h"
+#include "error_handling.h"
 #include "IRenderer.h"
 #include "Lighting.h"
 #include "Model.h"
@@ -33,12 +42,6 @@
 #include "VkImageWrapper.h"
 #include "VkSetLayoutFactory.h"
 #include "BaseCamera.h"
-
-#ifdef NDEBUG
-#define ENABLE_VALIDATION_LAYERS false
-#else
-#define ENABLE_VALIDATION_LAYERS true
-#endif
 
 // preferrable surface settings (selected if supported)
 #define SURFACE_COLOR_FORMAT		VK_FORMAT_R8G8B8A8_UNORM

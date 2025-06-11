@@ -260,5 +260,8 @@
     <ClInclude Include="vRenderer\include\vulkan\VkShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vRenderer\include\error_handling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
