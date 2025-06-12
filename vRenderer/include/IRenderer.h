@@ -6,8 +6,10 @@
 
 #include "RenderSettings.h"
 #include "Lighting.h"
-#include "Model.h"
+#include "ModelInstance.h"
 #include "BaseCamera.h"
+
+using namespace VRD::Scene;
 
 /// <summary>
 /// Interface for a 3D renderer class
@@ -24,7 +26,7 @@ public:
 	virtual bool updateModelTransform(int modelId, glm::mat4 newTransform) = 0;
 
 	virtual bool addToRenderer(const Model& model, glm::vec3 color) = 0;
-	virtual bool addToRendererTextured(const Model& model) = 0;
+	virtual bool addToRendererTextured(const ModelInstance& model) = 0;
 	virtual bool removeFromRenderer(int modelId) = 0;
 	virtual bool isModelInRenderer(uint32_t id) = 0;
 

@@ -1260,12 +1260,12 @@ bool VulkanRenderer::addToRenderer(const Model& model, glm::vec3 color)
 	return false;
 }
 
-bool VulkanRenderer::addToRendererTextured(const Model& model)
+bool VulkanRenderer::addToRendererTextured(const ModelInstance& model)
 {
 	// If mesh is not in renderer
 	if (!isModelInRenderer(model.id))
 	{
-		VkModel* vkModel = new VkModel(model.id, model, context, samplerDescriptorCreateInfo);
+		VkModel* vkModel = new VkModel(model.id, model.getTemplate(), context, samplerDescriptorCreateInfo);
 		modelsToRender.push_back(vkModel);
 
 		return true;

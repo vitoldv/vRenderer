@@ -23,6 +23,8 @@
 
 #define MAX_LIGHT_SOURCES 10
 
+using namespace VRD::Scene;
+
 class OpenGLRenderer : public IRenderer
 {
 public:
@@ -32,7 +34,7 @@ public:
 	int init(GLFWwindow* window) override;
 	void draw() override;
 	bool addToRenderer(const Model& model, glm::vec3 color) override;
-	bool addToRendererTextured(const Model& model) override;
+	bool addToRendererTextured(const ModelInstance& model) override;
 	bool removeFromRenderer(int modelId) override;
 	bool isModelInRenderer(uint32_t id) override;
 	bool updateModelTransform(int modelId, glm::mat4 newTransform) override;
@@ -54,6 +56,8 @@ private:
 	std::vector<std::shared_ptr<Light>> lightSources;
 
 	GLModel* getModel(uint32_t id);
+
+	void createFramebuffers();
 
 	void applyLighting();
 	void drawOutline();

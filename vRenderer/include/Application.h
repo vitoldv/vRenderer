@@ -14,11 +14,18 @@
 #include "AppContext.h"
 
 #include "Model.h"
+#include "SceneGraph.h"
+#include "SceneGraphWindow.h"
+#include "AssetBrowser.h"
 #include "utils.h"
 #include "editor_settings.h"
 
 #include "OrbitCamera.h"
 #include "FpvCamera.h"
+
+using namespace VRD::OVERL;
+using AssetBrowserOp = VRD::OVERL::AssetBrowser::Op;
+using SceneGraphOp = VRD::OVERL::SceneGraphWindow::Op;
 
 class Application
 {
@@ -44,18 +51,13 @@ private:
 	CameraType cameraType;
 	int cameraFov = 70;
 
-	// Scene
-	std::string selectedModelName;
-	bool newSelection;
-
 	std::shared_ptr<BaseCamera> camera;
 	std::vector<std::shared_ptr<Light>> lightSources;
 
-	Model* modelToRender;
-	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	std::unique_ptr<SceneGraph> sceneGraph;
 
+	std::unique_ptr<AssetBrowser> assetBrowser;
+	std::unique_ptr<SceneGraphWindow> sceneGraphWindow;
 
 	void initWindow(std::string title, const int width, const int height);
 	int initApplication();
@@ -68,9 +70,19 @@ private:
 	void destroyWindow();
 	void imguiMenu();
 
+	void createModelInstance();
+	void cloneSceneInstance(uint32_t instanceId);
+	void deleteSceneInstance(uint32_t instanceId);
+	void hideSceneInstance(uint32_t instanceId);
+
 	void onCameraTypeChanged(CameraType cameraType);
 	void onCameraSettingsChanged();
 	void onLightSettingsChanged();
+	void onAssetBrowserAction(AssetBrowserOp action, std::string modelName);
+	void onSceneGraphAction(SceneGraphOp action, uint32_t instanceId);
+	void onInstanceTransformChanged(uint32_t id);
+	void addModelToRenderer(std::string modelName);
+
 
 	void setSceneCamera(CameraType cameraType);
 };

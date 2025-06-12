@@ -4,26 +4,29 @@
 #include <string>
 #include <filesystem>
 #include <numeric>
+#include <iostream>
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
 
-#include <geometry_settings.h>
-#include <Mesh.h>
-#include <Material.h>
+#include "ISceneInstanceTemplate.h"
+
+#include "geometry_settings.h"
+#include "Mesh.h"
+#include "Material.h"
 
 /*
 	Generic class for imported model
 */ 
-class Model
+class Model : public ISceneInstanceTemplate
 {
 public:
-	const uint32_t id;
 	const std::string folderPath;
+	const std::string name;
 
 	Model(uint32_t id, std::string filePath);
-	~Model() = default;
+	virtual ~Model() = default;
 
 	uint32_t getMeshCount() const;
 	uint32_t getMaterialCount() const;
@@ -36,7 +39,6 @@ private:
 
 	uint32_t meshCount;
 	uint32_t materialsCount;
-	std::string name;
 
 	// Meshes of this model
 	std::vector<Mesh> meshes;

@@ -40,6 +40,14 @@ int OpenGLRenderer::init(GLFWwindow* window)
 	return 0;
 }
 
+void OpenGLRenderer::createFramebuffers()
+{
+	unsigned int fbo;
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+}
+
 void enableOutline()
 {
 	glEnable(GL_STENCIL_TEST);
@@ -110,15 +118,15 @@ bool OpenGLRenderer::addToRenderer(const Model& model, glm::vec3 color)
 	return false;
 }
 
-bool OpenGLRenderer::addToRendererTextured(const Model& model)
+bool OpenGLRenderer::addToRendererTextured(const ModelInstance& model)
 {
-	// If mesh is not in renderer
-	if (!isModelInRenderer(model.id))
-	{
-		GLModel* glModel = new GLModel(model.id, model);
-		modelsToRender.push_back(glModel);
-		return true;
-	}
+	//// If mesh is not in renderer
+	//if (!isModelInRenderer(model.id))
+	//{
+	//	GLModel* glModel = new GLModel(model.id, *model.modelTemplate);
+	//	modelsToRender.push_back(glModel);
+	//	return true;
+	//}
 
 	return false;
 }
@@ -152,6 +160,8 @@ GLModel* OpenGLRenderer::getModel(uint32_t id)
 		[id](GLModel* model) {return model->id == id;});
 	return it != modelsToRender.end() ? *it : nullptr;
 }
+
+
 
 bool OpenGLRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
 {

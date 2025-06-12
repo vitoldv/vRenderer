@@ -151,6 +151,7 @@
     <ClCompile Include="vRenderer\src\BaseCamera.cpp" />
     <ClCompile Include="vRenderer\src\FpvCamera.cpp" />
     <ClCompile Include="vRenderer\src\glad.c" />
+    <ClCompile Include="vRenderer\src\imgui_helper.cpp" />
     <ClCompile Include="vRenderer\src\input_handler.cpp" />
     <ClCompile Include="vRenderer\src\opengl\GLMaterial.cpp" />
     <ClCompile Include="vRenderer\src\opengl\GLMesh.cpp" />
@@ -175,14 +176,19 @@
     <ClInclude Include="vRenderer\externals\imgui\backends\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="vRenderer\include\AppContext.h" />
     <ClInclude Include="vRenderer\include\Application.h" />
+    <ClInclude Include="vRenderer\include\AssetBrowser.h" />
     <ClInclude Include="vRenderer\include\error_handling.h" />
     <ClInclude Include="vRenderer\include\Event.h" />
     <ClInclude Include="vRenderer\include\FpvCamera.h" />
     <ClInclude Include="vRenderer\include\input_handler.h" />
     <ClInclude Include="vRenderer\include\IRenderer.h" />
+    <ClInclude Include="vRenderer\include\ISceneInstanceTemplate.h" />
+    <ClInclude Include="vRenderer\include\ITemplateInstance.h" />
+    <ClInclude Include="vRenderer\include\SceneGraphInstance.h" />
     <ClInclude Include="vRenderer\include\json.hpp" />
     <ClInclude Include="vRenderer\include\Lighting.h" />
     <ClInclude Include="vRenderer\include\Material.h" />
+    <ClInclude Include="vRenderer\include\ModelInstance.h" />
     <ClInclude Include="vRenderer\include\opengl\GLMaterial.h" />
     <ClInclude Include="vRenderer\include\opengl\GLMesh.h" />
     <ClInclude Include="vRenderer\include\opengl\GLModel.h" />
@@ -197,6 +203,8 @@
     <ClInclude Include="vRenderer\include\Mesh.h" />
     <ClInclude Include="vRenderer\include\Model.h" />
     <ClInclude Include="vRenderer\include\RenderSettings.h" />
+    <ClInclude Include="vRenderer\include\SceneGraph.h" />
+    <ClInclude Include="vRenderer\include\SceneGraphWindow.h" />
     <ClInclude Include="vRenderer\include\Singleton.h" />
     <ClInclude Include="vRenderer\include\stb_image.h" />
     <ClInclude Include="vRenderer\include\utils.h" />

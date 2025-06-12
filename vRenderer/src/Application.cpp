@@ -6,6 +6,7 @@
 #include "Application.h"
 #include "imgui/imgui_helper.h"
 
+
 void Application::initWindow(std::string title, const int width, const int height)
 {
 	glfwInit();
@@ -58,6 +59,12 @@ int Application::initApplication()
 		renderer->bindRenderSettings(renderSettings);
 	}   
 
+	assetBrowser = std::make_unique<AssetBrowser>();
+	sceneGraphWindow = std::make_unique<SceneGraphWindow>();
+	sceneGraph = std::make_unique<SceneGraph>();
+
+
+
 	initInput(window);
 
 	setSceneCamera(CameraType::ORBIT);
@@ -108,33 +115,6 @@ void Application::processInput()
 
 void Application::update()
 {
-	if (this->newSelection)
-	{
-		if (modelToRender != nullptr)
-		{
-			renderer->removeFromRenderer(modelToRender->id);
-			delete modelToRender;
-			modelToRender = nullptr;
-		}
-		
-		std::string model = this->selectedModelName + "\\" + this->selectedModelName + ".obj";
-		modelToRender = new Model(1, MODEL_ASSETS(model.c_str()));
-		renderer->addToRendererTextured(*modelToRender);
-
-		newSelection = false;
-	}
-
-	if (modelToRender != nullptr)
-	{
-		glm::mat4 t = glm::translate(glm::mat4(1.0f), position);
-		glm::mat4 rx = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0, 0));
-		glm::mat4 ry = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0, 1.0f, 0));
-		glm::mat4 rz = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f));
-		glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
-		glm::mat4 transform = t * rz * ry * rx * s;
-		renderer->updateModelTransform(modelToRender->id, transform);
-	}
-
 	camera->update();
 }
 
@@ -145,9 +125,6 @@ void Application::render()
 
 void Application::cleanup()
 {
-	delete modelToRender;
-	modelToRender = nullptr;
-
 	delete renderer;
 	renderer = nullptr;
 }
@@ -208,14 +185,82 @@ void Application::setSceneCamera(CameraType cameraType)
 	renderer->setCamera(camera);
 }
 
+void Application::createModelInstance()
+{
+
+}
+
+void Application::cloneSceneInstance(uint32_t instanceId)
+{
+	std::cout << "CLONE" << std::endl;
+}
+
+void Application::deleteSceneInstance(uint32_t instanceId)
+{
+	std::cout << "delete" << std::endl;
+}
+
+void Application::hideSceneInstance(uint32_t instanceId)
+{
+	std::cout << "hide" << std::endl;
+}
+
+void Application::onAssetBrowserAction(AssetBrowserOp action, std::string modelName)
+{
+	switch (action)
+	{
+	case AssetBrowserOp::ADD:
+		addModelToRenderer(modelName);
+		break;
+	default:
+		break;
+	}
+}
+
+void Application::addModelToRenderer(std::string modelName)
+{
+	if (renderer != nullptr && sceneGraph != nullptr)
+	{
+		std::string modelFileName = modelName + "\\" + modelName + ".obj";
+		auto model = std::make_shared<Model>(1, MODEL_ASSETS(modelFileName.c_str()));
+		const SceneGraphInstance& newInstance = sceneGraph->addInstance(*model);
+		renderer->addToRendererTextured(dynamic_cast<const ModelInstance&>(newInstance));
+	}
+}
+
+void Application::onSceneGraphAction(SceneGraphOp action, uint32_t instanceId)
+{
+	switch(action)
+	{
+	case SceneGraphOp::CLONE :
+		cloneSceneInstance(instanceId);
+		break;
+	case SceneGraphOp::DELETE:
+		deleteSceneInstance(instanceId);
+		break;
+	case SceneGraphOp::HIDE:
+		hideSceneInstance(instanceId);
+		break;
+	}
+}
+
+void Application::onInstanceTransformChanged(uint32_t id)
+{
+	const SceneGraphInstance& instance = sceneGraph->getInstance(id);
+	renderer->updateModelTransform(instance.id, instance.getTransformMat());
+}
+
 void Application::imguiMenu()
 {	
 	// SETTINGS EDITOR WINDOW
 	{
 		ImGui::Begin("vRenderer Settings", nullptr, ImGuiWindowFlags_None);
 		if (ImGui::BeginTabBar("Menus")) {
-			if (ImGui::BeginTabItem("Asset Browser")) {
-				imgui_helper::DrawAssetBrowser(MODEL_ASSETS_FOLDER, c_supportedFormats, selectedModelName, this->newSelection);
+			if (ImGui::BeginTabItem("Inspector")) {
+				assetBrowser->Draw(MODEL_ASSETS_FOLDER, c_supportedFormats, [this](AssetBrowserOp action, std::string model) {
+					onAssetBrowserAction(action, model);
+				});
+
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Renderer"))
@@ -247,12 +292,18 @@ void Application::imguiMenu()
 				}
 				ImGui::EndTabItem();
 			}
-			if (ImGui::BeginTabItem("Transform Editor")) {
-				imgui_helper::ShowTransformEditor(position, rotation, scale); // Renamed!
-				ImGui::EndTabItem();
-			}
 			ImGui::EndTabBar();
 		}
+		ImGui::End();
+
+		ImGui::Begin("Inspector", nullptr, ImGuiWindowFlags_None);
+		sceneGraphWindow->Draw(*sceneGraph, [this](SceneGraphOp action, uint32_t instanceId) {
+			onSceneGraphAction(action, instanceId);},
+			[this](uint32_t instanceId) {
+				onInstanceTransformChanged(instanceId);
+			});
+
+		ImGui::Separator();
 		ImGui::End();
 	}
 

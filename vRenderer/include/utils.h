@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <json.hpp>
+#include <filesystem>
 
 using json = nlohmann::json;
 
@@ -31,7 +32,8 @@ static bool SavePrefs(const std::string& key, const T& value) {
     // Write to file
     std::ofstream out(PREFS_FILE);
     if (!out) return false;
-    out << j.dump(4);
+    // TODO TEMPORARY
+    //out << j.dump(4);
     return true;
 }
 
@@ -67,3 +69,9 @@ static inline const char* concat(const char* a, const char* b) {
     snprintf(buffer, sizeof(buffer), "%s%s", a, b);
     return buffer;
 }   
+
+static inline const std::string getFileName(const std::string filePath)
+{
+    std::filesystem::path path = filePath;
+    return path.filename().stem().string();
+}

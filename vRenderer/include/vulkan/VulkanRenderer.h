@@ -34,7 +34,7 @@
 #include "error_handling.h"
 #include "IRenderer.h"
 #include "Lighting.h"
-#include "Model.h"
+#include "ModelInstance.h"
 #include "VkModel.h"
 #include "VulkanUtils.h"
 #include "VkUniform.hpp"
@@ -62,6 +62,8 @@ const std::vector<const char*> deviceExtensions = {
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
+
+using namespace VRD::Scene;
 
 class VulkanRenderer : public IRenderer
 {
@@ -151,7 +153,7 @@ public:
 	void applyLighting();
 
 	bool addToRenderer(const Model& model, glm::vec3 color);
-	bool addToRendererTextured(const Model& model);
+	bool addToRendererTextured(const ModelInstance& model);
 	bool removeFromRenderer(int modelId);
 	bool isModelInRenderer(uint32_t id);
 

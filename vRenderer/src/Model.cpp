@@ -1,9 +1,9 @@
 #include "Model.h"
-#include <iostream>
+#include "utils.h"
 
-Model::Model(uint32_t id, std::string filePath) :
-	id(id),
-	folderPath(filePath.substr(0, filePath.find_last_of('\\')))
+Model::Model(uint32_t id, std::string filePath) : 
+	ISceneInstanceTemplate(id, getFileName(filePath)),
+	folderPath(filePath.substr(0, filePath.find_last_of('\\')))	
 {
 	importModel(filePath);
 }
@@ -37,14 +37,6 @@ void Model::importModel(std::string filePath)
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(filePath, ASSIMP_PREPROCESS_FLAGS);
-	
-	// Take a name from scene, if it's empty - extract it from model file path
-	if (this->name.empty())
-	{
-		int start = filePath.find_last_of('\\') + 1;
-		int end = filePath.find_last_of('.');
-		this->name = filePath.substr(start, end - start);
-	}
 
 	this->meshCount = scene->mNumMeshes;
 
@@ -177,3 +169,10 @@ void Model::importModel(std::string filePath)
 	// Usage:
 	sortByOpacity(meshes, materials);
 }
+
+//SceneGraphInstance* Model::createInstance(uint32_t id) const
+//{
+//	std::string name = "ModelInstance " + std::to_string(id);
+//	ModelInstance* modelInstance = new ModelInstance(id, name, this);
+//	return modelInstance;
+//}
