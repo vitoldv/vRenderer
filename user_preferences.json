@@ -1,9 +1,0 @@
-{
-    "API": 1,
-    "Render_settings": {
-        "api": 0,
-        "backgroundColor": 2864434431,
-        "fpsLimit": true,
-        "targetFps": 60
-    }
-}

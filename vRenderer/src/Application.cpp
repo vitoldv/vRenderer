@@ -6,7 +6,6 @@
 #include "Application.h"
 #include "imgui/imgui_helper.h"
 
-
 void Application::initWindow(std::string title, const int width, const int height)
 {
 	glfwInit();
@@ -59,12 +58,11 @@ int Application::initApplication()
 		renderer->bindRenderSettings(renderSettings);
 	}   
 
+	assetImporter = std::make_unique<AssetImporter>(new AssimpModelImporter(), new StbiImageImporter());
 	assetBrowser = std::make_unique<AssetBrowser>();
 	sceneGraphWindow = std::make_unique<SceneGraphWindow>();
 	sceneGraph = std::make_unique<SceneGraph>();
-
-
-
+	
 	initInput(window);
 
 	setSceneCamera(CameraType::ORBIT);
@@ -185,11 +183,6 @@ void Application::setSceneCamera(CameraType cameraType)
 	renderer->setCamera(camera);
 }
 
-void Application::createModelInstance()
-{
-
-}
-
 void Application::cloneSceneInstance(uint32_t instanceId)
 {
 	std::cout << "CLONE" << std::endl;
@@ -221,8 +214,7 @@ void Application::addModelToRenderer(std::string modelName)
 {
 	if (renderer != nullptr && sceneGraph != nullptr)
 	{
-		std::string modelFileName = modelName + "\\" + modelName + ".obj";
-		auto model = std::make_shared<Model>(1, MODEL_ASSETS(modelFileName.c_str()));
+		auto model = assetImporter->importModel(modelName);
 		const SceneGraphInstance& newInstance = sceneGraph->addInstance(*model);
 		renderer->addToRendererTextured(dynamic_cast<const ModelInstance&>(newInstance));
 	}

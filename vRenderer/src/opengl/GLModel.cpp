@@ -52,12 +52,12 @@ void GLModel::createFromGenericModel(const Model& model)
 
 	for (int i = 0; i < meshCount; i++)
 	{
-		const Mesh& mesh = model.getMeshes()[i];
+		const Mesh& mesh = *model.getMeshes()[i];
 
 		uint32_t newMeshId = i;
 		GLMesh* glMesh = new GLMesh(newMeshId, mesh);
 
-		auto material = model.getMaterials()[i];
+		const auto& material = model.getMaterials()[i];
 		if (material != nullptr)
 		{
 			materialCount++;

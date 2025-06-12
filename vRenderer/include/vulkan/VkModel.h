@@ -8,6 +8,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "geometry_settings.h"
 #include "Model.h"
 #include "VkMesh.h"
 #include "VkMaterial.h"

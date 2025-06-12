@@ -13,10 +13,15 @@
 
 #include "AppContext.h"
 
-#include "Model.h"
+#include "AssetImporter.h"
+#include "AssimpModelImporter.h"
+#include "StbiImageImporter.h"
+
 #include "SceneGraph.h"
+
 #include "SceneGraphWindow.h"
 #include "AssetBrowser.h"
+
 #include "utils.h"
 #include "editor_settings.h"
 
@@ -54,6 +59,7 @@ private:
 	std::shared_ptr<BaseCamera> camera;
 	std::vector<std::shared_ptr<Light>> lightSources;
 
+	std::unique_ptr<AssetImporter> assetImporter;
 	std::unique_ptr<SceneGraph> sceneGraph;
 
 	std::unique_ptr<AssetBrowser> assetBrowser;

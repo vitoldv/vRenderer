@@ -84,12 +84,12 @@ void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetC
 {
 	for (int i = 0; i < model.getMeshCount(); i++)
 	{
-		const Mesh& mesh = model.getMeshes()[i];
+		const Mesh& mesh = *model.getMeshes()[i];
 		
 		uint32_t newMeshId = i;
 		VkMesh* vkMesh = new VkMesh(newMeshId, mesh, context);
 		
-		auto material = model.getMaterials()[i];
+		const auto& material = model.getMaterials()[i];
 		VkMaterial* vkMaterial = nullptr;
 		if (material != nullptr)
 		{

@@ -132,6 +132,12 @@
     <ClCompile Include="vRenderer\src\imgui_helper.cpp">
       <Filter>Source Files\general</Filter>
     </ClCompile>
+    <ClCompile Include="vRenderer\src\AssetImporter.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="vRenderer\src\AssimpModelImporter.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Mesh.h">
@@ -285,6 +291,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\ITemplateInstance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\AssetImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\AssimpModelImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\IModelAssetImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\IImageAssetImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\StbiImageImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

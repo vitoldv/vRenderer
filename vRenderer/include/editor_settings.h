@@ -2,10 +2,6 @@
 
 #include <vector>
 
-#define ASSETS_FOLDER "vRenderer\\assets\\"
-#define MODEL_ASSETS_FOLDER "vRenderer\\assets\\models\\"
-#define MODEL_ASSETS(asset) concat(MODEL_ASSETS_FOLDER, asset)
-
 #define CAMERA_ZOOM_STEP 2.0f
 #define CAMERA_ROTATION_SPEED 0.5f
 #define CAMERA_FPV_SENSETIVITY_HORIZONTAL 0.35f
