@@ -138,7 +138,7 @@
     <ClCompile Include="vRenderer\src\AssimpModelImporter.cpp">
       <Filter>Source Files\general</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\src\StbiImageImporter.cpp">
+    <ClCompile Include="vRenderer\src\StbImageImporter.cpp">
       <Filter>Source Files\general</Filter>
     </ClCompile>
   </ItemGroup>

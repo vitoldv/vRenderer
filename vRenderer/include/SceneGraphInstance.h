@@ -17,7 +17,22 @@ namespace VRD::Scene
 		const std::string printName;
 
 		SceneGraphInstance(uint32_t id, std::string printName) : id(id), printName(printName) {}
+		SceneGraphInstance(uint32_t id, std::string printName, const SceneGraphInstance& other) :
+			id(id), printName(printName)
+		{
+			position = other.position;
+			rotation = other.rotation;
+			scale = other.scale;
+		}
 		virtual ~SceneGraphInstance() {}
+
+		SceneGraphInstance(const SceneGraphInstance& other) = delete;
+		SceneGraphInstance& operator=(const SceneGraphInstance& other) = delete;
+		
+		virtual SceneGraphInstance* clone(uint32_t id, std::string printName) const
+		{
+			return new SceneGraphInstance(id, printName, *this);
+		}
 
 		glm::vec3 position = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 rotation = { 0.0f, 0.0f, 0.0f };

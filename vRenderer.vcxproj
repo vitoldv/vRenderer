@@ -164,7 +164,7 @@
     <ClCompile Include="vRenderer\src\main.cpp" />
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />
-    <ClCompile Include="vRenderer\src\StbiImageImporter.cpp" />
+    <ClCompile Include="vRenderer\src\StbImageImporter.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkSetLayoutFactory.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />

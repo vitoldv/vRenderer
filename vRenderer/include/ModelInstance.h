@@ -13,7 +13,20 @@ namespace VRD::Scene
 	public:
 
 		ModelInstance(uint32_t id, std::string printName) : SceneGraphInstance(id, printName) {}
+		ModelInstance(uint32_t id, std::string printName, const ModelInstance& other) :
+			SceneGraphInstance(id, printName, dynamic_cast<const SceneGraphInstance&>(other))
+		{
+			modelTemplate = other.modelTemplate;
+		}
 		virtual ~ModelInstance() {}
+
+		ModelInstance(const ModelInstance& other) = delete;
+		ModelInstance& operator=(const ModelInstance& other) = delete;
+
+		virtual ModelInstance* clone(uint32_t id, std::string printName) const
+		{
+			return new ModelInstance(id, printName, *this);
+		}
 
 		const Model& getTemplate() const
 		{
@@ -26,6 +39,7 @@ namespace VRD::Scene
 		}
 
 	private:
+
 		std::shared_ptr<const Model> modelTemplate = nullptr;
 	};
 }

@@ -185,7 +185,8 @@ void Application::setSceneCamera(CameraType cameraType)
 
 void Application::cloneSceneInstance(uint32_t instanceId)
 {
-	std::cout << "CLONE" << std::endl;
+	const SceneGraphInstance& newInstance = sceneGraph->cloneInstance(instanceId);\
+	renderer->addToRendererTextured(dynamic_cast<const ModelInstance&>(newInstance));
 }
 
 void Application::deleteSceneInstance(uint32_t instanceId)
