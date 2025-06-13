@@ -1,6 +1,6 @@
 #include "AssimpModelImporter.h"
 
-std::shared_ptr<Model> AssimpModelImporter::importModel(std::filesystem::path modelFilePath, bool printImportData)
+std::shared_ptr<Model> AssimpModelImporter::importModel(std::filesystem::path modelFilePath, IImageAssetImporter& imageImporter, bool printImportData)
 {
 	// If model is already imported just return it
 	if (importedModelsMap.find(modelFilePath.string()) != importedModelsMap.end())
@@ -47,18 +47,19 @@ std::shared_ptr<Model> AssimpModelImporter::importModel(std::filesystem::path mo
 			std::string folderPath = modelFilePath.parent_path().string();
 
 			// Texture loading lambda
-			auto getTexture = [mat, folderPath](aiTextureType type) {
+			auto getTexture = [&mat, &folderPath, &imageImporter](aiTextureType type) {
 				aiString path;
+				std::shared_ptr<Texture> texture = nullptr;
 				if (mat->GetTexture(type, 0, &path) == aiReturn_SUCCESS)
 				{
 					std::string s = path.C_Str();
 					std::replace(s.begin(), s.end(), '/', '\\');
 					s = folderPath + "\\" + s;
-					return s;
+					texture = imageImporter.importTexture(s, false);
 				}
-				return std::string("");
+				return texture;
 				};
-
+			
 			Material* material = new Material(mat->GetName().C_Str());
 
 			material->diffuseTexture = getTexture(aiTextureType_DIFFUSE);
@@ -70,7 +71,7 @@ std::shared_ptr<Model> AssimpModelImporter::importModel(std::filesystem::path mo
 
 			mat->Get(AI_MATKEY_SHININESS, material->shininess);
 			mat->Get(AI_MATKEY_REFRACTI, material->refraction);
-			if (material->opacityMap.empty())
+			if (material->opacityMap == nullptr)
 				mat->Get(AI_MATKEY_OPACITY, material->opacity);
 
 			auto getColor = [&](const char* key, uint32_t type, uint32_t idx, glm::vec3& color) {
@@ -79,13 +80,13 @@ std::shared_ptr<Model> AssimpModelImporter::importModel(std::filesystem::path mo
 				color = glm::vec3(aiColor.r, aiColor.g, aiColor.b);
 				};
 
-			if (material->ambientTexture.empty())
+			if (material->ambientTexture == nullptr)
 				getColor(AI_MATKEY_COLOR_AMBIENT, material->ambientColor);
-			if (material->diffuseTexture.empty())
+			if (material->diffuseTexture == nullptr)
 				getColor(AI_MATKEY_COLOR_DIFFUSE, material->diffuseColor);
-			if (material->specularTexture.empty())
+			if (material->specularTexture == nullptr)
 				getColor(AI_MATKEY_COLOR_SPECULAR, material->specularColor);
-			if (material->emissionMap.empty())
+			if (material->emissionMap == nullptr)
 				getColor(AI_MATKEY_COLOR_EMISSIVE, material->emmissiveColor);
 
 			materials[i].reset(material);

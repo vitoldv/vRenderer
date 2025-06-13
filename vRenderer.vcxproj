@@ -164,6 +164,7 @@
     <ClCompile Include="vRenderer\src\main.cpp" />
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />
+    <ClCompile Include="vRenderer\src\StbiImageImporter.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkSetLayoutFactory.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
@@ -212,8 +213,9 @@
     <ClInclude Include="vRenderer\include\SceneGraph.h" />
     <ClInclude Include="vRenderer\include\SceneGraphWindow.h" />
     <ClInclude Include="vRenderer\include\Singleton.h" />
-    <ClInclude Include="vRenderer\include\StbiImageImporter.h" />
+    <ClInclude Include="vRenderer\include\StbImageImporter.h" />
     <ClInclude Include="vRenderer\include\stb_image.h" />
+    <ClInclude Include="vRenderer\include\Texture.h" />
     <ClInclude Include="vRenderer\include\utils.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkSetLayoutFactory.h" />

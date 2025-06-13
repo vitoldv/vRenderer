@@ -1,11 +1,10 @@
 #include "VkTexture.h"
-#include "stb_image.h"
 
-VkTexture::VkTexture(std::string fileName, VkContext context) :
-	name(fileName.c_str())
+VkTexture::VkTexture(const Texture& texture, VkContext context) :
+	name(texture.name)
 {
 	this->context = context;
-	createTexture(fileName, context);
+	createTexture(texture);
 }
 
 VkTexture::~VkTexture()
@@ -18,59 +17,38 @@ VkImageView VkTexture::getImageView() const
 	return this->imageView;
 }
 
-void VkTexture::createTexture(std::string fileName, VkContext context)
+void VkTexture::createTexture(const Texture& texture)
 {
-	createTextureImage(fileName, context);
+	createTextureImage(texture);
 
 	imageView = createImageView(image,
 		VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, context);
 }
 
-stbi_uc* loadTexture(std::string fileName, int* width, int* height, VkDeviceSize* imageSize)
-{
-	int channels;
-	stbi_uc* image = stbi_load(fileName.c_str(), width, height, &channels, STBI_rgb_alpha);
-	if (!image)
-	{
-		throw std::runtime_error("Failed to load texture \"" + fileName + "\".");
-	}
 
-	// calculate image size
-	*imageSize = *width * *height * 4;
-
-	return image;
-}
-
-
- void VkTexture::createTextureImage(std::string fileName, VkContext context)
+ void VkTexture::createTextureImage(const Texture& texture)
  {
-	 int width, height;
-	 VkDeviceSize imageSize;
-	 stbi_uc* imageData = loadTexture(fileName, &width, &height, &imageSize);
-
 	 // Create staging buffer to hold loaded data ready to copy to device
 	 VkBuffer imageStagingBuffer;
 	 VkDeviceMemory imageStagingBufferMemory;
-	 createBuffer(context.physicalDevice, context.logicalDevice, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	 createBuffer(context.physicalDevice, context.logicalDevice, texture.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &imageStagingBuffer, &imageStagingBufferMemory);
 
 	 // copy image data to staging buffer
 	 void* data;
-	 vkMapMemory(context.logicalDevice, imageStagingBufferMemory, 0, imageSize, 0, &data);
-	 memcpy(data, imageData, static_cast<size_t>(imageSize));
+	 vkMapMemory(context.logicalDevice, imageStagingBufferMemory, 0, texture.size, 0, &data);
+	 memcpy(data, texture.ptr, static_cast<size_t>(texture.size));
 	 vkUnmapMemory(context.logicalDevice, imageStagingBufferMemory);
 
-	 stbi_image_free(imageData);
-
 	 // Create image to hold final texture
-	 image = createImage(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+	 image = createImage(texture.width, texture.height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
 		 VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &imageMemory, context);
 
 	 // COPY IMAGE DATA
 	 // transition image to be DST for copy operation
 	 transitionImageLayout(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool,
 		 image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	 copyImageBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, imageStagingBuffer, image, width, height);
+	 copyImageBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, imageStagingBuffer, image, texture.width, texture.height);
 
 	 // transition image to be shader readable for shader usage
 	 transitionImageLayout(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool,

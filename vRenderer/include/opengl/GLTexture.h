@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "Texture.h"
+
 class GLTexture
 {
 public:
@@ -12,11 +14,11 @@ public:
 	const std::string name;
 	uint32_t glId;
 
-	GLTexture(std::string fileName);
+	GLTexture(const Texture& texture);
 	~GLTexture();
 
 private:
 
-	void createTexture(std::string fileName);
+	void createTexture(const Texture& texture);
 	void cleanup();
 };

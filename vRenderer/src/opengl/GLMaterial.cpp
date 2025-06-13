@@ -37,21 +37,21 @@ void GLMaterial::apply(GLShader& shader)
 
 void GLMaterial::createFromGenericMaterial(const Material& material)
 {
-	if (!material.ambientTexture.empty())
+	if (material.ambientTexture != nullptr)
 	{
-		ambient = std::make_unique<GLTexture>(material.ambientTexture);
+		ambient = std::make_unique<GLTexture>(*material.ambientTexture);
 	}
-	if (!material.diffuseTexture.empty())
+	if (material.diffuseTexture != nullptr)
 	{
-		diffuse = std::make_unique<GLTexture>(material.diffuseTexture);
+		diffuse = std::make_unique<GLTexture>(*material.diffuseTexture);
 	}
-	if (!material.specularTexture.empty())
+	if (material.specularTexture != nullptr)
 	{
-		specular = std::make_unique<GLTexture>(material.specularTexture);
+		specular = std::make_unique<GLTexture>(*material.specularTexture);
 	}
-	if (!material.opacityMap.empty())
+	if (material.opacityMap != nullptr)
 	{
-		opacityMap = std::make_unique<GLTexture>(material.opacityMap);
+		opacityMap = std::make_unique<GLTexture>(*material.opacityMap);
 	}
 
 	ambientColor = material.ambientColor;

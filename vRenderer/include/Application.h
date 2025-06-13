@@ -15,7 +15,7 @@
 
 #include "AssetImporter.h"
 #include "AssimpModelImporter.h"
-#include "StbiImageImporter.h"
+#include "StbImageImporter.h"
 
 #include "SceneGraph.h"
 

@@ -6,6 +6,8 @@
 #include <string>
 #include "VulkanUtils.h"
 
+#include "Texture.h"
+
 using namespace VkUtils;
 
 class VkTexture
@@ -14,7 +16,7 @@ public:
 
 	const std::string name;
 
-	VkTexture(std::string fileName, VkContext context);
+	VkTexture(const Texture& texture, VkContext context);
 	~VkTexture();
 
 	VkImageView getImageView() const;
@@ -26,8 +28,8 @@ private:
 
 	VkContext context;
 
-	void createTexture(std::string fileName, VkContext context);
-	void createTextureImage(std::string fileName, VkContext context);
+	void createTexture(const Texture& texture);
+	void createTextureImage(const Texture& texture);
 
 	void cleanup();
 };

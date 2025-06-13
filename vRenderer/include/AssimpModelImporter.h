@@ -12,7 +12,7 @@
 class AssimpModelImporter : public IModelAssetImporter
 {
 public:
-	std::shared_ptr<Model> importModel(std::filesystem::path modelFilePath, bool printImportData = false) override;
+	std::shared_ptr<Model> importModel(std::filesystem::path modelFilePath, IImageAssetImporter& imageImporter, bool printImportData = false) override;
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<Model>> importedModelsMap;

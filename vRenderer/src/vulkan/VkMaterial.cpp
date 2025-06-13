@@ -76,10 +76,10 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 
 		// Lambda for texture creation
 		VkContext& ctx = this->context;
-		auto createTexture = [&](std::string textureStr, std::unique_ptr<VkTexture>& vkTexture) {
-			if (!textureStr.empty())
+		auto createTexture = [&](const std::shared_ptr<Texture>& texture, std::unique_ptr<VkTexture>& vkTexture) {
+			if (texture != nullptr)
 			{
-				vkTexture = std::make_unique<VkTexture>(textureStr, ctx);
+				vkTexture = std::make_unique<VkTexture>(*texture, ctx);
 			}
 		};
 

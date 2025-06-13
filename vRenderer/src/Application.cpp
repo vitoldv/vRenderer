@@ -58,7 +58,7 @@ int Application::initApplication()
 		renderer->bindRenderSettings(renderSettings);
 	}   
 
-	assetImporter = std::make_unique<AssetImporter>(new AssimpModelImporter(), new StbiImageImporter());
+	assetImporter = std::make_unique<AssetImporter>(new AssimpModelImporter(), new StbImageImporter());
 	assetBrowser = std::make_unique<AssetBrowser>();
 	sceneGraphWindow = std::make_unique<SceneGraphWindow>();
 	sceneGraph = std::make_unique<SceneGraph>();

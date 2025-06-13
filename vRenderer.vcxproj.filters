@@ -138,6 +138,9 @@
     <ClCompile Include="vRenderer\src\AssimpModelImporter.cpp">
       <Filter>Source Files\general</Filter>
     </ClCompile>
+    <ClCompile Include="vRenderer\src\StbiImageImporter.cpp">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Mesh.h">
@@ -305,7 +308,10 @@
     <ClInclude Include="vRenderer\include\IImageAssetImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\StbiImageImporter.h">
+    <ClInclude Include="vRenderer\include\StbImageImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
