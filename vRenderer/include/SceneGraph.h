@@ -34,9 +34,10 @@ namespace VRD::Scene
 			return *newInstance;
 		}
 
-		bool deleteInstance(const SceneGraphInstance& instance)
+		bool deleteInstance(uint32_t id)
 		{
-			// TODO IMPLEMENT
+			sceneInstances.erase(id);
+			return true;
 		}
 
 		const std::unordered_map<uint32_t, SceneGraphInstance*>& getInstances() const
@@ -65,9 +66,9 @@ namespace VRD::Scene
 
 		std::unordered_map<uint32_t, SceneGraphInstance*> sceneInstances = {};
 
-		SceneGraphInstance* createInstanceFromTemplate(uint32_t id, const ISceneInstanceTemplate& instanceTemplate) const
+		SceneGraphInstance* createInstanceFromTemplate(uint32_t id, const ISceneInstanceTemplate& instanceTemplate)
 		{
-			std::string name = instanceTemplate.name + " #" + std::to_string(id);
+			std::string name = instanceTemplate.name + " (ModelInstance #" + std::to_string(id) + ")";
 			ModelInstance* modelInstance = new ModelInstance(id, name);
 			modelInstance->createFromTemplate(dynamic_cast<const Model&>(instanceTemplate));
 			return modelInstance;

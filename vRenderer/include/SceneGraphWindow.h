@@ -36,17 +36,26 @@ namespace VRD::OVERL
 			ImGui::SameLine();
 			if (ImGui::Button("Clone"))
 			{
-				onAction(Op::CLONE, selectedId);
+				if (sceneGraph.hasInstance(selectedId))
+				{
+					onAction(Op::CLONE, selectedId);
+				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Delete"))
 			{
-				onAction(Op::DELETE, selectedId);
+				if (sceneGraph.hasInstance(selectedId))
+				{
+					onAction(Op::DELETE, selectedId);
+				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Hide"))
 			{
-				onAction(Op::HIDE, selectedId);
+				if (sceneGraph.hasInstance(selectedId))
+				{
+					onAction(Op::HIDE, selectedId);
+				}
 			}
 			
 

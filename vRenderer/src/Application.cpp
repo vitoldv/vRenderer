@@ -191,7 +191,8 @@ void Application::cloneSceneInstance(uint32_t instanceId)
 
 void Application::deleteSceneInstance(uint32_t instanceId)
 {
-	std::cout << "delete" << std::endl;
+	sceneGraph->deleteInstance(instanceId);
+	renderer->removeFromRenderer(instanceId);
 }
 
 void Application::hideSceneInstance(uint32_t instanceId)
