@@ -40,13 +40,12 @@ namespace VRD::Scene
 
 		inline glm::mat4 getTransformMat() const
 		{
-			glm::mat4 t = glm::mat4(1.0f);
-			t = glm::scale(t, scale);
-			t = glm::rotate(t, rotation.x, glm::vec3(1.0f, 0, 0));
-			t = glm::rotate(t, rotation.y, glm::vec3(0, 1.0f, 0));
-			t = glm::rotate(t, rotation.z, glm::vec3(0, 0, 1.0f));
-			t = glm::translate(t, position);
-			return t;
+			glm::mat4 t = glm::translate(glm::mat4(1.0f), position);
+			glm::mat4 rx = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0, 0));
+			glm::mat4 ry = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0, 1.0f, 0));
+			glm::mat4 rz = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1.0f));
+			glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
+			return t * rz * ry * rx * s;
 		}
 	};
 }
