@@ -320,5 +320,8 @@
     <ClInclude Include="vRenderer\include\ThreadDispatcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vRenderer\include\ThreadPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
