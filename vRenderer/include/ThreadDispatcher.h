@@ -1,108 +1,54 @@
-//#pragma once
-//
-//#include <queue>
-//#include <thread>
-//#include <future>
-//#include <mutex>
-//
-//class ThreadDispatcher
-//{
-//
-//public:
-//
-//	enum class Thread
-//	{
-//		MAIN,
-//	};
-//
-//	ThreadDispatcher()
-//	{
-//		
-//	}
-//
-//	void process()
-//	{
-//		while (!handlers.empty())
-//		{
-//			auto& handler = handlers.front();
-//			handler.function(handler.data);
-//			handlers.pop();
-//		}
-//	}
-//
-//	template<typename Callback, typename... Args>
-//	static void dispatch(Thread threadType, Callback callback);
-//
-//private:
-//
-//	// Struct to represent a task using a function pointer
-//	struct Task
-//	{
-//		void (*function)(void*);  // Raw function pointer
-//		void* data;               // Pointer to data for the function (if needed)
-//	};
-//
-//	static std::queue<Task> handlers;
-//	static std::mutex mutex;
-//};
-//
-//template<typename Callback, typename... Args>
-//static void ThreadDispatcher::dispatch(Thread threadType, Callback callback)
-//{
-//	std::lock_guard<std::mutex> lock(mutex);
-//	struct Wrapper
-//	{
-//		Callback callable;
-//		std::tuple<Args...> args;
-//		// The function to invoke the callable
-//		static void invoke(void* data)
-//		{
-//			auto wrapper = static_cast<Wrapper*>(data);
-//			std::apply(wrapper->callable, wrapper->args);
-//			delete wrapper; // Clean up the wrapper
-//		}
-//	};
-//
-//	auto* wrapper = new Wrapper{ callback, std::make_tuple(args...) };
-//
-//	handlers.push({&Wrapper::invoke, wrapper});
-//}
-
 #pragma once
 
 #include <queue>
 #include <mutex>
+#include <memory>
 #include <condition_variable>
 
-// Struct to represent a task using a function pointer
-struct Task {
+#include "Singleton.h"
+#include "ThreadPool.h"
+
+struct Task
+{
     void (*function)(void*);  // Raw function pointer
     void* data;               // Pointer to data for the function (if needed)
 };
 
-// Simple MainThreadDispatcher
-class MainThreadDispatcher 
+/// <summary>
+/// Thread dispatcher for both main and worker threads
+/// </summary>
+class ThreadDispatcher : public Singleton<ThreadDispatcher>
 {
+    friend class Singleton<ThreadDispatcher>;
+
 public:
 
-    // Add a task to the dispatcher (thread-safe)
-    static void post(void (*function)(void*), void* data = nullptr);
+    ThreadDispatcher();
 
-    // Execute all tasks in the queue (called on the main thread)
-    static void process();
+    void process();
 
     template <typename Callable, typename... Args>
-    static void postWithArgs(Callable callable, Args... args);
+    void main(Callable callable, Args... args);
+    template <typename Callable, typename... Args>
+    void worker(Callable callable, Args... args);
 
 private:
-    static std::mutex queueMutex;        // Protect access to the task queue
-    static std::queue<Task> taskQueue;   // Queue of tasks to execute
-    static std::condition_variable queueCondition; // Optional for advanced use (e.g., waiting mechanics)
+
+    std::mutex queueMutex;    
+    std::queue<Task> taskQueue;   
+    std::unique_ptr<ThreadPool> workerPool;
+
+    void dispatch_main_internal(void (*function)(void*), void* data = nullptr);
 };
 
+/// <summary>
+/// Dispatches provided callable to main thread
+/// </summary>
 template <typename Callable, typename... Args>
-void MainThreadDispatcher::postWithArgs(Callable callable, Args... args) {
-    struct Wrapper {
+void ThreadDispatcher::main(Callable callable, Args... args) 
+{
+    struct Wrapper
+    {
         Callable callable;
         std::tuple<Args...> args;
 
@@ -116,5 +62,14 @@ void MainThreadDispatcher::postWithArgs(Callable callable, Args... args) {
 
     // Create a wrapper to hold the callable and arguments
     auto* wrapper = new Wrapper{ callable, std::make_tuple(args...) };
-    post(&Wrapper::invoke, wrapper);
+    dispatch_main_internal(&Wrapper::invoke, wrapper);
+}
+
+/// <summary>
+/// Dispatches provided callable to the available working thread
+/// </summary>
+template <typename Callable, typename... Args>
+void ThreadDispatcher::worker(Callable callable, Args... args)
+{
+    workerPool->enqueue(callable, args...);
 }

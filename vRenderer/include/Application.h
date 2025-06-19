@@ -49,8 +49,7 @@ private:
 	IRenderer* renderer;
 	std::shared_ptr<RenderSettings> renderSettings;
 	AppContext* context;
-	//std::unique_ptr<ThreadDispatcher> threadDispatcher;
-	std::list<Model_future> future_Models;
+	std::unique_ptr<ThreadDispatcher> threadDispatcher;
 
 	// Currently utilized graphics api. The one in renderSettings is one selected by user and will be applied after app restart.
 	RenderSettings::API currentApi;
