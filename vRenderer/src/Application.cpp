@@ -37,6 +37,7 @@ void Application::initWindow(std::string title, const int width, const int heigh
 int Application::initApplication()
 {
 	context = &AppContext::instance();
+	//threadDispatcher = std::make_unique<ThreadDispatcher>();
 
 	if (currentApi == RenderSettings::API::VULKAN)
 	{
@@ -216,9 +217,11 @@ void Application::addModelToRenderer(std::string modelName)
 {
 	if (renderer != nullptr && sceneGraph != nullptr)
 	{
-		auto model = assetImporter->importModel(modelName);
-		const SceneGraphInstance& newInstance = sceneGraph->addInstance(*model);
-		renderer->addToRendererTextured(dynamic_cast<const ModelInstance&>(newInstance));
+		assetImporter->importModel_async(modelName, [this](std::shared_ptr<Model> model)
+			{
+			const SceneGraphInstance& newInstance = sceneGraph->addInstance(*model);
+			renderer->addToRendererTextured(dynamic_cast<const ModelInstance&>(newInstance));
+		});
 	}
 }
 
@@ -333,6 +336,7 @@ int Application::run()
 
 		processInput();
 		update();
+		MainThreadDispatcher::process();
 		render();
 	}
 

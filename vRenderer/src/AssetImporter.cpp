@@ -8,6 +8,7 @@ AssetImporter::AssetImporter(IModelAssetImporter* modelImporter, IImageAssetImpo
 
 std::shared_ptr<Model> AssetImporter::importModel(std::string modelName)
 {
+	std::this_thread::sleep_for(std::chrono::seconds(5));
 	std::string modelFileName = modelName + "\\" + modelName + ".obj";
 	std::filesystem::path path = MODEL_ASSETS(modelFileName.c_str());
 	return modelImporter->importModel(path, *imageImporter, true);
