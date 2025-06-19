@@ -217,11 +217,7 @@ void Application::addModelToRenderer(std::string modelName)
 {
 	if (renderer != nullptr && sceneGraph != nullptr)
 	{
-		assetImporter->importModel_async(modelName, [this](std::shared_ptr<Model> model)
-			{
-			const SceneGraphInstance& newInstance = sceneGraph->addInstance(*model);
-			renderer->addToRendererTextured(dynamic_cast<const ModelInstance&>(newInstance));
-		});
+		future_Models.push_back(assetImporter->importModel_async(modelName));
 	}
 }
 
@@ -336,7 +332,24 @@ int Application::run()
 
 		processInput();
 		update();
-		MainThreadDispatcher::process();
+
+		//MainThreadDispatcher::process();
+		for(auto it = future_Models.begin(); it != future_Models.end();)
+		{
+			if (it->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+			{
+				auto& model = *(*it).get();
+				const SceneGraphInstance& newInstance = sceneGraph->addInstance(model);
+				renderer->addToRendererTextured(dynamic_cast<const ModelInstance&>(newInstance));
+				it = future_Models.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+
+		}
+
 		render();
 	}
 

@@ -5,6 +5,7 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <list>
 
 #include "RenderSettings.h"
 #include "OpenGLRenderer.h"
@@ -49,6 +50,7 @@ private:
 	std::shared_ptr<RenderSettings> renderSettings;
 	AppContext* context;
 	//std::unique_ptr<ThreadDispatcher> threadDispatcher;
+	std::list<Model_future> future_Models;
 
 	// Currently utilized graphics api. The one in renderSettings is one selected by user and will be applied after app restart.
 	RenderSettings::API currentApi;
