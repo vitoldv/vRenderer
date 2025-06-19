@@ -27,6 +27,11 @@ public:
 
     void process();
 
+    // Note:
+    // This class utilizes template approach to callback handling for performance reasons.
+    // Despite not being a production target software and being basically a viewing and editing tool (at the moment),
+    // I still try to address performance benefiting solutions for learning reasons.
+    // Otherwise, std::function would be a nice replacement.
     template <typename Callable, typename... Args>
     void main(Callable callable, Args... args);
     template <typename Callable, typename... Args>
