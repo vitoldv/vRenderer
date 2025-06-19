@@ -3,6 +3,9 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <thread>
+#include <vector>
+#include <list>
 
 #include "RenderSettings.h"
 #include "OpenGLRenderer.h"
@@ -12,6 +15,7 @@
 #include <glm/glm.hpp>
 
 #include "AppContext.h"
+#include "ThreadDispatcher.h"
 
 #include "AssetImporter.h"
 #include "AssimpModelImporter.h"
@@ -45,6 +49,7 @@ private:
 	IRenderer* renderer;
 	std::shared_ptr<RenderSettings> renderSettings;
 	AppContext* context;
+	std::unique_ptr<ThreadDispatcher> threadDispatcher;
 
 	// Currently utilized graphics api. The one in renderSettings is one selected by user and will be applied after app restart.
 	RenderSettings::API currentApi;

@@ -165,6 +165,7 @@
     <ClCompile Include="vRenderer\src\Mesh.cpp" />
     <ClCompile Include="vRenderer\src\Model.cpp" />
     <ClCompile Include="vRenderer\src\StbImageImporter.cpp" />
+    <ClCompile Include="vRenderer\src\ThreadDispatcher.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkSetLayoutFactory.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
@@ -216,6 +217,8 @@
     <ClInclude Include="vRenderer\include\StbImageImporter.h" />
     <ClInclude Include="vRenderer\include\stb_image.h" />
     <ClInclude Include="vRenderer\include\Texture.h" />
+    <ClInclude Include="vRenderer\include\ThreadDispatcher.h" />
+    <ClInclude Include="vRenderer\include\ThreadPool.h" />
     <ClInclude Include="vRenderer\include\utils.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkSetLayoutFactory.h" />

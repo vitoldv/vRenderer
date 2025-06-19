@@ -4,6 +4,7 @@ AssetImporter::AssetImporter(IModelAssetImporter* modelImporter, IImageAssetImpo
 {
 	this->modelImporter.reset(modelImporter);
 	this->imageImporter.reset(imageImporter);
+	this->pool = std::make_unique<ThreadPool>(2);
 }
 
 std::shared_ptr<Model> AssetImporter::importModel(std::string modelName)
