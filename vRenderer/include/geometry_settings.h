@@ -10,3 +10,5 @@ for geometry importing, loading and manipulation.
 #define VERTEX_INDEX_OFFSET	1
 
 #define ASSIMP_PREPROCESS_FLAGS aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs
+
+const std::vector<const char*> c_supportedFormats = { ".obj", ".fbx"};

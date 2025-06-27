@@ -15,5 +15,3 @@ enum CameraType
     ORBIT,
     FPV
 };
-
-const std::vector<const char*> c_supportedFormats = { ".obj" };
