@@ -1,54 +1,22 @@
 #pragma once
 
-#include "VulkanUtils.h"
-#include "VkShaderManager.h"
-#include "VkSetLayoutFactory.h"
+#include "VkGraphicsPipelineBase.h"
 
-using namespace VkUtils;
-
-class VkSkyboxPipeline
+class VkSkyboxPipeline : public VkGraphicsPipelineBase
 {
 public:
 
-	VkSkyboxPipeline(VkRenderPass renderPass, VkContext context)
+	VkSkyboxPipeline(VkRenderPass renderPass, VkContext context) :
+		VkGraphicsPipelineBase(renderPass, context)
 	{
-		this->renderPass = renderPass;
-		this->context = context;
 		describe();
 	}
 
-	void cmdBind(VkCommandBuffer commandBuffer)
-	{
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	}
-
-	VkPipelineLayout getLayout() const
-	{
-		return layout;
-	}
-
-	~VkSkyboxPipeline()
-	{
-		//cleanup();
-	}
-
-
-	void cleanup()
-	{
-		vkDestroyPipelineLayout(context.logicalDevice, layout, nullptr);
-		vkDestroyPipeline(context.logicalDevice, pipeline, nullptr);
-	}
-
-private:
-
-	VkPipeline pipeline;
-	VkPipelineLayout layout;
-	VkRenderPass renderPass;
-	VkContext context;
+protected:
 
 	VkPushConstantRange pushConstantRange;
 
-	void describe()
+	virtual void describe() override
 	{
 		std::string key = "skybox";
 		auto shaderStages = VkShaderManager::instance().getShaderStage(VkShaderManager::RenderPass::FIRST, &key);
