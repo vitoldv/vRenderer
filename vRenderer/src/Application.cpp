@@ -94,24 +94,8 @@ int Application::initApplication()
 	renderer->addLightSources(lightSources.data(), lightSources.size());
 
 	// Load and set skybox
-	std::vector<std::string> skyboxTextures {
-		"vRenderer\\assets\\skybox\\back.jpg",
-		"vRenderer\\assets\\skybox\\bottom.jpg",
-		"vRenderer\\assets\\skybox\\front.jpg",
-		"vRenderer\\assets\\skybox\\left.jpg",
-		"vRenderer\\assets\\skybox\\right.jpg",
-		"vRenderer\\assets\\skybox\\top.jpg",
-	};
-	assetImporter->importTextures_async(skyboxTextures, [this](std::vector<std::shared_ptr<Texture>> textures) {
-		Cubemap cubemap{
-			textures[0],
-			textures[1],
-			textures[2],
-			textures[3],
-			textures[4],
-			textures[5],
-		};
-		skyboxCubemap.reset(&cubemap);
+	assetImporter->importCubemap_async("skybox", [this](std::shared_ptr<Cubemap> cubemap) {
+		skyboxCubemap = cubemap;
 		renderer->setSkybox(skyboxCubemap);
 		});
 
