@@ -14,53 +14,18 @@ public:
 
 protected:
 
-	VkPushConstantRange pushConstantRange;
-
 	virtual void describe() override
 	{
-
 		VkShaderManager& inst = VkShaderManager::instance();
-		auto shaderStages = inst.getShaderStage(VkShaderManager::RenderPass::FIRST);
+		auto shaderStages = inst.getShaderStage(VkShaderManager::RenderPass::SECOND);
 
-		// DEFINING VERTEX ATTRIBUTES LAYOUT
 		VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
-		{
-			VkVertexInputBindingDescription bindingDescription = {};
-			bindingDescription.binding = 0;
-			bindingDescription.stride = sizeof(VkUtils::Vertex);
-			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertexInputCreateInfo.vertexBindingDescriptionCount = 0;
+		vertexInputCreateInfo.pVertexBindingDescriptions = nullptr;
+		vertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
+		vertexInputCreateInfo.pVertexAttributeDescriptions = nullptr;
 
-			std::array<VkVertexInputAttributeDescription, 4> attributes;
-			attributes[0].binding = 0;										// should be same as above
-			attributes[0].location = 0;
-			attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributes[0].offset = offsetof(VkUtils::Vertex, pos);
-
-			attributes[1].binding = 0;										// should be same as above
-			attributes[1].location = 1;
-			attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributes[1].offset = offsetof(VkUtils::Vertex, color);
-
-			attributes[2].binding = 0;										// should be same as above
-			attributes[2].location = 2;
-			attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributes[2].offset = offsetof(VkUtils::Vertex, normal);
-
-			attributes[3].binding = 0;										// should be same as above
-			attributes[3].location = 3;
-			attributes[3].format = VK_FORMAT_R32G32_SFLOAT;
-			attributes[3].offset = offsetof(VkUtils::Vertex, uv);
-
-			// VERTEX INPUT
-			vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-			vertexInputCreateInfo.vertexBindingDescriptionCount = 1;
-			vertexInputCreateInfo.pVertexBindingDescriptions = &bindingDescription;					// list of vertex binding descriptions (data spacing/stride information)
-			vertexInputCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
-			vertexInputCreateInfo.pVertexAttributeDescriptions = attributes.data();				// list of vertex attribute descriptions (data format and where to bind to/from)
-		}
-
-		// INPUT ASSEMBLY
-		// defines how vertex data is perceived (topology)
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 		{
 			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -68,7 +33,6 @@ protected:
 			inputAssembly.primitiveRestartEnable = VK_FALSE;
 		}
 
-		// VIEWPORT & SCISSORS
 		VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {};
 		{
 			VkViewport viewport = {};
@@ -90,20 +54,6 @@ protected:
 			viewportStateCreateInfo.pScissors = &scissor;
 		}
 
-		/*
-		// DYNAMIC STATES
-		// Dynamic states to enable
-		std::vector<VkDynamicState> dynamicStatesEnables;
-		dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);	// allows to change viewport on runtime using vkCmdSetViewport
-		dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
-
-		VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {};
-		dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStatesEnables.size());
-		dynamicStateCreateInfo.pDynamicStates = dynamicStatesEnables.data();
-		*/
-
-		// RASTERIZER
 		VkPipelineRasterizationStateCreateInfo rastCreateInfo = {};
 		{
 			rastCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -116,7 +66,6 @@ protected:
 			rastCreateInfo.depthBiasEnable = VK_FALSE;				// whether to add depth bias to fragments (good for stopping "shadow acne" in shadow mapping)
 		}
 
-		// MULTI SAMPLING
 		VkPipelineMultisampleStateCreateInfo multisamplingCreateInfo = {};
 		{
 			multisamplingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -155,110 +104,52 @@ protected:
 			colorBlendingCreateInfo.pAttachments = &colorState;
 		}
 
-		// PIPELINE LAYOUT SETUP (DESCRIPTORS AND PUSH CONSTANTS LAYOUT)
+		// Create new pipeline layout
+		VkPipelineLayoutCreateInfo secondPipelineLayoutCreateInfo = {};
 		{
-			VkSetLayoutFactory& inst = VkSetLayoutFactory::instance();
-			std::array<VkDescriptorSetLayout, 5> setLayouts = {
-				inst.getSetLayout(DESC_SET_LAYOUT::CAMERA),
-				inst.getSetLayout(DESC_SET_LAYOUT::MATERIAL_SAMPLER),
-				inst.getSetLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM),
-				inst.getSetLayout(DESC_SET_LAYOUT::LIGHT),
-				inst.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
-			};
-			VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
-			pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();
-			pipelineLayoutCreateInfo.pSetLayouts = setLayouts.data();
-			pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-			pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+			VkDescriptorSetLayout setLayout = VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::SECOND_PASS_INPUT);
+			secondPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			secondPipelineLayoutCreateInfo.setLayoutCount = 1;
+			secondPipelineLayoutCreateInfo.pSetLayouts = &setLayout;
+			secondPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+			secondPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
-			// Create Pipeline Layout
-			VkResult result = vkCreatePipelineLayout(context.logicalDevice, &pipelineLayoutCreateInfo, nullptr, &layout);
+			VkResult result = vkCreatePipelineLayout(context.logicalDevice, &secondPipelineLayoutCreateInfo, nullptr, &layout);
 			if (result != VK_SUCCESS)
 			{
-				throw std::runtime_error("Failed to create Pipeline Layout!");
+				throw std::runtime_error("Failed to create second pipeline layout.");
 			}
 		}
 
-		// DEPTH TESTING AND STENCIL TESTING SETUP
+		// Don't want to write to depth buffer
 		VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
-		{
-			depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-
-			depthStencilCreateInfo.depthTestEnable = VK_TRUE;
-			depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
-			depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-			depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
-
-			depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
-			VkStencilOpState stencilState = {};
-			stencilState.failOp = VK_STENCIL_OP_KEEP;
-			stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
-			stencilState.passOp = VK_STENCIL_OP_REPLACE;
-			stencilState.compareOp = VK_COMPARE_OP_ALWAYS;
-			stencilState.reference = 1;
-			stencilState.compareMask = 0xFF;
-			stencilState.writeMask = 0xFF;
-			depthStencilCreateInfo.front = stencilState;
-		}
+		depthStencilCreateInfo.depthWriteEnable = VK_FALSE;
 
 		// -- GRAPHICS PIPELINE CREATION --
 		VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
-		pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineCreateInfo.stageCount = 2;									// Number of shader stages
-		pipelineCreateInfo.pStages = shaderStages.data();							// List of shader stages
-		pipelineCreateInfo.pVertexInputState = &vertexInputCreateInfo;		// All the fixed function pipeline states
-		pipelineCreateInfo.pInputAssemblyState = &inputAssembly;
-		pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
-		pipelineCreateInfo.pDynamicState = nullptr;
-		pipelineCreateInfo.pRasterizationState = &rastCreateInfo;
-		pipelineCreateInfo.pMultisampleState = &multisamplingCreateInfo;
-		pipelineCreateInfo.pColorBlendState = &colorBlendingCreateInfo;
-		pipelineCreateInfo.pDepthStencilState = &depthStencilCreateInfo;
-		pipelineCreateInfo.layout = layout;							// Pipeline Layout pipeline should use
-		pipelineCreateInfo.renderPass = renderPass;							// Render pass description the pipeline is compatible with
-		pipelineCreateInfo.subpass = 0;							 			// Subpass of render pass to use with pipeline
-
-		// Pipeline Derivatives : Can create multiple pipelines that derive from one another for optimisation
-		pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;	// Existing pipeline to derive from...
-		pipelineCreateInfo.basePipelineIndex = -1;				// or index of pipeline being created to derive from (in case creating multiple at once)
-
-		///////////////////////////////////
-		// ----- SECOND PASS PIPELINE -----
-		///////////////////////////////////
-
-		shaderStages = inst.getShaderStage(VkShaderManager::RenderPass::SECOND);
-
-		// No vertex data for second pass
-		vertexInputCreateInfo.vertexBindingDescriptionCount = 0;
-		vertexInputCreateInfo.pVertexBindingDescriptions = nullptr;
-		vertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
-		vertexInputCreateInfo.pVertexAttributeDescriptions = nullptr;
-
-		// Don't want to write to depth buffer
-		depthStencilCreateInfo.depthWriteEnable = VK_FALSE;
-
-		// Create new pipeline layout
-		VkDescriptorSetLayout setLayout = VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::SECOND_PASS_INPUT);
-		VkPipelineLayoutCreateInfo secondPipelineLayoutCreateInfo = {};
-		secondPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		secondPipelineLayoutCreateInfo.setLayoutCount = 1;
-		secondPipelineLayoutCreateInfo.pSetLayouts = &setLayout;
-		secondPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-		secondPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-
-		VkResult result = vkCreatePipelineLayout(context.logicalDevice, &secondPipelineLayoutCreateInfo, nullptr, &layout);
-		if (result != VK_SUCCESS)
 		{
-			throw std::runtime_error("Failed to create second pipeline layout.");
+			pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+			pipelineCreateInfo.stageCount = 2;									// Number of shader stages
+			pipelineCreateInfo.pStages = shaderStages.data();							// List of shader stages
+			pipelineCreateInfo.pVertexInputState = &vertexInputCreateInfo;
+			pipelineCreateInfo.pInputAssemblyState = &inputAssembly;
+			pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
+			pipelineCreateInfo.pDepthStencilState = &depthStencilCreateInfo;
+			pipelineCreateInfo.pDynamicState = nullptr;
+			pipelineCreateInfo.pMultisampleState = &multisamplingCreateInfo;
+			pipelineCreateInfo.pRasterizationState = &rastCreateInfo;
+			pipelineCreateInfo.pColorBlendState = &colorBlendingCreateInfo;
+			pipelineCreateInfo.layout = layout;							// Pipeline Layout pipeline should use
+			pipelineCreateInfo.renderPass = renderPass;							// Render pass description the pipeline is compatible with
+			pipelineCreateInfo.subpass = 1;							 			// Subpass of render pass to use with pipeline
+
+			// Pipeline Derivatives : Can create multiple pipelines that derive from one another for optimisation
+			pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;	// Existing pipeline to derive from...
+			pipelineCreateInfo.basePipelineIndex = -1;				// or index of pipeline being created to derive from (in case creating multiple at once)							// second subpass
 		}
 
-		pipelineCreateInfo.pStages = shaderStages.data();
-		pipelineCreateInfo.layout = layout;
-		pipelineCreateInfo.subpass = 1;								// second subpass
-
 		// Create second pipeline
-		result = vkCreateGraphicsPipelines(context.logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
+		VkResult result = vkCreateGraphicsPipelines(context.logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create second graphics pipeline.");

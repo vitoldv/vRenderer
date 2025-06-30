@@ -165,6 +165,12 @@ protected:
 				inst.getSetLayout(DESC_SET_LAYOUT::LIGHT),
 				inst.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
 			};
+
+			// Defines push constant values
+			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			pushConstantRange.offset = 0;
+			pushConstantRange.size = sizeof(PushConstant);
+
 			VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 			pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();
