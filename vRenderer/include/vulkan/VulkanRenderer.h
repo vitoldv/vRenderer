@@ -47,6 +47,9 @@
 #include "VkShaderManager.h"
 #include "VkCubemap.h"
 #include "VkSkybox.h"
+#include "VkOutlinePipeline.h"
+#include "VkMainPipeline.h"
+#include "VkSecondPassPipeline.h"
 
 // preferrable surface settings (selected if supported)
 #define SURFACE_COLOR_FORMAT		VK_FORMAT_R8G8B8A8_UNORM
@@ -93,11 +96,10 @@ private:
 
 	// Graphics pipeline
 	VkRenderPass renderPass;
-	VkPipeline mainPipeline;
-	VkPipeline outlinePipeline;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline secondPipeline;
-	VkPipelineLayout secondPipelineLayout;
+	std::unique_ptr<VkMainPipeline> mainPipeline;
+	std::unique_ptr<VkSecondPassPipeline> secondPassPipeline;
+
+	std::unique_ptr<VkOutlinePipeline> outlinePipeline;
 
 	std::vector<VkFramebuffer> swapchainFramebuffers;
 	VkCommandPool graphicsCommandPool;

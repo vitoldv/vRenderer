@@ -225,9 +225,11 @@
     <ClInclude Include="vRenderer\include\utils.h" />
     <ClInclude Include="vRenderer\include\vulkan\interfaces\VkGraphicsPipelineBase.h" />
     <ClInclude Include="vRenderer\include\vulkan\interfaces\IVkCoreResourceHolder.h" />
-    <ClInclude Include="vRenderer\include\vulkan\interfaces\IGraphicsPipeline.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkCubemap.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkMainPipeline.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkOutlinePipeline.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkSecondPassPipeline.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkSetLayoutFactory.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMesh.h" />

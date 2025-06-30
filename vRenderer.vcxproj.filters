@@ -25,6 +25,15 @@
     <Filter Include="Source Files\imgui_src">
       <UniqueIdentifier>{543b4d15-03ad-4209-b183-46f919122637}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\vulkan">
+      <UniqueIdentifier>{25ff9abd-7295-4d99-8b43-aa7e686ab83a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\vulkan\interfaces">
+      <UniqueIdentifier>{16213463-6295-41d4-8625-30971eaba1ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\vulkan\pipelines">
+      <UniqueIdentifier>{31c9bd46-2c48-40ba-b76f-60a4ff3a75a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vRenderer\src\glad.c">
@@ -170,15 +179,6 @@
     <ClInclude Include="vRenderer\include\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VulkanRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VulkanUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\display_settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -195,9 +195,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\AppContext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\src\BaseCamera.h">
@@ -245,43 +242,16 @@
     <ClInclude Include="vRenderer\include\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkUniform.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkUniformDynamic.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkUniform.ipp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkUniformDynamic.ipp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\opengl\GLModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\opengl\GLMaterial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\opengl\OpenGLRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkSetLayoutFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vRenderer\include\Singleton.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\error_handling.h">
@@ -332,29 +302,74 @@
     <ClInclude Include="vRenderer\include\ThreadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\interfaces\IGraphicsPipeline.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vRenderer\include\vulkan\VulkanUtils.h">
+      <Filter>Header Files\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkCubemap.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkMesh.h">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkModel.h">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkSetLayoutFactory.h">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkShaderManager.h">
+      <Filter>Header Files\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkSimpleMesh.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkSkybox.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkSkyboxPipeline.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vRenderer\include\vulkan\VkTexture.h">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkUniform.hpp">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkUniform.ipp">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkUniformDynamic.hpp">
+      <Filter>Header Files\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkUniformDynamic.ipp">
+      <Filter>Header Files\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VulkanCore.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\interfaces\VkGraphicsPipelineBase.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vRenderer\include\vulkan\VulkanRenderer.h">
+      <Filter>Header Files\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\interfaces\IVkCoreResourceHolder.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\vulkan\interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkSkyboxPipeline.h">
+      <Filter>Header Files\vulkan\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\interfaces\VkGraphicsPipelineBase.h">
+      <Filter>Header Files\vulkan\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkOutlinePipeline.h">
+      <Filter>Header Files\vulkan\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkMainPipeline.h">
+      <Filter>Header Files\vulkan\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkSecondPassPipeline.h">
+      <Filter>Header Files\vulkan\pipelines</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -98,11 +98,9 @@ void VulkanRenderer::cleanup()
 		vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 	}
 	
-	vkDestroyPipeline(logicalDevice, secondPipeline, nullptr);
-	vkDestroyPipelineLayout(logicalDevice, secondPipelineLayout, nullptr);
-	vkDestroyPipeline(logicalDevice, outlinePipeline, nullptr);
-	vkDestroyPipeline(logicalDevice, mainPipeline, nullptr);
-	vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
+	secondPassPipeline->cleanup();
+	outlinePipeline->cleanup();
+	mainPipeline->cleanup();
 	vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
 	for (auto image : swapchainImages)
 	{
@@ -539,12 +537,6 @@ void VulkanRenderer::createRenderPass()
 void VulkanRenderer::createDescriptorSetLayouts()
 {
 	VkSetLayoutFactory::initialize(context);
-
-	// layout for second pass input attachment
-	// TODO: think of how it could be moved to VkSetLayoutFactory
-	// probably the idea for a solution will arise after shader manager implementation along
-	// with per-pass shader selection 
-	inputDescriptorSetLayout = createDescriptorSetLayout(2, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, context);
 }
 
 void VulkanRenderer::createTextureSampler()
@@ -631,7 +623,7 @@ void VulkanRenderer::createSubpassInputDescriptorSets()
 	// TODO: probably refactor this along with other places where descriptor sets are updated
 	inputDescriptorSets.resize(IMAGE_COUNT);
 
-	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, inputDescriptorSetLayout);
+	std::vector<VkDescriptorSetLayout> setLayouts(IMAGE_COUNT, VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::SECOND_PASS_INPUT));
 
 	VkDescriptorSetAllocateInfo setAllocInfo = {};
 	setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -684,292 +676,13 @@ void VulkanRenderer::createSubpassInputDescriptorSets()
 
 void VulkanRenderer::createGraphicsPipeline()
 {
+
 	VkShaderManager::initialize(context);
 	auto& shaderManager = VkShaderManager::instance();
 
-	///////////////////////////////////
-	// ----- FIRST PASS PIPELINES -----
-	///////////////////////////////////
-
-	// -------- MAIN PIPELINE --------
-
-	// SHADER STAGES SETUP
-	auto shaderStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::FIRST);
-
-	// DEFINING VERTEX ATTRIBUTES LAYOUT
-	VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
-	{
-		VkVertexInputBindingDescription bindingDescription = {};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		std::array<VkVertexInputAttributeDescription, 4> attributes;
-		attributes[0].binding = 0;										// should be same as above
-		attributes[0].location = 0;
-		attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributes[0].offset = offsetof(Vertex, pos);
-
-		attributes[1].binding = 0;										// should be same as above
-		attributes[1].location = 1;
-		attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributes[1].offset = offsetof(Vertex, color);
-
-		attributes[2].binding = 0;										// should be same as above
-		attributes[2].location = 2;
-		attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributes[2].offset = offsetof(Vertex, normal);
-
-		attributes[3].binding = 0;										// should be same as above
-		attributes[3].location = 3;
-		attributes[3].format = VK_FORMAT_R32G32_SFLOAT;
-		attributes[3].offset = offsetof(Vertex, uv);
-
-		// VERTEX INPUT
-		vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputCreateInfo.vertexBindingDescriptionCount = 1;
-		vertexInputCreateInfo.pVertexBindingDescriptions = &bindingDescription;					// list of vertex binding descriptions (data spacing/stride information)
-		vertexInputCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
-		vertexInputCreateInfo.pVertexAttributeDescriptions = attributes.data();				// list of vertex attribute descriptions (data format and where to bind to/from)
-	}
-
-	// INPUT ASSEMBLY
-	// defines how vertex data is perceived (topology)
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	{
-		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		inputAssembly.primitiveRestartEnable = VK_FALSE;
-	}
-
-	// VIEWPORT & SCISSORS
-	VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {};
-	{
-		VkViewport viewport = {};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)swapChainExtent.width;
-		viewport.height = (float)swapChainExtent.height;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
-		VkRect2D scissor = {};
-		scissor.offset = { 0,0 };
-		scissor.extent = swapChainExtent;
-
-		viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportStateCreateInfo.viewportCount = 1;
-		viewportStateCreateInfo.pViewports = &viewport;
-		viewportStateCreateInfo.scissorCount = 1;
-		viewportStateCreateInfo.pScissors = &scissor;
-	}
-
-	/*
-	// DYNAMIC STATES
-	// Dynamic states to enable
-	std::vector<VkDynamicState> dynamicStatesEnables;
-	dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);	// allows to change viewport on runtime using vkCmdSetViewport
-	dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
-
-	VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {};
-	dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStatesEnables.size());
-	dynamicStateCreateInfo.pDynamicStates = dynamicStatesEnables.data();
-	*/
-
-	// RASTERIZER
-	VkPipelineRasterizationStateCreateInfo rastCreateInfo = {};
-	{
-		rastCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rastCreateInfo.depthClampEnable = VK_FALSE;
-		rastCreateInfo.rasterizerDiscardEnable = VK_FALSE;
-		rastCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-		rastCreateInfo.lineWidth = 1.0f;
-		rastCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-		rastCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rastCreateInfo.depthBiasEnable = VK_FALSE;				// whether to add depth bias to fragments (good for stopping "shadow acne" in shadow mapping)
-	}
-
-	// MULTI SAMPLING
-	VkPipelineMultisampleStateCreateInfo multisamplingCreateInfo = {};
-	{
-		multisamplingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisamplingCreateInfo.sampleShadingEnable = VK_FALSE;
-		multisamplingCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	}
-
-	// COLOR SETUP DEFINITION (blending etc.)
-	VkPipelineColorBlendStateCreateInfo colorBlendingCreateInfo = {};
-	{
-		// BLENDING
-		// Blending decides how to blend a new color being written to a fragment, with the old value
-
-		// Blend Attachment State (how blending is handled)
-		VkPipelineColorBlendAttachmentState colorState = {};
-		colorState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT	// colors to apply blending to
-			| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorState.blendEnable = VK_TRUE;													// Enable blending
-
-		// Blending uses equation: (srcColorBlendFactor * new color) colorBlendOp (dstColorBlendFactor * old color)
-		colorState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-		colorState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		colorState.colorBlendOp = VK_BLEND_OP_ADD;
-
-		// Summarised: (VK_BLEND_FACTOR_SRC_ALPHA * new color) + (VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA * old color)
-		//			   (new color alpha * new color) + ((1 - new color alpha) * old color)
-
-		colorState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorState.alphaBlendOp = VK_BLEND_OP_ADD;
-		// Summarised: (1 * new alpha) + (0 * old alpha) = new alpha
-
-		colorBlendingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlendingCreateInfo.logicOpEnable = VK_FALSE;
-		colorBlendingCreateInfo.attachmentCount = 1;
-		colorBlendingCreateInfo.pAttachments = &colorState;
-	}
-
-	// PIPELINE LAYOUT SETUP (DESCRIPTORS AND PUSH CONSTANTS LAYOUT)
-	{
-		VkSetLayoutFactory& inst = VkSetLayoutFactory::instance();
-		std::array<VkDescriptorSetLayout, 5> setLayouts = {
-			inst.getSetLayout(DESC_SET_LAYOUT::CAMERA),
-			inst.getSetLayout(DESC_SET_LAYOUT::MATERIAL_SAMPLER),
-			inst.getSetLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM),
-			inst.getSetLayout(DESC_SET_LAYOUT::LIGHT),
-			inst.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
-		};
-		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
-		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();
-		pipelineLayoutCreateInfo.pSetLayouts = setLayouts.data();
-		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-		pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
-
-		// Create Pipeline Layout
-		VkResult result = vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to create Pipeline Layout!");
-		}
-	}
-
-	// DEPTH TESTING AND STENCIL TESTING SETUP
-	VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
-	{
-		depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		
-		depthStencilCreateInfo.depthTestEnable = VK_TRUE;
-		depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
-		depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-		depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
-
-		depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
-		VkStencilOpState stencilState = {};
-		stencilState.failOp = VK_STENCIL_OP_KEEP;
-		stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
-		stencilState.passOp = VK_STENCIL_OP_REPLACE;
-		stencilState.compareOp = VK_COMPARE_OP_ALWAYS;
-		stencilState.reference = 1;
-		stencilState.compareMask = 0xFF;
-		stencilState.writeMask = 0xFF;
-		depthStencilCreateInfo.front = stencilState;
-	}
-
-	// -- GRAPHICS PIPELINE CREATION --
-	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
-	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineCreateInfo.stageCount = 2;									// Number of shader stages
-	pipelineCreateInfo.pStages = shaderStages.data();							// List of shader stages
-	pipelineCreateInfo.pVertexInputState = &vertexInputCreateInfo;		// All the fixed function pipeline states
-	pipelineCreateInfo.pInputAssemblyState = &inputAssembly;
-	pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
-	pipelineCreateInfo.pDynamicState = nullptr;
-	pipelineCreateInfo.pRasterizationState = &rastCreateInfo;
-	pipelineCreateInfo.pMultisampleState = &multisamplingCreateInfo;
-	pipelineCreateInfo.pColorBlendState = &colorBlendingCreateInfo;
-	pipelineCreateInfo.pDepthStencilState = &depthStencilCreateInfo;
-	pipelineCreateInfo.layout = pipelineLayout;							// Pipeline Layout pipeline should use
-	pipelineCreateInfo.renderPass = renderPass;							// Render pass description the pipeline is compatible with
-	pipelineCreateInfo.subpass = 0;							 			// Subpass of render pass to use with pipeline
-
-	// Pipeline Derivatives : Can create multiple pipelines that derive from one another for optimisation
-	pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;	// Existing pipeline to derive from...
-	pipelineCreateInfo.basePipelineIndex = -1;				// or index of pipeline being created to derive from (in case creating multiple at once)
-
-	// Create Main Pipeline
-	VkResult result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &mainPipeline);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create the Main Pipeline!");
-	}
-
-	// -------- OUTLINE PIPELINE --------
-
-	// reusing structs from previous pipeline creation
-
-	// Setup different stencil and depth testing rules
-	VkStencilOpState stencilState = {};
-	stencilState.failOp = VK_STENCIL_OP_KEEP;
-	stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
-	stencilState.passOp = VK_STENCIL_OP_REPLACE;
-	stencilState.compareOp = VK_COMPARE_OP_NOT_EQUAL;
-	stencilState.reference = 1;
-	stencilState.compareMask = 0xFF;
-	stencilState.writeMask = 0x00;
-	depthStencilCreateInfo.front = stencilState;
-	depthStencilCreateInfo.depthTestEnable = VK_FALSE;
-
-	// Setup outline shaders
-	std::string o = "outline";
-	pipelineCreateInfo.pStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::FIRST, &o).data();
-
-	// Create Outline Pipeline
-	result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &outlinePipeline);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create the Outline Pipeline!");
-	}
-
-	///////////////////////////////////
-	// ----- SECOND PASS PIPELINE -----
-	///////////////////////////////////
-
-	shaderStages = shaderManager.getShaderStage(VkShaderManager::RenderPass::SECOND);
-
-	// No vertex data for second pass
-	vertexInputCreateInfo.vertexBindingDescriptionCount = 0;
-	vertexInputCreateInfo.pVertexBindingDescriptions = nullptr;
-	vertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputCreateInfo.pVertexAttributeDescriptions = nullptr;
-
-	// Don't want to write to depth buffer
-	depthStencilCreateInfo.depthWriteEnable = VK_FALSE;
-
-	// Create new pipeline layout
-	VkPipelineLayoutCreateInfo secondPipelineLayoutCreateInfo = {};
-	secondPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	secondPipelineLayoutCreateInfo.setLayoutCount = 1;
-	secondPipelineLayoutCreateInfo.pSetLayouts = &inputDescriptorSetLayout;
-	secondPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	secondPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-
-	result = vkCreatePipelineLayout(logicalDevice, &secondPipelineLayoutCreateInfo, nullptr, &secondPipelineLayout);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create second pipeline layout.");
-	}
-
-	pipelineCreateInfo.pStages = shaderStages.data();
-	pipelineCreateInfo.layout = secondPipelineLayout;
-	pipelineCreateInfo.subpass = 1;								// second subpass
-
-	// Create second pipeline
-	result = vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &secondPipeline);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create second graphics pipeline.");
-	}
+	mainPipeline = std::make_unique<VkMainPipeline>(renderPass, context);
+	outlinePipeline = std::make_unique<VkOutlinePipeline>(renderPass, context);
+	secondPassPipeline = std::make_unique<VkSecondPassPipeline>(renderPass, context);
 }
 
 void VulkanRenderer::createFramebuffers()
@@ -1100,33 +813,32 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	}
 
 	// bind pipeline to be used with render pass
-	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mainPipeline);
-
+	mainPipeline->cmdBind(commandBuffers[currentImage]);
 	// bind (static) uniforms
-	vpUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
-	lightUniform->cmdBind(currentImage, commandBuffers[currentImage], pipelineLayout);
+	vpUniform->cmdBind(currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
+	lightUniform->cmdBind(currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
 
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
-		colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], pipelineLayout);
-		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera, true);
+		colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], mainPipeline->getLayout());
+		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), *sceneCamera, true);
 	}
 
 	if (renderSettings->enableOutline)
 	{
-		vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, outlinePipeline);
+		outlinePipeline->cmdBind(commandBuffers[currentImage]);
 		for (int i = 0; i < modelsToRender.size(); i++)
 		{
-			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], pipelineLayout, *sceneCamera, false);
+			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), *sceneCamera, false);
 		}
 	}
 
 	// Start second subpass
 	vkCmdNextSubpass(commandBuffers[currentImage], VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipeline);
-	vkCmdBindDescriptorSets(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPipelineLayout,
+	secondPassPipeline->cmdBind(commandBuffers[currentImage]);
+	vkCmdBindDescriptorSets(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPassPipeline->getLayout(),
 		0, 1, &inputDescriptorSets[currentImage], 0, nullptr);
 	vkCmdDraw(commandBuffers[currentImage], 3, 1, 0, 0);
 
