@@ -831,16 +831,14 @@ void VulkanRenderer::createGraphicsPipeline()
 
 	// PIPELINE LAYOUT SETUP (DESCRIPTORS AND PUSH CONSTANTS LAYOUT)
 	{
-		// Each layout should correspond to the Descriptor Set type of the same index in shader
-		// Example: layout(set = 0) == layout at index 0 here
-		//std::array<VkDescriptorSetLayout, 4> descriptorSetLayouts = {
-		//	vpUniforms[0]->getDescriptorLayout(),
-		//	samplerDescriptorSetLayout,
-		//	lightUniforms[0]->getDescriptorLayout(),
-		//	colorUniformsDynamic[0]->getDescriptorLayout()
-		//};
-
-		auto setLayouts = VkSetLayoutFactory::instance().getLayouts();
+		VkSetLayoutFactory& inst = VkSetLayoutFactory::instance();
+		std::array<VkDescriptorSetLayout, 5> setLayouts = {
+			inst.getSetLayout(DESC_SET_LAYOUT::CAMERA),
+			inst.getSetLayout(DESC_SET_LAYOUT::MATERIAL_SAMPLER),
+			inst.getSetLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM),
+			inst.getSetLayout(DESC_SET_LAYOUT::LIGHT),
+			inst.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
+		};
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();

@@ -74,7 +74,7 @@ void VkSkybox::createFromCubemap(const Cubemap& cubemap)
 	// DESCRIPTOR
 	{
 		VkDescriptorSetAllocateInfo allocInfo = {};
-		VkDescriptorSetLayout samplerSetLayout = createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context);
+		VkDescriptorSetLayout samplerSetLayout = VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::CUBEMAP_SAMPLER);
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		allocInfo.descriptorPool = samplerDescriptorPool;
 		allocInfo.descriptorSetCount = 1;

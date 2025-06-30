@@ -11,11 +11,12 @@ using namespace VkUtils;
 
 enum class DESC_SET_LAYOUT
 {
-	CAMERA			= 0,
-	MATERIAL_SAMPLER		= 1,
-	MATERIAL_UNIFORM		= 2,
-	LIGHT			= 3,		
-	DYNAMIC_COLOR	= 4
+	CAMERA,
+	MATERIAL_SAMPLER,
+	MATERIAL_UNIFORM,
+	LIGHT,		
+	DYNAMIC_COLOR,
+	CUBEMAP_SAMPLER 
 };
 
 class VkSetLayoutFactory : public Singleton<VkSetLayoutFactory> 
@@ -26,7 +27,6 @@ public:
 
 	VkDescriptorSetLayout getSetLayout(DESC_SET_LAYOUT layout);
 	uint32_t getSetIndexForLayout(DESC_SET_LAYOUT layout);
-	std::vector<VkDescriptorSetLayout> getLayouts();
 	void cleanup();
 
 protected:

@@ -74,19 +74,6 @@ protected:
 			viewportStateCreateInfo.pScissors = &scissor;
 		}
 
-		/*
-		// DYNAMIC STATES
-		// Dynamic states to enable
-		std::vector<VkDynamicState> dynamicStatesEnables;
-		dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);	// allows to change viewport on runtime using vkCmdSetViewport
-		dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
-
-		VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {};
-		dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStatesEnables.size());
-		dynamicStateCreateInfo.pDynamicStates = dynamicStatesEnables.data();
-		*/
-
 		// RASTERIZER
 		VkPipelineRasterizationStateCreateInfo rastCreateInfo = {};
 		{
@@ -141,9 +128,10 @@ protected:
 
 		// PIPELINE LAYOUT SETUP (DESCRIPTORS AND PUSH CONSTANTS LAYOUT)
 		{
+			VkSetLayoutFactory& ins = VkSetLayoutFactory::instance();
 			std::array<VkDescriptorSetLayout, 2> setLayouts = {
-				VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::CAMERA),
-				createDescriptorSetLayout(1, VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, context) 
+				ins.getSetLayout(DESC_SET_LAYOUT::CAMERA),
+				ins.getSetLayout(DESC_SET_LAYOUT::CUBEMAP_SAMPLER)
 			};
 
 			// Defines push constant values
