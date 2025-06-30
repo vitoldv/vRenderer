@@ -66,4 +66,7 @@ private:
 	*/
 	ImGuiIO imguiIO;
 	std::function<void()> imguiCallback;
+
+	// Inherited via IRenderer
+	bool setSkybox(const std::shared_ptr<Cubemap> cubemap) override;
 };

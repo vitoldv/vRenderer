@@ -55,6 +55,9 @@ void VulkanRenderer::cleanup()
 
 	cleanupImgui();
 
+	skyboxPipeline->cleanup();
+	skybox->cleanup();
+
 	// Cleanup models
 	for (auto& model : modelsToRender)
 	{
@@ -368,6 +371,7 @@ void VulkanRenderer::createSwapChain()
 	}
 
 	context.imageCount = IMAGE_COUNT;
+	context.imageExtent = swapChainExtent;
 }
 
 void VulkanRenderer::createDepthBuffer()
@@ -559,13 +563,11 @@ void VulkanRenderer::createTextureSampler()
 	createInfo.minLod = 0.0f;
 	createInfo.anisotropyEnable = VK_FALSE;
 	createInfo.maxAnisotropy = 16;
-
 	VkResult result = vkCreateSampler(logicalDevice, &createInfo, nullptr, &textureSampler);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create texture sampler.");
 	}
-
 	samplerDescriptorCreateInfo.sampler = textureSampler;
 }
 
@@ -620,7 +622,7 @@ void VulkanRenderer::createUniforms()
 	colorUniformsDynamic = std::make_unique<VkUniformDynamic<UboDynamicColor>>(
 		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
 		dynamicUniformDescriptorPool,
-		layoutFactory.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR), 
+		layoutFactory.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
 		context);
 }
 
@@ -1090,6 +1092,14 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 
 	// Begin render pass
 	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
+
+	// DRAW SKYBOX
+	if (renderSkybox && skybox != nullptr)
+	{
+		skyboxPipeline->cmdBind(commandBuffers[currentImage]);
+		vpUniform->cmdBind(currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
+		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline, *sceneCamera);
+	}
 
 	// bind pipeline to be used with render pass
 	vkCmdBindPipeline(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, mainPipeline);
@@ -1654,6 +1664,12 @@ void VulkanRenderer::setupImgui()
 
 	ImGui::StyleColorsDark();
 
+	ImGuiStyle& style = ImGui::GetStyle();
+	float xscale, yscale;
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+	style.ScaleAllSizes(xscale);
+
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForVulkan(window, true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
@@ -1724,4 +1740,12 @@ void VulkanRenderer::cleanupImgui()
 	ImGui::DestroyContext();
 
 	vkDestroyDescriptorPool(logicalDevice, imguiDescriptorPool, nullptr);
+}
+
+bool VulkanRenderer::setSkybox(const std::shared_ptr<Cubemap> cubemap)
+{
+	skybox = std::make_unique<VkSkybox>(*cubemap, context);
+	skyboxPipeline = std::make_unique<VkSkyboxPipeline>(renderPass, context);
+	renderSkybox = true;
+	return renderSkybox;
 }

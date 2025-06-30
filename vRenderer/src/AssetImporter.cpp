@@ -30,3 +30,8 @@ std::shared_ptr<Model> AssetImporter::importModel(std::string modelName)
 
 	return modelImporter->importModel(modelFile, *imageImporter, true);
 }
+
+std::shared_ptr<Texture> AssetImporter::importTexture(std::string textureName)
+{
+	return imageImporter->importTexture(textureName, true);
+}

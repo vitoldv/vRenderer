@@ -17,6 +17,7 @@ std::shared_ptr<Texture> StbImageImporter::importTexture(std::filesystem::path t
 	}
 
 	std::shared_ptr<Texture> texture = std::make_shared<Texture>();
+	texture->name = textureFilePath.stem().string();
 	texture->ptr = static_cast<uint8_t*>(image);
 	texture->width = static_cast<uint32_t>(width);
 	texture->height = static_cast<uint32_t>(height);

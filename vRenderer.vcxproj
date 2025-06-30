@@ -166,12 +166,15 @@
     <ClCompile Include="vRenderer\src\Model.cpp" />
     <ClCompile Include="vRenderer\src\StbImageImporter.cpp" />
     <ClCompile Include="vRenderer\src\ThreadDispatcher.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkCubemap.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkSetLayoutFactory.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkModel.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkShaderManager.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkSimpleMesh.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkSkybox.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkTexture.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VulkanRenderer.cpp" />
   </ItemGroup>
@@ -220,12 +223,16 @@
     <ClInclude Include="vRenderer\include\ThreadDispatcher.h" />
     <ClInclude Include="vRenderer\include\ThreadPool.h" />
     <ClInclude Include="vRenderer\include\utils.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkCubemap.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkSetLayoutFactory.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMesh.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkModel.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkShaderManager.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkSimpleMesh.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkSkybox.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkSkyboxPipeline.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkTexture.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkUniform.hpp" />
     <ClInclude Include="vRenderer\include\vulkan\VkUniform.ipp" />
