@@ -18,12 +18,6 @@ protected:
 
 	virtual void describe() override
 	{
-        ///////////////////////////////////
-        // ----- FIRST PASS PIPELINES -----
-        ///////////////////////////////////
-
-        // -------- MAIN PIPELINE --------
-
         // SHADER STAGES SETUP
         std::string o = "outline";
         VkShaderManager& shaderManager = VkShaderManager::instance();
@@ -96,19 +90,6 @@ protected:
             viewportStateCreateInfo.scissorCount = 1;
             viewportStateCreateInfo.pScissors = &scissor;
         }
-
-        /*
-        // DYNAMIC STATES
-        // Dynamic states to enable
-        std::vector<VkDynamicState> dynamicStatesEnables;
-        dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);    // allows to change viewport on runtime using vkCmdSetViewport
-        dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
-
-        VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {};
-        dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStatesEnables.size());
-        dynamicStateCreateInfo.pDynamicStates = dynamicStatesEnables.data();
-        */
 
         // RASTERIZER
         VkPipelineRasterizationStateCreateInfo rastCreateInfo = {};
@@ -190,25 +171,22 @@ protected:
 
         // DEPTH TESTING AND STENCIL TESTING SETUP
         VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo = {};
-        {
-            depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
+        depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+        depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
+        depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
+        VkStencilOpState stencilState = {};
+        stencilState.failOp = VK_STENCIL_OP_KEEP;
+        stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
+        stencilState.passOp = VK_STENCIL_OP_REPLACE;
+        stencilState.compareOp = VK_COMPARE_OP_NOT_EQUAL;
+        stencilState.reference = 1;
+        stencilState.compareMask = 0xFF;
+        stencilState.writeMask = 0x00;
+        depthStencilCreateInfo.front = stencilState;
+        depthStencilCreateInfo.depthTestEnable = VK_FALSE;
 
-            depthStencilCreateInfo.depthTestEnable = VK_TRUE;
-            depthStencilCreateInfo.depthWriteEnable = VK_TRUE;
-            depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-            depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
-
-            depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
-            VkStencilOpState stencilState = {};
-            stencilState.failOp = VK_STENCIL_OP_KEEP;
-            stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
-            stencilState.passOp = VK_STENCIL_OP_REPLACE;
-            stencilState.compareOp = VK_COMPARE_OP_ALWAYS;
-            stencilState.reference = 1;
-            stencilState.compareMask = 0xFF;
-            stencilState.writeMask = 0xFF;
-            depthStencilCreateInfo.front = stencilState;
-        }
 
         // -- GRAPHICS PIPELINE CREATION --
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
@@ -230,20 +208,6 @@ protected:
         // Pipeline Derivatives : Can create multiple pipelines that derive from one another for optimisation
         pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;    // Existing pipeline to derive from...
         pipelineCreateInfo.basePipelineIndex = -1;                // or index of pipeline being created to derive from (in case creating multiple at once)
-
-        // -------- OUTLINE PIPELINE --------
-
-        // Setup different stencil and depth testing rules
-        VkStencilOpState stencilState = {};
-        stencilState.failOp = VK_STENCIL_OP_KEEP;
-        stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
-        stencilState.passOp = VK_STENCIL_OP_REPLACE;
-        stencilState.compareOp = VK_COMPARE_OP_NOT_EQUAL;
-        stencilState.reference = 1;
-        stencilState.compareMask = 0xFF;
-        stencilState.writeMask = 0x00;
-        depthStencilCreateInfo.front = stencilState;
-        depthStencilCreateInfo.depthTestEnable = VK_FALSE;
 
         // Create Outline Pipeline
         VkResult result = vkCreateGraphicsPipelines(context.logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
