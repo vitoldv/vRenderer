@@ -38,7 +38,7 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 	return meshes;
 }
 
-void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera, bool bindMaterials)
+void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials)
 {
 	for (int i = 0; i < meshCount; i++)
 	{
@@ -55,7 +55,6 @@ void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelin
 			PushConstant push = {};
 			push.model = mesh->getTransformMat();
 			push.normalMatrix = glm::transpose(glm::inverse(mesh->getTransformMat()));
-			push.viewPosition = camera.getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
 		}

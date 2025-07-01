@@ -20,7 +20,7 @@ void VkMaterial::cmdBind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkP
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
 		samplerDescriptorSetIndex, 1, &samplerDescriptorSet, 0, nullptr);
 
-	componentsUniform->cmdBind(imageIndex, commandBuffer, pipelineLayout);
+	componentsUniform->cmdBind(uniformDescriptorSetIndex, imageIndex, commandBuffer, pipelineLayout);
 }
 
 /// <summary>
@@ -32,8 +32,9 @@ void VkMaterial::cmdBind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkP
 void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDescriptorSetCreateInfo createInfo)
 {
 	auto& setLayoutFactory = VkSetLayoutFactory::instance();
-	samplerDescriptorSetIndex = setLayoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::MATERIAL_SAMPLER);
-	uniformDescriptorSetIndex = setLayoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM);
+	// Find the way to pass it through model->draw method
+	samplerDescriptorSetIndex = 1;
+	uniformDescriptorSetIndex = 2;
 
 	// Create descriptor pool for material components uniform
 	// Each swapchain image requires its own uniform i.e. descriptor
@@ -55,7 +56,6 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 
 		// Create uniform to hold material components data
 		componentsUniform = std::make_unique<VkUniform<UboMaterial>>(
-			uniformDescriptorSetIndex,
 			uniformDescriptorPool,
 			// TODO get rid of these embarassment
 			setLayoutFactory.getSetLayout(DESC_SET_LAYOUT::MATERIAL_UNIFORM),

@@ -36,12 +36,20 @@
 #include "Lighting.h"
 #include "ModelInstance.h"
 #include "VkModel.h"
+#include "VkSimpleMesh.h"
 #include "VulkanUtils.h"
 #include "VkUniform.hpp"
 #include "VkUniformDynamic.hpp"
 #include "VkImageWrapper.h"
 #include "VkSetLayoutFactory.h"
 #include "BaseCamera.h"
+#include "VkSkyboxPipeline.h"
+#include "VkShaderManager.h"
+#include "VkCubemap.h"
+#include "VkSkybox.h"
+#include "VkOutlinePipeline.h"
+#include "VkMainPipeline.h"
+#include "VkSecondPassPipeline.h"
 
 // preferrable surface settings (selected if supported)
 #define SURFACE_COLOR_FORMAT		VK_FORMAT_R8G8B8A8_UNORM
@@ -88,11 +96,10 @@ private:
 
 	// Graphics pipeline
 	VkRenderPass renderPass;
-	VkPipeline mainPipeline;
-	VkPipeline outlinePipeline;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline secondPipeline;
-	VkPipelineLayout secondPipelineLayout;
+	std::unique_ptr<VkMainPipeline> mainPipeline;
+	std::unique_ptr<VkSecondPassPipeline> secondPassPipeline;
+
+	std::unique_ptr<VkOutlinePipeline> outlinePipeline;
 
 	std::vector<VkFramebuffer> swapchainFramebuffers;
 	VkCommandPool graphicsCommandPool;
@@ -136,6 +143,10 @@ private:
 
 	// Textures
 	VkSampler textureSampler;
+
+	bool renderSkybox;
+	std::unique_ptr<VkSkybox> skybox;
+	std::unique_ptr<VkSkyboxPipeline> skyboxPipeline;
 
 	/*
 	---- IMGUI fields -----
@@ -219,6 +230,8 @@ private:
 	void createImguiDescriptorPool();
 	ImDrawData* drawImgui();
 	void cleanupImgui();
+
+	bool setSkybox(const std::shared_ptr<Cubemap> cubemap) override;
 };
 
 

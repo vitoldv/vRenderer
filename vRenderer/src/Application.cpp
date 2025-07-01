@@ -93,6 +93,12 @@ int Application::initApplication()
 
 	renderer->addLightSources(lightSources.data(), lightSources.size());
 
+	// Load and set skybox
+	assetImporter->importCubemap_async("skybox", [this](std::shared_ptr<Cubemap> cubemap) {
+		skyboxCubemap = cubemap;
+		renderer->setSkybox(skyboxCubemap);
+		});
+
 	return 0;
 }
 

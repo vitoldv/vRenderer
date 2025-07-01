@@ -16,13 +16,13 @@ class VkUniformDynamic
 {
 public:
 
-	VkUniformDynamic(uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
+	VkUniformDynamic(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
 	~VkUniformDynamic();
 
 	size_t getBufferSize() const;
 	void update(uint32_t imageIndex, const T* data, uint32_t drawCount);
 	void updateAll(const T* data, uint32_t drawCount);
-	void cmdBind(uint32_t imageIndex, uint32_t drawIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+	void cmdBind(uint32_t setIndex, uint32_t imageIndex, uint32_t drawIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 	const VkDescriptorSetLayout getDescriptorLayout() const;
 
 	void cleanup();
@@ -30,7 +30,6 @@ public:
 private:
 
 	const uint32_t imageCount;
-	const uint32_t descriptorSetIndex;
 
 	T* transferSpace;
 	size_t alignment;

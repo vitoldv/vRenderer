@@ -11,6 +11,8 @@
 #define ASSETS_FOLDER "vRenderer\\assets\\"
 #define MODEL_ASSETS_FOLDER "vRenderer\\assets\\models\\"
 #define MODEL_ASSETS(asset) concat(MODEL_ASSETS_FOLDER, asset)
+#define CUBEMAP_ASSETS_FOLDER "vRenderer\\assets\\cubemaps\\"
+#define CUBEMAP_ASSETS(asset) concat(CUBEMAP_ASSETS_FOLDER, asset)
 
 using Model_future = std::future<std::shared_ptr<Model>>;
 
@@ -21,9 +23,20 @@ public:
 	AssetImporter(IModelAssetImporter* modelImporter, IImageAssetImporter* imageImporter);
 
 	std::shared_ptr<Model> importModel(std::string modelName);
+	std::shared_ptr<Texture> importTexture(std::string textureName);
+	std::shared_ptr<Cubemap> importCubemap(std::string cubemapName);
 
 	template<typename Callback>
 	void importModel_async(std::string modelName, Callback onFinish);
+
+	template<typename Callback>
+	void importTexture_async(std::string textureName, Callback onFinish);
+
+	template<typename Callback>
+	void importTextures_async(const std::vector<std::string>& textureNames, Callback onFinish);
+
+	template<typename Callback>
+	void importCubemap_async(std::string cubemapName, Callback onFinish);
 
 private:
 
@@ -41,11 +54,45 @@ static inline const char* concat(const char* a, const char* b) {
 }
 
 template<typename Callback>
-void AssetImporter::importModel_async(std::string modelName, Callback onFinish)
+inline void AssetImporter::importModel_async(std::string modelName, Callback onFinish)
 {
 	auto* dispatcher = &ThreadDispatcher::instance();
 	dispatcher->worker([this, modelName, onFinish, dispatcher]() {
 		auto model = importModel(modelName);
 		dispatcher->main(onFinish, model);
+		});
+}
+
+template<typename Callback>
+inline void AssetImporter::importTexture_async(std::string textureName, Callback onFinish)
+{
+	auto* dispatcher = &ThreadDispatcher::instance();
+	dispatcher->worker([this, textureName, onFinish, dispatcher]() {
+		auto texture = importTexture(textureName);
+		dispatcher->main(onFinish, texture);
+		});
+}
+
+template<typename Callback>
+inline void AssetImporter::importTextures_async(const std::vector<std::string>& textureNames, Callback onFinish)
+{
+	auto* dispatcher = &ThreadDispatcher::instance();
+	dispatcher->worker([this, textureNames, onFinish, dispatcher]() {
+		std::vector<std::shared_ptr<Texture>> importedTextures(textureNames.size());
+		for (int i = 0; i < textureNames.size(); ++i)
+		{
+			importedTextures[i] = importTexture(textureNames[i]);
+		}
+		dispatcher->main(onFinish, importedTextures);
+		});
+}
+
+template<typename Callback>
+inline void AssetImporter::importCubemap_async(std::string cubemapName, Callback onFinish)
+{
+	auto* dispatcher = &ThreadDispatcher::instance();
+	dispatcher->worker([this, cubemapName, onFinish, dispatcher]() {
+		std::shared_ptr<Cubemap> cubemap = importCubemap(cubemapName);
+		dispatcher->main(onFinish, cubemap);
 		});
 }

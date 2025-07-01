@@ -70,6 +70,8 @@ private:
 	std::unique_ptr<AssetBrowser> assetBrowser;
 	std::unique_ptr<SceneGraphWindow> sceneGraphWindow;
 
+	std::shared_ptr<Cubemap> skyboxCubemap;
+
 	void initWindow(std::string title, const int width, const int height);
 	int initApplication();
 	void loadUserPrefs();

@@ -1,4 +1,4 @@
-#version 450        // GLSL 4.5
+#version 450 core
 
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aColor;
@@ -17,19 +17,14 @@ layout(push_constant) uniform Push {
 } push;
 
 // Interpolated values
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragUv;
-layout(location = 2) out vec3 fragNormal;
-layout(location = 3) out vec3 fragPos;
-
-// Flat values (mesh related)
-layout(location = 4) flat out vec3 outViewPos;
+layout(location = 0) out vec3 fragPos;
+layout(location = 1) out vec3 fragNormal;
+// Flat values
+layout(location = 2) flat out vec3 outViewPos;
 
 void main() {
     gl_Position = uboProjectionView.projection * uboProjectionView.view * push.model * vec4(aPos, 1.0);
     
-    fragColor = aColor;
-    fragUv = aUv;
     fragNormal = (push.normalMatrix * vec4(aNormal, 1.0)).xyz;
     fragPos = (push.model * vec4(aPos, 1.0)).xyz;
 

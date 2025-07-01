@@ -20,6 +20,8 @@
 #define MAX_OBJECTS 1
 #define MAX_LIGHT_SOURCES 10
 
+const uint32_t SKYBOX_RESERVED_ID = 12314;
+
 namespace VkUtils
 {
 	struct Vertex
@@ -30,10 +32,11 @@ namespace VkUtils
 		glm::vec2 uv;
 	};
 
-	struct UboViewProjection
+	struct ALIGN_STD140 UboViewProjection
 	{
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::vec3 viewPosition;
 	};
 
 	/// <summary>
@@ -102,8 +105,6 @@ namespace VkUtils
 		// normal matrix for proper normals transformation
 		// P.S. can be as well used to transform any direction vector in world space
 		glm::mat4 normalMatrix;
-		// the position of a viewer (camera)
-		glm::vec3 viewPosition;
 	};
 
 	const std::vector<glm::vec3> meshVertices = {
@@ -148,7 +149,8 @@ namespace VkUtils
 		
 		// Amount of images in swapchain
 		uint32_t imageCount;
-		
+		VkExtent2D imageExtent;
+
 		VkDeviceSize minUniformBufferOffset;
 	};
 
@@ -327,7 +329,7 @@ namespace VkUtils
 	}
 
 	static void copyImageBuffer(VkDevice logicalDevice, VkQueue transferQueue, VkCommandPool transferCommandPool, VkBuffer srcBuffer,
-		VkImage image, uint32_t width, uint32_t height)
+		VkImage image, uint32_t width, uint32_t height, uint32_t layerCount = 1)
 	{
 		VkCommandBuffer transferCommandBuffer = beginCommandBuffer(logicalDevice, transferCommandPool);
 
@@ -338,7 +340,7 @@ namespace VkUtils
 		imageRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageRegion.imageSubresource.mipLevel = 0;
 		imageRegion.imageSubresource.baseArrayLayer = 0;
-		imageRegion.imageSubresource.layerCount = 1;
+		imageRegion.imageSubresource.layerCount = layerCount;
 		imageRegion.imageOffset = { 0,0,0 };
 		imageRegion.imageExtent = { width, height, 1 };
 
@@ -394,7 +396,7 @@ namespace VkUtils
 	}
 
 	static void transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool commandPool, VkImage image,
-		VkImageLayout oldLayout, VkImageLayout newLayout)
+		VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t layerCount = 1)
 	{
 		VkCommandBuffer commandBuffer = beginCommandBuffer(device, commandPool);
 
@@ -409,7 +411,7 @@ namespace VkUtils
 		imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
 		imageMemoryBarrier.subresourceRange.levelCount = 1;
 		imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
-		imageMemoryBarrier.subresourceRange.layerCount = 1;
+		imageMemoryBarrier.subresourceRange.layerCount = layerCount;
 
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
@@ -443,12 +445,13 @@ namespace VkUtils
 		endAndSubmitCommandBuffer(device, commandPool, queue, commandBuffer);
 	}
 
-	static VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkContext context)
+	static VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkContext context,
+		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D, uint32_t layerCount = 1)
 	{
 		VkImageViewCreateInfo imageViewCreateInfo = {};
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.image = image;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.viewType = viewType;
 		imageViewCreateInfo.format = format;
 		imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;	// Allows remapping of rgba components to other rgba values
 		imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -460,7 +463,7 @@ namespace VkUtils
 		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;				// Start mipmap level to view from
 		imageViewCreateInfo.subresourceRange.levelCount = 1;				// number of mipmap levels to view
 		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;			// start array level to view from
-		imageViewCreateInfo.subresourceRange.layerCount = 1;				// number of array layers to view
+		imageViewCreateInfo.subresourceRange.layerCount = layerCount;		// number of array layers to view
 
 		VkImageView imageView;
 		VkResult result = vkCreateImageView(context.logicalDevice, &imageViewCreateInfo, nullptr, &imageView);
@@ -472,15 +475,15 @@ namespace VkUtils
 		return imageView;
 	}
 
-	static VkDescriptorPool createDescriptorPool(VkDescriptorType type, uint32_t size, VkDescriptorPoolCreateFlagBits flags, VkContext context)
+	static VkDescriptorPool createDescriptorPool(VkDescriptorType type, uint32_t maxSets, VkDescriptorPoolCreateFlagBits flags, VkContext context)
 	{
 		VkDescriptorPoolSize poolSize = {};
 		poolSize.type = type;
-		poolSize.descriptorCount = size;
+		poolSize.descriptorCount = maxSets;
 
 		VkDescriptorPoolCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		createInfo.maxSets = size;
+		createInfo.maxSets = maxSets;
 		createInfo.poolSizeCount = 1;
 		createInfo.pPoolSizes = &poolSize;
 		createInfo.flags = flags;
@@ -496,7 +499,7 @@ namespace VkUtils
 	}
 
 	static VkImage createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags userFlags, VkMemoryPropertyFlags propertyFlags, VkDeviceMemory* imageMemory,
-		VkContext context)
+		VkContext context, VkImageCreateFlags imageFlags = 0, uint32_t layers = 1)
 	{
 		// Create the image
 		VkImageCreateInfo imageCreateInfo = {};
@@ -506,13 +509,14 @@ namespace VkUtils
 		imageCreateInfo.extent.height = height;
 		imageCreateInfo.extent.depth = 1;								// 1 because there is no 3D aspect
 		imageCreateInfo.mipLevels = 1;
-		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.arrayLayers = layers;
 		imageCreateInfo.format = format;
 		imageCreateInfo.tiling = tiling;
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;		// layout of image data on creation
 		imageCreateInfo.usage = userFlags;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;				// number of samples for multisampling
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;		// whether image can be shared between queues
+		imageCreateInfo.flags = imageFlags;
 
 		VkImage image;
 		VkResult result = vkCreateImage(context.logicalDevice, &imageCreateInfo, nullptr, &image);

@@ -75,6 +75,11 @@ void OpenGLRenderer::drawOutline()
 	glEnable(GL_DEPTH_TEST);
 }
 
+bool OpenGLRenderer::setSkybox(const std::shared_ptr<Cubemap> cubemap)
+{
+	return false;
+}
+
 void OpenGLRenderer::draw()
 {
 	// IMGUI rendering

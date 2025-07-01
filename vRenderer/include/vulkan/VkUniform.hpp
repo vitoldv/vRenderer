@@ -11,19 +11,18 @@ class VkUniform
 {
 public:
 
-	VkUniform(uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
+	VkUniform(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context);
 	~VkUniform();
 
 	void update(uint32_t imageIndex, const T& data);
 	void updateAll(const T& data);
-	void cmdBind(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) const;
+	void cmdBind(uint32_t setIndex, uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) const;
 
 	void cleanup();
 
 protected:
 
 	const uint32_t imageCount;
-	const uint32_t descriptorSetIndex;
 
 	std::vector<VkBuffer> buffer;
 	std::vector<VkDeviceMemory> memory;

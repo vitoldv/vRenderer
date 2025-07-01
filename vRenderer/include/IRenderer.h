@@ -33,6 +33,7 @@ public:
 	virtual void bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings) = 0;
 	virtual void setCamera(const std::shared_ptr<BaseCamera> camera) = 0;
 	virtual bool addLightSources(const std::shared_ptr<Light> lights[], uint32_t count) = 0;
+	virtual bool setSkybox(const std::shared_ptr<Cubemap> cubemap) = 0;
 
 	virtual void cleanup() = 0;
 };
