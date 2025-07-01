@@ -22,7 +22,44 @@ void Application::initWindow(std::string title, const int width, const int heigh
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	}
 
-	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+	GLFWmonitor* primaryMonitor = nullptr;
+	int actualWidth = width;
+	int actualHeight = height;
+	int xpos, ypos, workWidth, workHeight;
+	float dpiScale = 1.0f;
+	if (IS_FULL_SCREEN) 
+	{
+		// Get the primary monitor
+		primaryMonitor = glfwGetPrimaryMonitor();
+		if (!primaryMonitor) {
+			throw std::runtime_error("Failed to get primary monitor");
+		}
+
+		// Get the video mode of the primary monitor
+		const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+		if (!mode) {
+			throw std::runtime_error("Failed to get video mode for primary monitor");
+		}
+		
+		glfwGetMonitorWorkarea(primaryMonitor, &xpos, &ypos, &workWidth, &workHeight);
+
+		float xscale, yscale;
+		glfwGetMonitorContentScale(primaryMonitor, &xscale, &yscale);
+		dpiScale = xscale;
+
+		// Set width and height to the monitor's resolution
+		actualWidth = mode->width;
+		actualHeight = mode->height;
+		std::cout << "Creating fullscreen window at resolution: " << actualWidth << "x" << actualHeight << std::endl;
+	}
+	else 
+	{
+		std::cout << "Creating window at resolution: " << actualWidth << "x" << actualHeight << std::endl;
+	}
+
+	window = glfwCreateWindow(workWidth, workHeight, title.c_str(), nullptr, nullptr);
 
 	if (currentApi == RenderSettings::API::OPENGL)
 	{
