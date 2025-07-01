@@ -1,6 +1,5 @@
 template<typename T>
-inline VkUniformDynamic<T>::VkUniformDynamic(uint32_t descriptorSetIndex, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
-	descriptorSetIndex(descriptorSetIndex),
+inline VkUniformDynamic<T>::VkUniformDynamic(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkContext context) :
 	imageCount(context.imageCount)
 {
 	this->context = context;
@@ -120,11 +119,11 @@ inline void VkUniformDynamic<T>::create()
 }
 
 template<typename T>
-inline void VkUniformDynamic<T>::cmdBind(uint32_t imageIndex, uint32_t drawIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
+inline void VkUniformDynamic<T>::cmdBind(uint32_t setIndex, uint32_t imageIndex, uint32_t drawIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 {
 	uint32_t dynamicOffset = static_cast<uint32_t>(alignment) * drawIndex;
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-		descriptorSetIndex, 1, &descriptorSet[imageIndex], 1, &dynamicOffset);
+		setIndex, 1, &descriptorSet[imageIndex], 1, &dynamicOffset);
 }
 
 template<typename T>

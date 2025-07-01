@@ -38,7 +38,7 @@ const std::vector<VkMesh*>& VkModel::getMeshes() const
 	return meshes;
 }
 
-void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, const BaseCamera& camera, bool bindMaterials)
+void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials)
 {
 	for (int i = 0; i < meshCount; i++)
 	{

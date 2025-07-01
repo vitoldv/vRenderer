@@ -27,7 +27,6 @@ class VkSetLayoutFactory : public Singleton<VkSetLayoutFactory>
 public:
 
 	VkDescriptorSetLayout getSetLayout(DESC_SET_LAYOUT layout);
-	uint32_t getSetIndexForLayout(DESC_SET_LAYOUT layout);
 	void cleanup();
 
 protected:

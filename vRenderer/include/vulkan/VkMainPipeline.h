@@ -20,7 +20,8 @@ protected:
 	{
 		
 		VkShaderManager& inst = VkShaderManager::instance();
-		auto shaderStages = inst.getShaderStage(VkShaderManager::RenderPass::FIRST);
+		std::string key = "first_pass";
+		auto shaderStages = inst.getShaderStage(VkShaderManager::RenderPass::FIRST, &key);
 
 		// DEFINING VERTEX ATTRIBUTES LAYOUT
 		VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};

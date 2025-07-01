@@ -600,19 +600,16 @@ void VulkanRenderer::createUniforms()
 	auto& layoutFactory = VkSetLayoutFactory::instance();
 
 	vpUniform = std::make_unique<VkUniform<UboViewProjection>>(
-		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::CAMERA),
 		uniformDescriptorPool,
 		layoutFactory.getSetLayout(DESC_SET_LAYOUT::CAMERA),
 		context);
 
 	lightUniform = std::make_unique<VkUniform<UboLightArray>>(
-		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::LIGHT),
 		uniformDescriptorPool,
 		layoutFactory.getSetLayout(DESC_SET_LAYOUT::LIGHT),
 		context);
 
 	colorUniformsDynamic = std::make_unique<VkUniformDynamic<UboDynamicColor>>(
-		layoutFactory.getSetIndexForLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
 		dynamicUniformDescriptorPool,
 		layoutFactory.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
 		context);
@@ -802,18 +799,18 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	}
 
 	// Begin render pass
-	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
+	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	// bind pipeline to be used with render pass
 	mainPipeline->cmdBind(commandBuffers[currentImage]);
 	// bind (static) uniforms
-	vpUniform->cmdBind(currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
-	lightUniform->cmdBind(currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
+	vpUniform->cmdBind(0, currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
+	lightUniform->cmdBind(3, currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
-		colorUniformsDynamic->cmdBind(currentImage, i, commandBuffers[currentImage], mainPipeline->getLayout());
-		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), *sceneCamera, true);
+		colorUniformsDynamic->cmdBind(4, currentImage, i, commandBuffers[currentImage], mainPipeline->getLayout());
+		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), true);
 	}
 
 	if (renderSettings->enableOutline)
@@ -821,7 +818,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 		outlinePipeline->cmdBind(commandBuffers[currentImage]);
 		for (int i = 0; i < modelsToRender.size(); i++)
 		{
-			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), *sceneCamera, false);
+			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), true);
 		}
 	}
 
@@ -829,7 +826,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	if (renderSkybox && skybox != nullptr)
 	{
 		skyboxPipeline->cmdBind(commandBuffers[currentImage]);
-		vpUniform->cmdBind(currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
+		vpUniform->cmdBind(0, currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
 		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline);
 	}
 

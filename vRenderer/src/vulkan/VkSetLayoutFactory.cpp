@@ -29,11 +29,6 @@ VkDescriptorSetLayout VkSetLayoutFactory::getSetLayout(DESC_SET_LAYOUT layout)
 	return layoutDefinitions[layout];
 }
 
-uint32_t VkSetLayoutFactory::getSetIndexForLayout(DESC_SET_LAYOUT layout)
-{
-	return static_cast<uint32_t>(layout);
-}
-
 void VkSetLayoutFactory::cleanup()
 {
 	for (auto& pair : layoutDefinitions)
