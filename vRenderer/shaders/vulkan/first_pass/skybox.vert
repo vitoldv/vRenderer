@@ -22,5 +22,6 @@ mat4 translate(vec3 t)
 void main()
 {
     fragUv = aPos;
-    gl_Position = uboProjectionView.projection * uboProjectionView.view * translate(uboProjectionView.viewPos) * vec4(aPos, 1.0);
+    vec4 pos = uboProjectionView.projection * uboProjectionView.view * translate(uboProjectionView.viewPos) * vec4(aPos, 1.0);
+    gl_Position = pos.xyww;
 }  

@@ -152,21 +152,10 @@ protected:
 		{
 			depthStencilCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 
-			depthStencilCreateInfo.depthTestEnable = VK_FALSE;
+			depthStencilCreateInfo.depthTestEnable = VK_TRUE;
 			depthStencilCreateInfo.depthWriteEnable = VK_FALSE;
-			depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+			depthStencilCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 			depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
-
-			depthStencilCreateInfo.stencilTestEnable = VK_TRUE;
-			VkStencilOpState stencilState = {};
-			stencilState.failOp = VK_STENCIL_OP_KEEP;
-			stencilState.depthFailOp = VK_STENCIL_OP_KEEP;
-			stencilState.passOp = VK_STENCIL_OP_REPLACE;
-			stencilState.compareOp = VK_COMPARE_OP_ALWAYS;
-			stencilState.reference = 1;
-			stencilState.compareMask = 0xFF;
-			stencilState.writeMask = 0xFF;
-			depthStencilCreateInfo.front = stencilState;
 		}
 
 		// -- GRAPHICS PIPELINE CREATION --

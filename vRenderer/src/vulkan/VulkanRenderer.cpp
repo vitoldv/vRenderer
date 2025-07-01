@@ -804,14 +804,6 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	// Begin render pass
 	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);;
 
-	// DRAW SKYBOX
-	if (renderSkybox && skybox != nullptr)
-	{
-		skyboxPipeline->cmdBind(commandBuffers[currentImage]);
-		vpUniform->cmdBind(currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
-		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline, *sceneCamera);
-	}
-
 	// bind pipeline to be used with render pass
 	mainPipeline->cmdBind(commandBuffers[currentImage]);
 	// bind (static) uniforms
@@ -832,6 +824,14 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 		{
 			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), *sceneCamera, false);
 		}
+	}
+
+	// DRAW SKYBOX
+	if (renderSkybox && skybox != nullptr)
+	{
+		skyboxPipeline->cmdBind(commandBuffers[currentImage]);
+		vpUniform->cmdBind(currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
+		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline, *sceneCamera);
 	}
 
 	// Start second subpass
