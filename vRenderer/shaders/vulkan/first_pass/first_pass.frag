@@ -3,10 +3,13 @@
 #define MAX_LIGHT_SOURCES 10
 #define GLOBAL_AMBIENT_STRENGTH 0.1
 
-layout(location = 0) in vec3 fragCol;
-layout(location = 1) in vec2 fragUv;
-layout(location = 2) in vec3 fragNormal;
-layout(location = 3) in vec3 fragPos;
+in FragInfo
+{
+    layout(location = 0) vec3 color;
+    layout(location = 1) vec2 uv;
+    layout(location = 2) vec3 normal;
+    layout(location = 3) vec3 worldPos;
+} fragIn; 
 
 layout(location = 4) flat in vec3 outViewPos;
 
@@ -64,9 +67,9 @@ vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir);
 void main()
 {
     // Fragment's normal in view space
-    vec3 norm = normalize(fragNormal);
+    vec3 norm = normalize(fragIn.normal);
     // Viewing direction
-    vec3 viewDir = normalize(outViewPos - fragPos);
+    vec3 viewDir = normalize(outViewPos - fragIn.worldPos);
 
     // Default fragment color
     vec3 result = selectBetween(diffuseMap, uboMaterial.diffuseColor).xyz;
@@ -91,14 +94,14 @@ void main()
     FragColor = vec4(result * shading, 1.0);
 
     // Applying fragment's opacity. It comes either from texture map or set universally for material
-    FragColor.a = max(texture(opacityMap, fragUv).r, uboMaterial.opacity);
+    FragColor.a = max(texture(opacityMap, fragIn.uv).r, uboMaterial.opacity);
 }
 
 // Define what color to use between texture and its fallback color
 // (if texture is present - color should be nulled)
 vec4 selectBetween(sampler2D map, vec4 color)
 {
-    return mix(texture(map, fragUv), vec4(color.xyz, 0.0), float(length(color.xyz) > 0.0));
+    return mix(texture(map, fragIn.uv), vec4(color.xyz, 0.0), float(length(color.xyz) > 0.0));
 }
 
 // Returns a vector of Phong shading impact
@@ -139,7 +142,7 @@ vec3 applyDirectionalLight(Light light, vec3 normal, vec3 viewDir)
 // Returns a shading impact of a Point light source (light.type == 1)
 vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir)
 {
-    vec3 lightDir = light.position.xyz - fragPos; 
+    vec3 lightDir = light.position.xyz - fragIn.worldPos; 
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 
@@ -151,7 +154,7 @@ vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir)
 // Returns a shading impact of a Spot (Flashlight) light source (light.type == 2)
 vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir)
 {
-    vec3 lightDir = light.position.xyz - fragPos; 
+    vec3 lightDir = light.position.xyz - fragIn.worldPos; 
     float lightDistance = length(lightDir);
     lightDir = normalize(lightDir);
 

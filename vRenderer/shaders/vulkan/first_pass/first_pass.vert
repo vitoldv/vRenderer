@@ -16,22 +16,23 @@ layout(push_constant) uniform Push {
     mat4 normalMatrix;
 } push;
 
-// Interpolated values
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragUv;
-layout(location = 2) out vec3 fragNormal;
-layout(location = 3) out vec3 fragPos;
+out FragInfo
+{
+    layout(location = 0) vec3 color;
+    layout(location = 1) vec2 uv;
+    layout(location = 2) vec3 normal;
+    layout(location = 3) vec3 worldPos;
+} fragOut;
 
-// Flat values (mesh related)
 layout(location = 4) flat out vec3 outViewPos;
 
 void main() {
     gl_Position = uboProjectionView.projection * uboProjectionView.view * push.model * vec4(aPos, 1.0);
     
-    fragColor = aColor;
-    fragUv = aUv;
-    fragNormal = (push.normalMatrix * vec4(aNormal, 1.0)).xyz;
-    fragPos = (push.model * vec4(aPos, 1.0)).xyz;
+    fragOut.color = aColor;
+    fragOut.uv = aUv;
+    fragOut.normal = (push.normalMatrix * vec4(aNormal, 1.0)).xyz;
+    fragOut.worldPos = (push.model * vec4(aPos, 1.0)).xyz;
 
     outViewPos = uboProjectionView.viewPos;
 }
