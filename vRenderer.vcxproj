@@ -167,6 +167,7 @@
     <ClCompile Include="vRenderer\src\StbImageImporter.cpp" />
     <ClCompile Include="vRenderer\src\ThreadDispatcher.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkCubemap.cpp" />
+    <ClCompile Include="vRenderer\src\vulkan\VkCubemapSamplerSet.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkSetLayoutFactory.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="vRenderer\include\vulkan\interfaces\VkGraphicsPipelineBase.h" />
     <ClInclude Include="vRenderer\include\vulkan\interfaces\IVkCoreResourceHolder.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkCubemap.h" />
+    <ClInclude Include="vRenderer\include\vulkan\VkCubemapSamplerSet.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkImageWrapper.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMainPipeline.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkOutlinePipeline.h" />

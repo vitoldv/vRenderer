@@ -20,6 +20,8 @@
 #define MAX_OBJECTS 1
 #define MAX_LIGHT_SOURCES 10
 
+const uint32_t SKYBOX_RESERVED_ID = 12314;
+
 namespace VkUtils
 {
 	struct Vertex

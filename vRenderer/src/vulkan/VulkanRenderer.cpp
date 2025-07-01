@@ -809,7 +809,6 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	// bind (static) uniforms
 	vpUniform->cmdBind(currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
 	lightUniform->cmdBind(currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
-
 	for (int i = 0; i < modelsToRender.size(); i++)
 	{
 		// bind dynamic uniforms (unique per object)
@@ -831,7 +830,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	{
 		skyboxPipeline->cmdBind(commandBuffers[currentImage]);
 		vpUniform->cmdBind(currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
-		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline, *sceneCamera);
+		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline);
 	}
 
 	// Start second subpass
