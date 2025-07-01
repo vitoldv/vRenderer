@@ -55,7 +55,6 @@ void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelin
 			PushConstant push = {};
 			push.model = mesh->getTransformMat();
 			push.normalMatrix = glm::transpose(glm::inverse(mesh->getTransformMat()));
-			push.viewPosition = camera.getPosition();
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
 		}

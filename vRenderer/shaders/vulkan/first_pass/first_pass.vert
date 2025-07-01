@@ -8,12 +8,12 @@ layout(location = 3) in vec2 aUv;
 layout(set = 0, binding = 0) uniform UboProjectionView {
     mat4 view;    
     mat4 projection;
+    vec3 viewPos;
 } uboProjectionView;
 
 layout(push_constant) uniform Push {
     mat4 model;
     mat4 normalMatrix;
-    vec3 viewPos;
 } push;
 
 // Interpolated values
@@ -33,5 +33,5 @@ void main() {
     fragNormal = (push.normalMatrix * vec4(aNormal, 1.0)).xyz;
     fragPos = (push.model * vec4(aPos, 1.0)).xyz;
 
-    outViewPos = push.viewPos;
+    outViewPos = uboProjectionView.viewPos;
 }

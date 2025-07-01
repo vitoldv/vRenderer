@@ -8,12 +8,12 @@ layout(location = 3) in vec2 aUv;
 layout(set = 0, binding = 0) uniform UboProjectionView {
     mat4 view;    
     mat4 projection;
+    vec3 viewPos;
 } uboProjectionView;
 
 layout(push_constant) uniform Push {
     mat4 model;
     mat4 normalMatrix;
-    vec3 viewPos;
 } push;
 
 #define outline_scale_factor 0.01

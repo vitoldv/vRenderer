@@ -862,7 +862,7 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 		UboViewProjection mvp = {};
 		mvp.projection = sceneCamera->getProjectionMatrix();
 		mvp.view = sceneCamera->getViewMatrix();
-
+		mvp.viewPosition = sceneCamera->getPosition();
 		vpUniform->update(imageIndex, mvp);
 	}
 

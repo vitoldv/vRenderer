@@ -30,10 +30,11 @@ namespace VkUtils
 		glm::vec2 uv;
 	};
 
-	struct UboViewProjection
+	struct ALIGN_STD140 UboViewProjection
 	{
 		glm::mat4 view;
 		glm::mat4 projection;
+		glm::vec3 viewPosition;
 	};
 
 	/// <summary>
@@ -102,8 +103,6 @@ namespace VkUtils
 		// normal matrix for proper normals transformation
 		// P.S. can be as well used to transform any direction vector in world space
 		glm::mat4 normalMatrix;
-		// the position of a viewer (camera)
-		glm::vec3 viewPosition;
 	};
 
 	const std::vector<glm::vec3> meshVertices = {

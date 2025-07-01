@@ -14,8 +14,6 @@ public:
 
 protected:
 
-	VkPushConstantRange pushConstantRange;
-
 	virtual void describe() override
 	{
 		std::string key = "skybox";
@@ -134,17 +132,12 @@ protected:
 				ins.getSetLayout(DESC_SET_LAYOUT::CUBEMAP_SAMPLER)
 			};
 
-			// Defines push constant values
-			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-			pushConstantRange.offset = 0;
-			pushConstantRange.size = sizeof(PushConstant);
-
 			VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 			pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutCreateInfo.setLayoutCount = 2;
 			pipelineLayoutCreateInfo.pSetLayouts = setLayouts.data();
-			pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-			pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+			pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+			pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
 			// Create Pipeline Layout
 			VkResult result = vkCreatePipelineLayout(context.logicalDevice, &pipelineLayoutCreateInfo, nullptr, &layout);

@@ -25,16 +25,6 @@ void VkSkybox::cmdDraw(VkCommandBuffer commandBuffer, const VkSkyboxPipeline& pi
 {
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 1, 1,
 		&samplerDescriptorSet, 0, nullptr);
-
-	// PUSH CONSTANTS
-	{
-		PushConstant push = {};
-		push.model = glm::translate(glm::mat4(1.0f), camera.getPosition());
-		push.normalMatrix = glm::mat4(1.0f);
-		push.viewPosition = camera.getPosition();
-		vkCmdPushConstants(commandBuffer, pipeline.getLayout(),
-			VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
-	}
 	skyboxMesh->cmdDraw(commandBuffer);
 }
 
