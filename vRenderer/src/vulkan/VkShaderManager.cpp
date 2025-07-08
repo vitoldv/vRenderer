@@ -89,9 +89,9 @@ VkShaderManager::~VkShaderManager()
 void VkShaderManager::validate()
 {
     // Validate root shader directory and compilation script paths
-    if (!fs::exists(shader_dir_root_) || !fs::is_directory(shader_dir_root_))
+    if (!fs::exists(shader_src_dir) || !fs::is_directory(shader_src_dir))
     {
-        throw std::runtime_error("Shader directory root does not exist or is not a directory: " + shader_dir_root_.string());
+        throw std::runtime_error("Shader directory root does not exist or is not a directory: " + shader_src_dir.string());
     }
 
     if (!fs::exists(compile_script_path_))
@@ -104,11 +104,11 @@ void VkShaderManager::validate()
     // Ensure subfolders exist
     if (!fs::exists(first_pass_dir) || !fs::is_directory(first_pass_dir))
     {
-        throw std::runtime_error("Required subfolder 'first_pass' does not exist or is not a directory within: " + shader_dir_root_.string());
+        throw std::runtime_error("Required subfolder 'first_pass' does not exist or is not a directory within: " + shader_src_dir.string());
     }
     if (!fs::exists(second_pass_dir) || !fs::is_directory(second_pass_dir))
     {
-        throw std::runtime_error("Required subfolder 'second_pass' does not exist or is not a directory within: " + shader_dir_root_.string());
+        throw std::runtime_error("Required subfolder 'second_pass' does not exist or is not a directory within: " + shader_src_dir.string());
     }
 }
 
@@ -119,7 +119,7 @@ void VkShaderManager::validate()
 std::vector<VkShaderManager::ShaderModulePaths> VkShaderManager::collectShaderModules()
 {
     std::map<std::string, ShaderModulePaths> modules;
-    auto collectModules = [&](const fs::path& folder, RenderPass pass){
+    auto collectModules = [&, this](const fs::path& folder, RenderPass pass){
         for (const auto& entry : fs::directory_iterator(folder))
         {
             if (entry.is_regular_file())
@@ -128,13 +128,6 @@ std::vector<VkShaderManager::ShaderModulePaths> VkShaderManager::collectShaderMo
                 std::string filename = p.filename().string();
                 std::string stem = p.stem().string();     // e.g., "shader" from "shader.vert"
                 std::string extension = p.extension().string(); // e.g., ".vert"
-
-                // Handle cases like "shader.vert.spv" vs "shader.vert" for stem
-                // We are interested in the base name before .vert or .frag
-                if (extension == ".spv") // Skip pre-compiled files in this discovery pass for sources
-                { 
-                    continue;
-                }
 
                 // If stem itself ends with .vert or .frag (e.g. from a filename like shader.vert.glsl)
                 // we might need a more robust way to get the true base name.
@@ -152,12 +145,14 @@ std::vector<VkShaderManager::ShaderModulePaths> VkShaderManager::collectShaderMo
                 {
                     modules[stem].vertSrcPath = p;
                     // Define expected SPIR-V path: e.g., shader.vert -> shader.vert.spv
-                    modules[stem].vertSpvPath = fs::path(p.string() + ".spv");
+                    modules[stem].vertSpvPath = shader_bin_dir / (p.stem().string() + ".vert" + ".spv");
+                    getShaderDependencies(p, modules[stem].dependencies);
                 }
                 else if (extension == ".frag") {
                     modules[stem].fragSrcPath = p;
                     // Define expected SPIR-V path: e.g., shader.frag -> shader.frag.spv
-                    modules[stem].fragSpvPath = fs::path(p.string() + ".spv");
+                    modules[stem].fragSpvPath = shader_bin_dir / (p.stem().string() + ".frag" + ".spv");
+                    getShaderDependencies(p, modules[stem].dependencies);
                 }
             }
         }
@@ -208,6 +203,8 @@ void VkShaderManager::compile(const std::vector<std::string>& shaderSources)
     // For a hard-coded path, it's generally simpler.
     // The script is assumed to compile all shaders in the known shader_dir_root_.
     std::string command = compile_script_path_.string();
+    command += " -o  " + shader_bin_dir.string();
+    command += " -i  " + shader_include_dir.string();
     for (auto& shader : shaderSources)
     {
         command += " " + shader;
@@ -219,6 +216,43 @@ void VkShaderManager::compile(const std::vector<std::string>& shaderSources)
         // but it's good practice to report it. The subsequent verification step
         // will catch if the script didn't produce the necessary files.
         std::cerr << "Warning: Shader compilation script execution may have failed (exit code: " << result << ")." << std::endl;
+    }
+}
+
+void VkShaderManager::getShaderDependencies(fs::path shader, std::set<fs::path>& dependencies)
+{
+    // Parse #include-s
+    std::ifstream stream;
+    std::string line;
+    stream.open(shader.string());
+    if (!stream.is_open())
+    {
+        throw std::runtime_error("Could not read shader file.");
+    }
+
+    while (std::getline(stream, line))
+    {
+        size_t include_pos = line.find("#include");
+        if (include_pos == std::string::npos) {
+            continue; // No "#include" on this line
+        }
+        size_t first_quote_pos = line.find('"', include_pos);
+        if (first_quote_pos == std::string::npos) {
+            continue; // No opening quote found
+        }
+        size_t last_quote_pos = line.find('"', first_quote_pos + 1);
+        if (last_quote_pos == std::string::npos) {
+            continue; // No closing quote found
+        }
+
+        size_t path_start = first_quote_pos + 1;
+        size_t path_length = last_quote_pos - path_start;
+        std::string include_str = line.substr(path_start, path_length);
+        fs::path include_path = shader_include_dir / include_str;
+        if (fs::exists(include_path))
+        {
+            dependencies.insert(include_path);
+        }
     }
 }
 
@@ -235,12 +269,23 @@ bool VkShaderManager::areBinariesUpToDate(const ShaderModulePaths& module) const
     }
     try
     {
+        bool old = false;
         auto vert_src_time = fs::last_write_time(module.vertSrcPath);
         auto frag_src_time = fs::last_write_time(module.fragSrcPath);
         auto vert_spv_time = fs::last_write_time(module.vertSpvPath);
         auto frag_spv_time = fs::last_write_time(module.fragSpvPath);
-        // Binaries are up-to-date if they are newer or same time as sources
-        return (vert_spv_time >= vert_src_time) && (frag_spv_time >= frag_src_time);
+        for (const fs::path& dependency : module.dependencies)
+        {
+            auto time = fs::last_write_time(dependency);
+            // Binary is old if any of dependency files was edited later
+            old |= time > vert_spv_time;
+            old |= time > frag_spv_time;
+        }
+        // Binaries are old if they are older than sources
+        old |= vert_src_time > vert_spv_time;
+        old |= frag_src_time > frag_spv_time;
+
+        return !old;
     }
     catch (const fs::filesystem_error& e)
     {

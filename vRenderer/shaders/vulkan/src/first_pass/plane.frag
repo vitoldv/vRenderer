@@ -1,17 +1,18 @@
-#version 450
+#version 450 core
 
 #define MAX_LIGHT_SOURCES 10
 #define GLOBAL_AMBIENT_STRENGTH 0.1
 
 in FragInfo
 {
-    layout(location = 0) vec3 color;
-    layout(location = 1) vec2 uv;
-    layout(location = 2) vec3 normal;
-    layout(location = 3) vec3 worldPos;
+    layout(location = 0) vec2 uv;
+    layout(location = 1) vec3 normal;
+    layout(location = 2) vec3 worldPos;
 } fragIn; 
 
-layout(location = 4) flat in vec3 outViewPos;
+layout(location = 3) in vec3 outViewPos;
+
+layout(location = 0) out vec4 FragColor;
 
 // Material (sets 1 & 2)
 layout(set = 1, binding = 0) uniform sampler2D ambientMap;
@@ -47,14 +48,8 @@ struct Light {
 };
 
 layout(set = 3, binding = 0) uniform UboLight {
-    Light lights[MAX_LIGHT_SOURCES];
+    Light lights[10];
 } uboLight;
-
-layout(set = 4, binding = 0) uniform UboDynamicColor {
-    vec4 color;
-} uboColor;
-
-layout(location = 0) out vec4 FragColor; 
 
 vec4 selectBetween(sampler2D map, vec4 color);
 vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 viewDir);
@@ -65,9 +60,9 @@ vec3 applyPointLight(Light light, vec3 normal, vec3 viewDir);
 vec3 applySpotLight(Light light, vec3 normal, vec3 viewDir);
 
 void main()
-{
+{    
     // Fragment's normal in view space
-    vec3 norm = normalize(fragIn.normal);
+    vec3 norm = vec3(0, 1.0, 0);
     // Viewing direction
     vec3 viewDir = normalize(outViewPos - fragIn.worldPos);
 
@@ -111,8 +106,9 @@ vec3 getDiffuseSpecularImpact(Light light, vec3 lightDir, vec3 normal, vec3 view
     vec3 diffuse = vec3(max(dot(normal, lightDir), 0.0));
 
     // Specular calculation
-    vec3 reflectDir = reflect(-lightDir, normal);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), max(uboMaterial.shininess, 2.0));
+    //vec3 reflectDir = reflect(-lightDir, normal);  
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), max(uboMaterial.shininess, 1.0));
     vec3 specColor = selectBetween(specularMap, uboMaterial.specularColor).xyz;
     vec3 specular = specColor.xyz * spec;
     

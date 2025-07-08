@@ -4,7 +4,9 @@
 #include <vector>
 #include <array>
 #include <map>
+#include <set>
 #include <filesystem> 
+#include <fstream>
 #include <stdexcept>  
 #include <cstdlib>  
 #include <iostream>
@@ -49,9 +51,11 @@ protected:
 private:
 
     const fs::path compile_script_path_ = "vRenderer\\scripts\\shader_compiler.bat";
-    const fs::path shader_dir_root_ = "vRenderer\\shaders\\vulkan";
-    const fs::path first_pass_dir = shader_dir_root_ / "first_pass";
-    const fs::path second_pass_dir = shader_dir_root_ / "second_pass";
+    const fs::path shader_src_dir = "vRenderer\\shaders\\vulkan\\src";
+    const fs::path shader_bin_dir = "vRenderer\\shaders\\vulkan\\bin";
+    const fs::path shader_include_dir = shader_src_dir / "include";
+    const fs::path first_pass_dir = shader_src_dir / "first_pass";
+    const fs::path second_pass_dir = shader_src_dir / "second_pass";
 
     // Represents the set of files for a single shader module
     struct ShaderModulePaths
@@ -62,6 +66,7 @@ private:
         fs::path fragSrcPath;
         fs::path vertSpvPath; // Expected path for compiled SPIR-V vertex shader
         fs::path fragSpvPath; // Expected path for compiled SPIR-V fragment shader
+        std::set<fs::path> dependencies;
     };    
 
     std::vector<ShaderModulePaths> shaderModules;
@@ -74,6 +79,8 @@ private:
     std::vector<std::string> getShadersForCompilation(std::vector<ShaderModulePaths>& modules);
     bool areBinariesUpToDate(const ShaderModulePaths& module) const;
     void compile(const std::vector<std::string>& shaderSources);
+
+    void getShaderDependencies(fs::path shader, std::set<fs::path>& dependencies);
 
     VkContext context;
 };

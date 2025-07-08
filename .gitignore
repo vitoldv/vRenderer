@@ -1,4 +1,5 @@
 vRenderer/assets/models
+vRenderer/shaders/bin
 imgui.ini
 
 # Build results
