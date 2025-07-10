@@ -75,8 +75,8 @@ namespace VkUtils
 			constant = genericLight.constant;
 			linear = genericLight.linear;
 			quadratic = genericLight.quadratic;
-			cutOff = genericLight.cutOff;
-			outerCutOff = genericLight.outerCutOff;
+			cutOff = glm::cos(glm::radians(genericLight.cutOff));
+			outerCutOff = glm::cos(glm::radians(genericLight.outerCutOff));
 			padding[0] = 0.0f;  // Initialize padding to zero
 			padding[1] = 0.0f;  // Initialize padding to zero
 			return *this;
