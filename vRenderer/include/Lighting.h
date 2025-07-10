@@ -8,25 +8,25 @@ struct Light
 	enum Type
 	{
 		// indexing starts from 1 because in shader 0 is treated as uninitialized (unprovided) light source
-		DIRECTIONAL = 1,
-		POINT = 2,
-		SPOT = 3
+		DIRECTIONAL = 0,
+		POINT = 1,
+		SPOT = 2
 	};
 
 	const int id;
-	const Type type;
+	Type type;
 
 	// Attenuation terms
-	float constant;
-	float linear;
-	float quadratic;
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
 
-	glm::vec3 color;
+	glm::vec3 color = { 1.0f, 1.0f, 1.0f };
 
-	glm::vec3 position;
-	glm::vec3 direction;
-	float cutOff;
-	float outerCutOff;
+	glm::vec3 position = {0, 0, 0};
+	glm::vec3 direction = {0, -1.0f, 0};
+	float cutOff = 20.0f;
+	float outerCutOff = 25.0f;
 
 	Light(int id, Type type) : id(id), type(type) {}
 };

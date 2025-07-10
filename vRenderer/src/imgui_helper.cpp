@@ -49,16 +49,24 @@ namespace imgui_helper
 		settingsChanged = ImGui::SliderInt("FOV", &fov, 1, 150);
 	}
 
-	void ShowLightSettingsTab(const std::vector<std::shared_ptr<Light>>& lights, bool& settingsChanged)
+	void ShowLightSettingsTab(const std::vector<std::shared_ptr<Light>>& lights, std::function<void(LightTabAction, uint32_t)> callback)
 	{
+		if (ImGui::Button("Add"))
+		{
+			callback(LightTabAction::Add, -1);
+		}
+
 		for (int i = 0; i < lights.size(); i++)
 		{
 			Light* light = lights[i].get();
-			std::string header = "Source #" + std::to_string(i) + " (" + lightTypeLabels[light->type - 1] + ")";
+			bool settingsChanged = false;
+			std::string header = "Source #" + std::to_string(i) + " (" + lightTypeLabels[light->type] + ")";
 			if (ImGui::CollapsingHeader(header.c_str()))
 			{
 				ImGui::PushID(i);
-				settingsChanged = false;
+				bool typeChanged = false;
+				EnumButtonGroup(lightTypeLabels, 3, light->type, typeChanged);
+				settingsChanged |= typeChanged;
 				settingsChanged |= ImGui::DragFloat3("Position", static_cast<float*>(&light->position[0]), 0.1f, -100.0f, 100.0f);
 				settingsChanged |= ImGui::DragFloat3("Direction", static_cast<float*>(&light->direction[0]), 0.1f, -100.0f, 100.0f);
 				settingsChanged |= ImGui::DragFloat("Constant", &light->constant, 0.05f, 0, 1.0f);
@@ -68,6 +76,10 @@ namespace imgui_helper
 				settingsChanged |= ImGui::DragFloat("OuterCutOff", &light->outerCutOff, 0.05f, 0, 120.0f);
 				ImGui::NewLine();
 				settingsChanged |= ImGui::ColorPicker3("Color", static_cast<float*>(&light->color[0]));
+				if (ImGui::Button("Remove"))
+				{
+					callback(LightTabAction::Remove, light->id);
+				}
 				ImGui::PopID();
 			}
 		}

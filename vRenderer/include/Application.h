@@ -63,6 +63,7 @@ private:
 
 	std::shared_ptr<BaseCamera> camera;
 	std::vector<std::shared_ptr<Light>> lightSources;
+	uint32_t global_lightId = 0;
 
 	std::unique_ptr<AssetImporter> assetImporter;
 	std::unique_ptr<SceneGraph> sceneGraph;
@@ -90,7 +91,7 @@ private:
 
 	void onCameraTypeChanged(CameraType cameraType);
 	void onCameraSettingsChanged();
-	void onLightSettingsChanged();
+	void onLightSettingsChanged(imgui_helper::LightTabAction action, uint32_t lightId);
 	void onAssetBrowserAction(AssetBrowserOp action, std::string modelName);
 	void onSceneGraphAction(SceneGraphOp action, uint32_t instanceId);
 	void onInstanceTransformChanged(uint32_t id);

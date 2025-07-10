@@ -23,13 +23,14 @@ namespace imgui_helper
 	extern const char* apiLabels[];
 	extern const char* cameraTypeLabels[];
 	extern const char* lightTypeLabels[];
+	enum class LightTabAction { Add, Remove };
 
 	template<typename Enum>
 	void EnumButtonGroup(const char* labels[], int count, Enum& value, bool& changed);
 
 	void ShowRendererSettingsTab(RenderSettings& renderSettings);
 	void ShowCameraSettingsTab(CameraType& cameraType, int& fov, bool& typeChanged, bool& settingsChanged);
-	void ShowLightSettingsTab(const std::vector<std::shared_ptr<Light>>& lights, bool& settingsChanged);
+	void ShowLightSettingsTab(const std::vector<std::shared_ptr<Light>>& lights, std::function<void(LightTabAction, uint32_t)> callback);
 
 	/// <summary>
 	/// Editor for a glm::vec3. Allows simultaneous edit of all components at once via sync flag.

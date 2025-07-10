@@ -40,6 +40,7 @@ public:
 	bool updateModelTransform(int modelId, glm::mat4 newTransform) override;
 	void setCamera(const std::shared_ptr<BaseCamera> camera) override;
 	bool addLightSources(const std::shared_ptr<Light> lights[], uint32_t count) override;
+	bool removeLightSources(uint32_t* ids, uint32_t count) override;
 	void cleanup() override;
 	void setImguiCallback(std::function<void()> callback) override;
 	void bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings);

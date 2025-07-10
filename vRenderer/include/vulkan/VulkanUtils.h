@@ -68,7 +68,7 @@ namespace VkUtils
 
 		UboLight& operator = (const Light& genericLight)
 		{
-			type = static_cast<uint32_t>(genericLight.type);
+			type = static_cast<uint32_t>(genericLight.type) + 1;
 			color = glm::vec4(genericLight.color, 0.0f);
 			direction = glm::vec4(genericLight.direction, 0.0f);		// w = 0.0 for directions (though)
 			position = glm::vec4(genericLight.position, 1.0f);			// w = 1.0 for position

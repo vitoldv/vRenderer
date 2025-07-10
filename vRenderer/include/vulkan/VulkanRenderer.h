@@ -171,6 +171,7 @@ public:
 	bool updateModelTransform(int modelId, glm::mat4 newTransform);
 	void setCamera(const std::shared_ptr<BaseCamera> camera);
 	bool addLightSources(const std::shared_ptr<Light> light[], uint32_t count);
+	bool removeLightSources(uint32_t* ids, uint32_t count) override;
 	void bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings);
 
 	void setImguiCallback(std::function<void()> callback);

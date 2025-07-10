@@ -106,28 +106,10 @@ int Application::initApplication()
 
 	setSceneCamera(CameraType::ORBIT);
 
-	auto light = std::make_shared<Light>(1, Light::Type::DIRECTIONAL);
-	light->color = { 1.0f, 1.0f, 1.0f };
-	light->position = { 1.8f, 0.9f, 0.0f };
-	light->direction = { 0, -1.0f, 0 };
-	light->constant = 1.0f;
-	light->linear = 0.09f;
-	light->quadratic = 0.032f;
-	light->cutOff = 20.0f;
-	light->outerCutOff = 27.0f;
+	auto light = std::make_shared<Light>(global_lightId++, Light::Type::DIRECTIONAL);
 	lightSources.push_back(light);
-
-	auto light2 = std::make_shared<Light>(2, Light::Type::POINT);
-	light2->color = { 1.0f, 1.0f, 1.0f };
-	light2->position = { 0.0f, 0.9f, 1.8f };
-	light2->direction = { 0.0f, 0, -1.0f };
-	light2->constant = 1.0f;
-	light2->linear = 0.09f;
-	light2->quadratic = 0.032f;
-	light2->cutOff = 20.0f;
-	light2->outerCutOff = 27.0f;
+	auto light2 = std::make_shared<Light>(global_lightId++, Light::Type::POINT);
 	lightSources.push_back(light2);
-
 	renderer->addLightSources(lightSources.data(), lightSources.size());
 
 	// Load and set skybox
@@ -188,9 +170,29 @@ void Application::onCameraSettingsChanged()
 	this->camera->setFov(cameraFov);
 }
 
-void Application::onLightSettingsChanged()
+void Application::onLightSettingsChanged(imgui_helper::LightTabAction action, uint32_t lightId)
 {
-	// nothing for now
+	switch (action)
+	{
+	case imgui_helper::LightTabAction::Add:
+	{
+		std::shared_ptr<Light> newLight = std::make_shared<Light>(global_lightId++, Light::POINT);
+		lightSources.push_back(newLight);
+		renderer->addLightSources(&newLight, 1);
+		break;
+	}
+	case imgui_helper::LightTabAction::Remove:
+	{
+
+		lightSources.erase(std::find_if(lightSources.begin(), lightSources.end(), [lightId](std::shared_ptr<Light> light) {
+			return light->id == lightId;
+		}));
+		renderer->removeLightSources(&lightId, 1);
+		break;
+	}
+	default:
+		break;
+	}
 }
 
 void Application::setSceneCamera(CameraType cameraType)
@@ -324,12 +326,10 @@ void Application::imguiMenu()
 			}
 			if (ImGui::BeginTabItem("Light"))
 			{
-				bool settingsChanged;
-				imgui_helper::ShowLightSettingsTab(lightSources, settingsChanged);
-				if (settingsChanged)
-				{
-					onLightSettingsChanged();
-				}
+				imgui_helper::ShowLightSettingsTab(lightSources, [this](imgui_helper::LightTabAction action, uint32_t id) {
+					onLightSettingsChanged(action, id);
+				});
+					
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();

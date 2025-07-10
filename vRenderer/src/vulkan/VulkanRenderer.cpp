@@ -1019,6 +1019,18 @@ bool VulkanRenderer::addLightSources(const std::shared_ptr<Light> lights[], uint
 	return false;
 }
 
+bool VulkanRenderer::removeLightSources(uint32_t* ids, uint32_t count)
+{
+	for (int i = 0; i < count; ++i)
+	{
+		uint32_t& id = *(ids + i);
+		auto it = std::find_if(lightSources.begin(), lightSources.end(), [&id](std::shared_ptr<Light> light) {return id == light->id;});
+		if (it == lightSources.end()) return false;
+		lightSources.erase(it);
+	}
+	return true;
+}
+
 void VulkanRenderer::bindRenderSettings(const std::shared_ptr<RenderSettings> renderSettings)
 {
 	this->renderSettings = renderSettings;

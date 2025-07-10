@@ -197,6 +197,12 @@ bool OpenGLRenderer::addLightSources(const std::shared_ptr<Light> lights[], uint
 	return false;
 }
 
+bool OpenGLRenderer::removeLightSources(uint32_t* ids, uint32_t count)
+{
+	// no implementation
+	return true;
+}
+
 void OpenGLRenderer::cleanup()
 {
 	for (auto* model : modelsToRender)
