@@ -298,7 +298,7 @@ void Application::imguiMenu()
 	{
 		ImGui::Begin("vRenderer Settings", nullptr, ImGuiWindowFlags_None);
 		if (ImGui::BeginTabBar("Menus")) {
-			if (ImGui::BeginTabItem("Inspector")) {
+			if (ImGui::BeginTabItem("Asset Browser")) {
 				assetBrowser->Draw(MODEL_ASSETS_FOLDER, c_supportedFormats, [this](AssetBrowserOp action, std::string model) {
 					onAssetBrowserAction(action, model);
 				});
