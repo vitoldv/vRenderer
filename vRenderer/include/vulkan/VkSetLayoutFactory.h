@@ -17,7 +17,8 @@ enum class DESC_SET_LAYOUT
 	LIGHT,		
 	DYNAMIC_COLOR,
 	CUBEMAP_SAMPLER,
-	SECOND_PASS_INPUT
+	SECOND_PASS_INPUT,
+	POST_PROCESSING_FEATURES
 };
 
 class VkSetLayoutFactory : public Singleton<VkSetLayoutFactory> 

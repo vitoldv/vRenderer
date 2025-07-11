@@ -93,6 +93,11 @@ namespace VkUtils
 		glm::vec4 color;
 	};
 
+	struct ALIGN_STD140 UboPostProcessingFeatures
+	{
+		float gammaCorrectionFactor;
+	};
+
 	/*
 	* Push Constants provide:
 	* 1. Model matrix (transform matrix)

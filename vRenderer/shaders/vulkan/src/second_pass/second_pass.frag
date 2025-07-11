@@ -3,6 +3,10 @@
 layout(input_attachment_index = 0, binding = 0) uniform subpassInput inputColor;        // Color ouput from subpass 1
 layout(input_attachment_index = 1, binding = 1) uniform subpassInput inputDepth;        // Depth ouput from subpass 1
 
+layout(set = 1, binding = 0) uniform UboPostProcessingFeatures {
+    float gammaCorrectionFactor;
+} postProcessingFeatures;
+
 layout(location = 0) out vec4 FragColor;
 
 void main()
@@ -12,5 +16,10 @@ void main()
     // subpassLoad([input_image]).rgba - is a way to grab this color
     //color = subpassLoad(inputColor).rgba;   
     
-    FragColor = subpassLoad(inputColor).rgba;   
+    vec4 result = subpassLoad(inputColor).rgba;
+    
+    float gamma = postProcessingFeatures.gammaCorrectionFactor;
+    result.rgb = pow(result.rgb, vec3(1.0/gamma));
+
+    FragColor = result;
 }

@@ -140,6 +140,7 @@ private:
 	std::unique_ptr<VkUniform<UboLightArray>> lightUniform;
 	std::unique_ptr<VkUniform<UboViewProjection>> vpUniform;
 	std::unique_ptr<VkUniformDynamic<UboDynamicColor>> colorUniformsDynamic;
+	std::unique_ptr<VkUniform<UboPostProcessingFeatures>> postPrFeaturesUniform;
 
 	// Textures
 	VkSampler textureSampler;
@@ -203,7 +204,7 @@ private:
 	void createSyncTools();
 
 	void recordCommands(uint32_t currentImage, ImDrawData& imguiDrawData);
-	void updateUniformBuffers(uint32_t imageIndex);
+	void updateUniforms(uint32_t imageIndex);
 
 	void setupDebugMessenger();
 

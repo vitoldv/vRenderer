@@ -107,10 +107,14 @@ protected:
 		// Create new pipeline layout
 		VkPipelineLayoutCreateInfo secondPipelineLayoutCreateInfo = {};
 		{
-			VkDescriptorSetLayout setLayout = VkSetLayoutFactory::instance().getSetLayout(DESC_SET_LAYOUT::SECOND_PASS_INPUT);
+			VkSetLayoutFactory& layoutFactor = VkSetLayoutFactory::instance();
+			std::array<VkDescriptorSetLayout, 2> setLayouts = {
+				layoutFactor.getSetLayout(DESC_SET_LAYOUT::SECOND_PASS_INPUT),
+				layoutFactor.getSetLayout(DESC_SET_LAYOUT::POST_PROCESSING_FEATURES)
+			};
 			secondPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			secondPipelineLayoutCreateInfo.setLayoutCount = 1;
-			secondPipelineLayoutCreateInfo.pSetLayouts = &setLayout;
+			secondPipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
+			secondPipelineLayoutCreateInfo.pSetLayouts = setLayouts.data();
 			secondPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 			secondPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 

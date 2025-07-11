@@ -78,6 +78,7 @@ void VulkanRenderer::cleanup()
 	vpUniform->cleanup();
 	lightUniform->cleanup();
 	colorUniformsDynamic->cleanup();
+	postPrFeaturesUniform->cleanup();
 
 	VkSetLayoutFactory::instance().cleanup();
 	VkShaderManager::instance().cleanup();
@@ -613,6 +614,11 @@ void VulkanRenderer::createUniforms()
 		dynamicUniformDescriptorPool,
 		layoutFactory.getSetLayout(DESC_SET_LAYOUT::DYNAMIC_COLOR),
 		context);
+
+	postPrFeaturesUniform = std::make_unique<VkUniform<UboPostProcessingFeatures>>(
+		uniformDescriptorPool,
+		layoutFactory.getSetLayout(DESC_SET_LAYOUT::POST_PROCESSING_FEATURES),
+		context);
 }
 
 void VulkanRenderer::createSubpassInputDescriptorSets()
@@ -836,6 +842,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	secondPassPipeline->cmdBind(commandBuffers[currentImage]);
 	vkCmdBindDescriptorSets(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPassPipeline->getLayout(),
 		0, 1, &inputDescriptorSets[currentImage], 0, nullptr);
+	postPrFeaturesUniform->cmdBind(1, currentImage, commandBuffers[currentImage], secondPassPipeline->getLayout());
 	vkCmdDraw(commandBuffers[currentImage], 3, 1, 0, 0);
 
 	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, commandBuffers[currentImage]);
@@ -851,7 +858,7 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 	}
 }
 
-void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
+void VulkanRenderer::updateUniforms(uint32_t imageIndex)
 {
 	// Update ViewProjection uniform
 	{
@@ -891,6 +898,10 @@ void VulkanRenderer::updateUniformBuffers(uint32_t imageIndex)
 			}
 		}
 	}
+
+	UboPostProcessingFeatures postPrFeatures = {};
+	postPrFeatures.gammaCorrectionFactor = renderSettings->gammaCorrectionFactor;
+	postPrFeaturesUniform->update(imageIndex, postPrFeatures);
 }
 
 void VulkanRenderer::draw()
@@ -921,7 +932,7 @@ void VulkanRenderer::draw()
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(logicalDevice, swapchain, std::numeric_limits<InputState>::max(), semImageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	updateUniformBuffers(imageIndex);
+	updateUniforms(imageIndex);
 	recordCommands(imageIndex, *imguiDrawData);
 	
 	// -- 2

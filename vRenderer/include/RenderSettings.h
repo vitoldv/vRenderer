@@ -25,6 +25,9 @@ struct RenderSettings
     int targetFps = 60;
     bool enableOutline;
 
+    // Standard gamma value fitting most of displays
+    float gammaCorrectionFactor = 2.2f;
+
     // Automatically generates to_json/from_json
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(RenderSettings, api, backgroundColor, fpsLimit, targetFps);
 };
