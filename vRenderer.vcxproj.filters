@@ -66,9 +66,6 @@
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp">
       <Filter>Source Files\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp">
-      <Filter>Source Files\vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="vRenderer\src\vulkan\VkModel.cpp">
       <Filter>Source Files\vulkan</Filter>
     </ClCompile>
@@ -315,9 +312,6 @@
       <Filter>Header Files\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h">
-      <Filter>Header Files\vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="vRenderer\include\vulkan\VkMesh.h">
       <Filter>Header Files\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkModel.h">

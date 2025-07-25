@@ -171,7 +171,6 @@
     <ClCompile Include="vRenderer\src\vulkan\VkImageWrapper.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkSetLayoutFactory.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkMaterial.cpp" />
-    <ClCompile Include="vRenderer\src\vulkan\VkMesh.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkModel.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkShaderManager.cpp" />
     <ClCompile Include="vRenderer\src\vulkan\VkSimpleMesh.cpp" />
@@ -234,7 +233,6 @@
     <ClInclude Include="vRenderer\include\vulkan\VkSecondPassPipeline.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkSetLayoutFactory.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkMaterial.h" />
-    <ClInclude Include="vRenderer\include\vulkan\VkMesh.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkModel.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkShaderManager.h" />
     <ClInclude Include="vRenderer\include\vulkan\VkSimpleMesh.h" />

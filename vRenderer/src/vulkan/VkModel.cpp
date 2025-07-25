@@ -4,12 +4,9 @@ VkModel::VkModel(uint32_t id, const Model& model, VkContext context, VkSamplerDe
 	id(id)
 {
 	this->context = context;
+	this->transform = glm::mat4(1.0f);
 
-	meshCount = model.getMeshCount();
-	meshes.resize(meshCount);
-	materials.resize(meshCount);
-
-	createFromGenericModel(model, createInfo);
+	createFromModel(model, createInfo);
 }
 
 VkModel::~VkModel()
@@ -19,98 +16,191 @@ VkModel::~VkModel()
 
 int VkModel::getMeshCount() const
 {
-	return meshCount;
+	return meshes.size();
 }
 
 int VkModel::getMaterialCount() const
 {
-	return materialCount;
-}
-
-const VkMesh* VkModel::getMesh(uint32_t id) const
-{
-	auto it = std::find_if(meshes.begin(), meshes.end(), [id](VkMesh* mesh) {return mesh->id == id;});
-	return *it;
-}
-
-const std::vector<VkMesh*>& VkModel::getMeshes() const
-{
-	return meshes;
+	return materials.size();
 }
 
 void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials)
-{
-	for (int i = 0; i < meshCount; i++)
+{	
+	for (const VkSubMesh& mesh : meshes)
 	{
-		auto& mesh = meshes[i];
-
-		VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };															// buffers to bind
-		VkBuffer indexBuffer = mesh->getIndexBuffer();
-		VkDeviceSize offsets[] = { 0 };																					// offsets into buffers being bound
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);								// Command to bind vertex buffer before deawing with them
-		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		uint32_t indexCount = mesh.indexCount;
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &mesh.vertexBufferOffset);								// Command to bind vertex buffer before deawing with them
+		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, mesh.indexBufferOffset, VK_INDEX_TYPE_UINT32);
 
 		// PUSH CONSTANTS
 		{
 			PushConstant push = {};
-			push.model = mesh->getTransformMat();
-			push.normalMatrix = glm::transpose(glm::inverse(mesh->getTransformMat()));
+			push.model = this->transform;
+			push.normalMatrix = glm::transpose(glm::inverse(this->transform));
 			vkCmdPushConstants(commandBuffer, pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
 		}
 
 		if (bindMaterials)
 		{
-			auto* material = materials[i];
-			// Material sampler uniforms
-			material->cmdBind(imageIndex, commandBuffer, pipelineLayout);
+			materials[mesh.materialIndex]->cmdBind(imageIndex, commandBuffer, pipelineLayout);
 		}
 
 		// execute pipeline
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->getIndexCount()), 1, 0, -VERTEX_INDEX_OFFSET, 0);
+		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, -VERTEX_INDEX_OFFSET, 0);
 	}
 }
 
 void VkModel::setTransform(glm::mat4 transform)
 {
-	for (auto* mesh : meshes)
-	{
-		mesh->setTransformMat(transform);
-	}
+	this->transform = transform;
 }
 
-void VkModel::createFromGenericModel(const Model& model, VkSamplerDescriptorSetCreateInfo createInfo)
+void VkModel::createFromModel(const Model& model, VkSamplerDescriptorSetCreateInfo createInfo)
 {
-	for (int i = 0; i < model.getMeshCount(); i++)
+	uint32_t meshCount = model.getMeshCount();
+	meshes.resize(meshCount);
+
+	std::vector<std::vector<Vertex>*> vertexBuffers(meshCount);
+	std::vector<const std::vector<uint32_t>*> indexBuffers(meshCount);
+
+	uint32_t currentSubMeshVertexOffset = 0;
+	uint32_t currentSubMeshIndexOffset = 0;
+
+	for (int i = 0; i < meshCount; ++i)
 	{
 		const Mesh& mesh = *model.getMeshes()[i];
-		
-		uint32_t newMeshId = i;
-		VkMesh* vkMesh = new VkMesh(newMeshId, mesh, context);
-		
-		const auto& material = model.getMaterials()[i];
-		VkMaterial* vkMaterial = nullptr;
-		if (material != nullptr)
+
+		std::vector<Vertex> vertices;
+		const auto& meshVertices = mesh.getVertices();
+		const auto& meshIndices = mesh.getIndices();
+		const auto& meshTexCoords = mesh.getTexCoords();
+		const auto& meshNormals = mesh.getNormals();
+		for (int i = 0; i < meshVertices.size(); i++)
 		{
-			materialCount++;
-			vkMaterial = new VkMaterial(*material, context, createInfo);
+			Vertex vertex = {};
+			vertex.pos = meshVertices.at(i);
+			vertex.normal = meshNormals.at(i);
+			vertex.uv = meshTexCoords.at(i);
+			vertices.push_back(vertex);
 		}
 
-		meshes[i] = vkMesh;
-		materials[i] = vkMaterial;
+		uint32_t indexCount = meshIndices.size();
+		uint32_t vertexCount = vertices.size();
+
+		VkSubMesh subMesh = {
+			i, vertexCount, indexCount,
+			currentSubMeshVertexOffset,
+			currentSubMeshIndexOffset
+		};
+
+		currentSubMeshVertexOffset += sizeof(Vertex) * vertexCount;
+		currentSubMeshIndexOffset += sizeof(uint32_t) * indexCount;
+
+		const auto& material = model.getMaterials()[i];
+		if (material != nullptr)
+		{
+			materials.push_back(std::make_unique<VkMaterial>(*material, context, createInfo));
+			subMesh.materialIndex = materials.size() - 1;
+		}
+		else
+		{
+			subMesh.materialIndex = NO_MATERIAL_INDEX;
+		}
+		
+
+		meshes[i] = subMesh;
+
+		vertexBuffers[i] = new std::vector<Vertex>(std::move(vertices));
+		indexBuffers[i] = &meshIndices;
 	}
+
+	createVertexBuffer(vertexBuffers, context);
+	createIndexBuffer(indexBuffers, context);
+}
+
+void VkModel::createVertexBuffer(const std::vector<std::vector<Vertex>*>& vertexBuffers, VkContext context)
+{
+	// Size of buffer needed for all vertex buffers
+	VkDeviceSize bufferSize = 0;
+	for (const auto& vertexBuffer : vertexBuffers)
+	{
+		bufferSize += sizeof(Vertex) * vertexBuffer->size();
+	}
+
+	// Temporary buffer to stage vertex data before transferring to GPU
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		&stagingBuffer, &stagingBufferMemory);
+
+	// MAP MEMORY TO STAGE BUFFER
+	void* data;
+	vkMapMemory(context.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);		// "map" the vertex buffer memory to some point
+	
+	for (int i = 0; i < vertexBuffers.size(); ++i)
+	{
+		size_t dataSize = (size_t)(sizeof(Vertex) * vertexBuffers[i]->size());
+		memcpy(data, vertexBuffers[i]->data(), dataSize);									// copy memory from vertices std::vector to the point
+		data = static_cast<void*>((uint8_t*)data + dataSize);
+	}
+
+	vkUnmapMemory(context.logicalDevice, stagingBufferMemory);										// unmap the vertex buffer memory
+
+	// Create buffer with TRANSFER_DST_BIT to mark as recipient of transfer data (also vertex buffer
+	// Buffer memory is to be DEVICE_LOCAL_BIT meaning memory is on the GPU and only accessible by it and not CPU (host))
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vertexBuffer, &vertexBufferMemory);
+
+	copyBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, stagingBuffer, vertexBuffer, bufferSize);
+
+	vkDestroyBuffer(context.logicalDevice, stagingBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, stagingBufferMemory, nullptr);
+}
+
+void VkModel::createIndexBuffer(const std::vector<const std::vector<uint32_t>*>& indexBuffers, VkContext context)
+{
+	// Size of buffer needed for indices
+	VkDeviceSize bufferSize = 0;
+	for (const auto& indexBuffer : indexBuffers)
+	{
+		bufferSize += sizeof(uint32_t) * indexBuffer->size();
+	}
+
+	// Temporary buffer to stage indices data before transferring to GPU
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		&stagingBuffer, &stagingBufferMemory);
+
+	// MAP MEMORY TO STAGE BUFFER
+	void* data;
+	vkMapMemory(context.logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);			// "map" the indices buffer memory to some point
+	for (int i = 0; i < indexBuffers.size(); ++i)
+	{
+		size_t dataSize = (size_t)(sizeof(uint32_t) * indexBuffers[i]->size());
+		memcpy(data, indexBuffers[i]->data(), dataSize);									// copy memory from vertices std::vector to the point
+		data = static_cast<void*>((uint8_t*)data + dataSize);
+	}
+	vkUnmapMemory(context.logicalDevice, stagingBufferMemory);								// unmap the indices buffer memory
+
+	// Create buffer with TRANSFER_DST_BIT to mark as recipient of transfer data (also indices buffer
+	// Buffer memory is to be DEVICE_LOCAL_BIT meaning memory is on the GPU and only accessible by it and not CPU (host))
+	createBuffer(context.physicalDevice, context.logicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &indexBuffer, &vertexBufferMemory);
+
+	copyBuffer(context.logicalDevice, context.graphicsQueue, context.graphicsCommandPool, stagingBuffer, indexBuffer, bufferSize);
+
+	vkDestroyBuffer(context.logicalDevice, stagingBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, stagingBufferMemory, nullptr);
 }
 
 void VkModel::cleanup()
 {
-	for (auto& texture : materials)
-	{
-		delete texture;
-		texture = nullptr;
-	}
-	for (auto& mesh : meshes)
-	{
-		delete mesh;
-		mesh = nullptr;
-	}
+	vkDestroyBuffer(context.logicalDevice, indexBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, indexBufferMemory, nullptr);
+	vkDestroyBuffer(context.logicalDevice, vertexBuffer, nullptr);
+	vkFreeMemory(context.logicalDevice, vertexBufferMemory, nullptr);
 }
