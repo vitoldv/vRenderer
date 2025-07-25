@@ -1,9 +1,10 @@
 #include "VkTexture.h"
 
-VkTexture::VkTexture(const Texture& texture, VkContext context) :
+VkTexture::VkTexture(const Texture& texture, VkFormat format, VkContext context) :
 	name(texture.name)
 {
 	this->context = context;
+	this->format = format;
 	createTexture(texture);
 }
 
@@ -22,7 +23,7 @@ void VkTexture::createTexture(const Texture& texture)
 	createTextureImage(texture);
 
 	imageView = createImageView(image,
-		VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, context);
+		format, VK_IMAGE_ASPECT_COLOR_BIT, context);
 }
 
 
@@ -41,7 +42,7 @@ void VkTexture::createTexture(const Texture& texture)
 	 vkUnmapMemory(context.logicalDevice, imageStagingBufferMemory);
 
 	 // Create image to hold final texture
-	 image = createImage(texture.width, texture.height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+	 image = createImage(texture.width, texture.height, format, VK_IMAGE_TILING_OPTIMAL,
 		 VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &imageMemory, context);
 
 	 // COPY IMAGE DATA

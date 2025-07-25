@@ -12,7 +12,7 @@ class VkCubemap
 {
 public:
 
-	VkCubemap(const Cubemap& cubemap, VkContext context);
+	VkCubemap(const Cubemap& cubemap, VkFormat format, VkContext context);
 	~VkCubemap();
 
 	VkImageView getImageView() const;
@@ -22,6 +22,7 @@ private:
 	VkImage cubemapImage;
 	VkDeviceMemory cubemapMemory;
 	VkImageView cubemapImageView;
+	VkFormat format;
 	VkContext context;
 
 	void createCubemapImage(const Cubemap& cubemap);

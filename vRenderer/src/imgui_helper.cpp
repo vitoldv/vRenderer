@@ -39,7 +39,8 @@ namespace imgui_helper
 		ImGui::Checkbox("FPS limit", &renderSettings.fpsLimit);
 		ImGui::SliderInt("FPS target", &renderSettings.targetFps, 1, 165);
 		ImGui::Checkbox("Object outline", &renderSettings.enableOutline);
-		ImGui::DragFloat("Gamma Correction factor", &renderSettings.gammaCorrectionFactor, 0.1f, 5.0f);
+		ImGui::DragFloat("Gamma", &renderSettings.gammaFactor, 0.05f, 0.3f, 2.0f);
+		ImGui::DragFloat("Brightness", &renderSettings.brightnessOffset, 0.01f, -0.5f, 0.5f);
 	}
 
 	void ShowCameraSettingsTab(CameraType& cameraType, int& fov, bool& typeChanged, bool& settingsChanged)

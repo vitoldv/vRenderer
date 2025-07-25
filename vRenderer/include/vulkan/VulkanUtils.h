@@ -95,7 +95,8 @@ namespace VkUtils
 
 	struct ALIGN_STD140 UboPostProcessingFeatures
 	{
-		float gammaCorrectionFactor;
+		float gammaFactor;
+		float brightnessOffset;
 	};
 
 	/*

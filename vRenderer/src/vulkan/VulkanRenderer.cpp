@@ -900,7 +900,8 @@ void VulkanRenderer::updateUniforms(uint32_t imageIndex)
 	}
 
 	UboPostProcessingFeatures postPrFeatures = {};
-	postPrFeatures.gammaCorrectionFactor = renderSettings->gammaCorrectionFactor;
+	postPrFeatures.gammaFactor = renderSettings->gammaFactor;
+	postPrFeatures.brightnessOffset = renderSettings->brightnessOffset;
 	postPrFeaturesUniform->update(imageIndex, postPrFeatures);
 }
 
@@ -1243,10 +1244,12 @@ VkFormat VulkanRenderer::defineSupportedFormat(const std::vector<VkFormat>& form
 {
 	for (VkFormat format : formats)
 	{
-		VkFormatProperties properties;
-		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &properties);
-		if ((tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures & featureFlags) == featureFlags)
-			|| (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures & featureFlags) == featureFlags))
+		VkFormatProperties2 properties2;
+		properties2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+		properties2.pNext = nullptr;
+		vkGetPhysicalDeviceFormatProperties2(physicalDevice, format, &properties2);
+		if ((tiling == VK_IMAGE_TILING_LINEAR && (properties2.formatProperties.linearTilingFeatures & featureFlags) == featureFlags)
+			|| (tiling == VK_IMAGE_TILING_OPTIMAL && (properties2.formatProperties.optimalTilingFeatures & featureFlags) == featureFlags))
 		{
 			return format;
 		}

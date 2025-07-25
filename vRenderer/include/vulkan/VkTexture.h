@@ -16,7 +16,7 @@ public:
 
 	const std::string name;
 
-	VkTexture(const Texture& texture, VkContext context);
+	VkTexture(const Texture& texture, VkFormat format, VkContext context);
 	~VkTexture();
 
 	VkImageView getImageView() const;
@@ -25,6 +25,8 @@ private:
 	VkImage image;
 	VkDeviceMemory imageMemory;
 	VkImageView imageView;
+
+	VkFormat format;
 
 	VkContext context;
 

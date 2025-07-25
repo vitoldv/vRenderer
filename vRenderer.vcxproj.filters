@@ -162,6 +162,9 @@
     <ClCompile Include="vRenderer\src\vulkan\VkSkybox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkCubemapSamplerSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Mesh.h">
@@ -370,6 +373,9 @@
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkSecondPassPipeline.h">
       <Filter>Header Files\vulkan\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkCubemapSamplerSet.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,8 +1,9 @@
 #include "VkCubemap.h"
 
-VkCubemap::VkCubemap(const Cubemap& cubemap, VkContext context)
+VkCubemap::VkCubemap(const Cubemap& cubemap, VkFormat format, VkContext context)
 {
 	this->context = context;
+	this->format = format;
 	createCubemapImage(cubemap);
 }
 
@@ -34,7 +35,7 @@ void VkCubemap::createCubemapImage(const Cubemap& cubemap)
 	// Create image to hold cubemap data
 	uint32_t width, height;
 	cubemap.getFaceExtent(width, height);
-	cubemapImage = createImage(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+	cubemapImage = createImage(width, height, format, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &cubemapMemory, context,
 		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, 6);
 
@@ -53,7 +54,7 @@ void VkCubemap::createCubemapImage(const Cubemap& cubemap)
 	vkFreeMemory(context.logicalDevice, imageStagingBufferMemory, nullptr);
 
 	cubemapImageView = createImageView(cubemapImage,
-		VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, context, VK_IMAGE_VIEW_TYPE_CUBE, 6);
+		format, VK_IMAGE_ASPECT_COLOR_BIT, context, VK_IMAGE_VIEW_TYPE_CUBE, 6);
 }
 
 void VkCubemap::cleanup()

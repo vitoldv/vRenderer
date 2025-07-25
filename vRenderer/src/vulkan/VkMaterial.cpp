@@ -75,18 +75,17 @@ void VkMaterial::createFromGenericMaterial(const Material& material, VkSamplerDe
 			context);
 
 		// Lambda for texture creation
-		VkContext& ctx = this->context;
-		auto createTexture = [&](const std::shared_ptr<Texture>& texture, std::unique_ptr<VkTexture>& vkTexture) {
+		auto createTexture = [this](const std::shared_ptr<Texture>& texture, std::unique_ptr<VkTexture>& vkTexture, VkFormat format) {
 			if (texture != nullptr)
 			{
-				vkTexture = std::make_unique<VkTexture>(*texture, ctx);
+				vkTexture = std::make_unique<VkTexture>(*texture, format, context);
 			}
 		};
 
-		createTexture(material.ambientTexture, ambient);
-		createTexture(material.diffuseTexture, diffuse);
-		createTexture(material.specularTexture, specular);
-		createTexture(material.opacityMap, opacityMap);
+		createTexture(material.ambientTexture, ambient, VK_FORMAT_R8G8B8A8_SRGB);
+		createTexture(material.diffuseTexture, diffuse, VK_FORMAT_R8G8B8A8_SRGB);
+		createTexture(material.specularTexture, specular, VK_FORMAT_R8G8B8A8_SRGB);
+		createTexture(material.opacityMap, opacityMap, VK_FORMAT_R8G8B8A8_SRGB);
 
 		createSamplerDescriptorSet(createInfo);
 	}

@@ -27,7 +27,7 @@ void VkCubemapSamplerSet::cleanup()
 
 void VkCubemapSamplerSet::createFromCubemap(const Cubemap& cubemap)
 {
-	this->cubemap = std::make_unique<VkCubemap>(cubemap, context);
+	this->cubemap = std::make_unique<VkCubemap>(cubemap, VK_FORMAT_R8G8B8A8_SRGB, context);
 
 	// Create cubemap sampler pool
 	samplerDescriptorPool = createDescriptorPool(
