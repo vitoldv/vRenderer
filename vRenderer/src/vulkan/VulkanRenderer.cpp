@@ -819,21 +819,23 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), true);
 	}
 
-	if (renderSettings->enableOutline)
-	{
-		outlinePipeline->cmdBind(commandBuffers[currentImage]);
-		for (int i = 0; i < modelsToRender.size(); i++)
-		{
-			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), true);
-		}
-	}
-
 	// DRAW SKYBOX
 	if (renderSkybox && skybox != nullptr)
 	{
 		skyboxPipeline->cmdBind(commandBuffers[currentImage]);
 		vpUniform->cmdBind(0, currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
 		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline);
+	}
+
+
+	if (renderSettings->enableOutline)
+	{
+		outlinePipeline->cmdBind(commandBuffers[currentImage]);
+		vpUniform->cmdBind(0, currentImage, commandBuffers[currentImage], outlinePipeline->getLayout());
+		for (int i = 0; i < modelsToRender.size(); i++)
+		{
+			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), true);
+		}
 	}
 
 	// Start second subpass
