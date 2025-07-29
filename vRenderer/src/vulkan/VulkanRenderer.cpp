@@ -23,7 +23,7 @@ int VulkanRenderer::init(GLFWwindow* window)
 		createDescriptorPools();
 		createUniforms();
 		createSubpassInputDescriptorSets();
-		createGraphicsPipeline();
+		createGraphicsPipelines();
 
 		createFramebuffers();
 		createCommandPool();
@@ -677,13 +677,13 @@ void VulkanRenderer::createSubpassInputDescriptorSets()
 	}
 }
 
-void VulkanRenderer::createGraphicsPipeline()
+void VulkanRenderer::createGraphicsPipelines()
 {
-
 	VkShaderManager::initialize(context);
 	auto& shaderManager = VkShaderManager::instance();
 
 	mainPipeline = std::make_unique<VkMainPipeline>(renderPass, context);
+	batchedPipeline = std::make_unique<VkBatchedPipeline>(renderPass, context);
 	outlinePipeline = std::make_unique<VkOutlinePipeline>(renderPass, context);
 	secondPassPipeline = std::make_unique<VkSecondPassPipeline>(renderPass, context);
 }
@@ -804,56 +804,70 @@ void VulkanRenderer::recordCommands(uint32_t currentImage, ImDrawData& imguiDraw
 		throw std::runtime_error("Failed to start recording a command buffer.");
 	}
 
+	VkCommandBuffer comBuf = commandBuffers[currentImage];
+
 	// Begin render pass
-	vkCmdBeginRenderPass(commandBuffers[currentImage], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(comBuf, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	//vkCmdSetStencilReference(commandBuffers[currentImage], )
 
 	// bind pipeline to be used with render pass
-	mainPipeline->cmdBind(commandBuffers[currentImage]);
-	// bind (static) uniforms
-	vpUniform->cmdBind(0, currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
-	lightUniform->cmdBind(3, currentImage, commandBuffers[currentImage], mainPipeline->getLayout());
-	for (int i = 0; i < modelsToRender.size(); i++)
+	//mainPipeline->cmdBind(comBuf);
+	//// bind (static) uniforms
+	//vpUniform->cmdBind(0, currentImage, comBuf, mainPipeline->getLayout());
+	//lightUniform->cmdBind(3, currentImage, comBuf, mainPipeline->getLayout());
+	//for (int i = 0; i < modelsToRender.size(); i++)
+	//{
+	//	// bind dynamic uniforms (unique per object)
+	//	colorUniformsDynamic->cmdBind(4, currentImage, i, comBuf, mainPipeline->getLayout());
+	//	modelsToRender[i]->cmdDraw(currentImage, comBuf, mainPipeline->getLayout(), true);
+	//}
+
+	if (modelBatches.size() > 0)
 	{
-		// bind dynamic uniforms (unique per object)
-		colorUniformsDynamic->cmdBind(4, currentImage, i, commandBuffers[currentImage], mainPipeline->getLayout());
-		modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), true);
+		batchedPipeline->cmdBind(comBuf);
+		vpUniform->cmdBind(0, currentImage, comBuf, batchedPipeline->getLayout());
+		lightUniform->cmdBind(3, currentImage, comBuf, batchedPipeline->getLayout());
+		for (auto& [modelId, modelBatch] : modelBatches)
+		{
+			modelBatch.cmdDraw(currentImage, comBuf, batchedPipeline->getLayout(), true);
+		}
 	}
 
 	// DRAW SKYBOX
 	if (renderSkybox && skybox != nullptr)
 	{
-		skyboxPipeline->cmdBind(commandBuffers[currentImage]);
-		vpUniform->cmdBind(0, currentImage, commandBuffers[currentImage], skyboxPipeline->getLayout());
-		skybox->cmdDraw(commandBuffers[currentImage], *skyboxPipeline);
+		skyboxPipeline->cmdBind(comBuf);
+		vpUniform->cmdBind(0, currentImage, comBuf, skyboxPipeline->getLayout());
+		skybox->cmdDraw(comBuf, *skyboxPipeline);
 	}
-
 
 	if (renderSettings->enableOutline)
 	{
-		outlinePipeline->cmdBind(commandBuffers[currentImage]);
-		vpUniform->cmdBind(0, currentImage, commandBuffers[currentImage], outlinePipeline->getLayout());
+		outlinePipeline->cmdBind(comBuf);
+		vpUniform->cmdBind(0, currentImage, comBuf, outlinePipeline->getLayout());
 		for (int i = 0; i < modelsToRender.size(); i++)
 		{
-			modelsToRender[i]->draw(currentImage, commandBuffers[currentImage], mainPipeline->getLayout(), true);
+			modelsToRender[i]->cmdDraw(currentImage, comBuf, mainPipeline->getLayout(), true);
 		}
 	}
 
 	// Start second subpass
-	vkCmdNextSubpass(commandBuffers[currentImage], VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdNextSubpass(comBuf, VK_SUBPASS_CONTENTS_INLINE);
 
-	secondPassPipeline->cmdBind(commandBuffers[currentImage]);
-	vkCmdBindDescriptorSets(commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, secondPassPipeline->getLayout(),
+	secondPassPipeline->cmdBind(comBuf);
+	vkCmdBindDescriptorSets(comBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, secondPassPipeline->getLayout(),
 		0, 1, &inputDescriptorSets[currentImage], 0, nullptr);
-	postPrFeaturesUniform->cmdBind(1, currentImage, commandBuffers[currentImage], secondPassPipeline->getLayout());
-	vkCmdDraw(commandBuffers[currentImage], 3, 1, 0, 0);
+	postPrFeaturesUniform->cmdBind(1, currentImage, comBuf, secondPassPipeline->getLayout());
+	vkCmdDraw(comBuf, 3, 1, 0, 0);
 
-	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, commandBuffers[currentImage]);
+	ImGui_ImplVulkan_RenderDrawData(&imguiDrawData, comBuf);
 
 	// End render pass
-	vkCmdEndRenderPass(commandBuffers[currentImage]);
+	vkCmdEndRenderPass(comBuf);
 
 	// Stop recording commands to command buffer 
-	result = vkEndCommandBuffer(commandBuffers[currentImage]);
+	result = vkEndCommandBuffer(comBuf);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to stop recording a command buffer.");
@@ -990,29 +1004,40 @@ bool VulkanRenderer::addToRenderer(const Model& model, glm::vec3 color)
 	return false;
 }
 
+
 bool VulkanRenderer::addToRendererTextured(const ModelInstance& model)
 {
-	// If mesh is not in renderer
-	if (!isModelInRenderer(model.id))
+	VkModelBatch* modelBatch = nullptr;
+	uint32_t modelId = model.getTemplate().id;
+
+	auto it = modelBatches.find(modelId);
+	// If no batch for this model -> create one
+	if (it == modelBatches.end())
 	{
 		VkModel* vkModel = new VkModel(model.id, model.getTemplate(), context, samplerDescriptorCreateInfo);
-		modelsToRender.push_back(vkModel);
-
-		return true;
+		auto [keyValIt, b] = modelBatches.emplace(std::piecewise_construct, std::forward_as_tuple(modelId), std::forward_as_tuple(5, vkModel, context));
+		modelBatch = &(*keyValIt).second;
 	}
+	else modelBatch = &(*it).second;
 
-	return false;
+	// Add instance to batch
+	VkModelBatch::InstanceData instanceData(model.getTransformMat());
+	modelBatch->addInstance(model.id, &instanceData);
+
+	return true;
 }
 
-bool VulkanRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
+bool VulkanRenderer::updateInstanceTransform(int templateId, int instanceId, glm::mat4 newTransform)
 {
-	VkModel* model = getModel(modelId);
-	if (model != nullptr)
+	//VkModel* model = getModel(modelId);
+	auto it = modelBatches.find(templateId);
+	if (it != modelBatches.end())
 	{
-		model->setTransform(newTransform);
+		VkModelBatch::InstanceData instanceData(newTransform);
+		(*it).second.updateInstanceData(instanceId, &instanceData);
 	}
 
-	return model != nullptr;
+	return true;
 }
 
 void VulkanRenderer::setCamera(const std::shared_ptr<BaseCamera> camera)

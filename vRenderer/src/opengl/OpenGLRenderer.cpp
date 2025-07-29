@@ -168,9 +168,9 @@ GLModel* OpenGLRenderer::getModel(uint32_t id)
 
 
 
-bool OpenGLRenderer::updateModelTransform(int modelId, glm::mat4 newTransform)
+bool OpenGLRenderer::updateInstanceTransform(int templateId, int instanceId, glm::mat4 newTransform)
 {
-	GLModel* model = getModel(modelId);
+	GLModel* model = getModel(templateId);
 	if (model != nullptr)
 	{
 		model->setTransform(newTransform);

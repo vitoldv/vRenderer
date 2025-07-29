@@ -22,6 +22,9 @@
 
 const uint32_t SKYBOX_RESERVED_ID = 12314;
 
+using modelId_t = uint32_t;
+using instanceId_t = uint32_t;
+
 namespace VkUtils
 {
 	struct Vertex

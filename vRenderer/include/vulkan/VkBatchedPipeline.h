@@ -1,12 +1,13 @@
 #pragma once
 
 #include "VkGraphicsPipelineBase.h"
+#include "VkModelBatch.h"
 
-class VkMainPipeline : public VkGraphicsPipelineBase
+class VkBatchedPipeline : public VkGraphicsPipelineBase
 {
 public:
 
-	VkMainPipeline(VkRenderPass renderPass, VkContext context) :
+	VkBatchedPipeline(VkRenderPass renderPass, VkContext context) :
 		VkGraphicsPipelineBase(renderPass, context)
 	{
 		describe();
@@ -14,51 +15,89 @@ public:
 
 protected:
 
-	VkPushConstantRange pushConstantRange;
-
 	virtual void describe() override
 	{
-		
 		VkShaderManager& inst = VkShaderManager::instance();
-		std::string key = "first_pass";
+		std::string key = "batch";
 		auto shaderStages = inst.getShaderStage(VkShaderManager::RenderPass::FIRST, &key);
 
-		// DEFINING VERTEX ATTRIBUTES LAYOUT
-		VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
-		{
-			VkVertexInputBindingDescription bindingDescription = {};
-			bindingDescription.binding = 0;
-			bindingDescription.stride = sizeof(VkUtils::Vertex);
-			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+			// Batched pipeline requires one more 
+			VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
+			// 4 per vertex (pos, color, normal, uv) + 4 per instance (4 colums of 4x4 matrix)
+			constexpr int attributesCount = 12;
+			std::array<VkVertexInputAttributeDescription, attributesCount> attributes;
 
-			std::array<VkVertexInputAttributeDescription, 4> attributes;
+			VkVertexInputBindingDescription perVertexBindingDesc = {};
+			perVertexBindingDesc.binding = 0;
+			perVertexBindingDesc.stride = sizeof(VkUtils::Vertex);
+			perVertexBindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 			attributes[0].binding = 0;										// should be same as above
 			attributes[0].location = 0;
 			attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributes[0].offset = offsetof(VkUtils::Vertex, pos);
-
 			attributes[1].binding = 0;										// should be same as above
 			attributes[1].location = 1;
 			attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributes[1].offset = offsetof(VkUtils::Vertex, color);
-
 			attributes[2].binding = 0;										// should be same as above
 			attributes[2].location = 2;
 			attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributes[2].offset = offsetof(VkUtils::Vertex, normal);
-
 			attributes[3].binding = 0;										// should be same as above
 			attributes[3].location = 3;
 			attributes[3].format = VK_FORMAT_R32G32_SFLOAT;
 			attributes[3].offset = offsetof(VkUtils::Vertex, uv);
 
-			// VERTEX INPUT
-			vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-			vertexInputCreateInfo.vertexBindingDescriptionCount = 1;
-			vertexInputCreateInfo.pVertexBindingDescriptions = &bindingDescription;					// list of vertex binding descriptions (data spacing/stride information)
-			vertexInputCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
-			vertexInputCreateInfo.pVertexAttributeDescriptions = attributes.data();				// list of vertex attribute descriptions (data format and where to bind to/from)
-		}
+			VkVertexInputBindingDescription perInstanceBindingDesc = {};
+			perInstanceBindingDesc.binding = 1;
+			perInstanceBindingDesc.stride = sizeof(VkModelBatch::InstanceData);
+			perInstanceBindingDesc.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+
+			attributes[4].binding = 1;
+			attributes[4].location = 4;
+			attributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[4].offset = offsetof(VkModelBatch::InstanceData, transform) + sizeof(glm::vec4) * 0;
+			attributes[5].binding = 1;
+			attributes[5].location = 5;
+			attributes[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[5].offset = offsetof(VkModelBatch::InstanceData, transform) + sizeof(glm::vec4) * 1;
+			attributes[6].binding = 1;
+			attributes[6].location = 6;
+			attributes[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[6].offset = offsetof(VkModelBatch::InstanceData, transform) + sizeof(glm::vec4) * 2;
+			attributes[7].binding = 1;
+			attributes[7].location = 7;
+			attributes[7].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[7].offset = offsetof(VkModelBatch::InstanceData, transform) + sizeof(glm::vec4) * 3;
+
+			attributes[8].binding = 1;
+			attributes[8].location = 8;
+			attributes[8].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[8].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 0;
+			attributes[9].binding = 1;
+			attributes[9].location = 9;
+			attributes[9].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[9].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 1;
+			attributes[10].binding = 1;
+			attributes[10].location = 10;
+			attributes[10].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[10].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 2;
+			attributes[11].binding = 1;
+			attributes[11].location = 11;
+			attributes[11].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			attributes[11].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 3;
+
+			std::array<VkVertexInputBindingDescription, 2> bindingDescriptions{
+				perVertexBindingDesc,
+				perInstanceBindingDesc
+			};
+
+				// VERTEX INPUT
+	vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputCreateInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
+	vertexInputCreateInfo.pVertexBindingDescriptions = bindingDescriptions.data();
+	vertexInputCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
+	vertexInputCreateInfo.pVertexAttributeDescriptions = attributes.data();
 
 		// INPUT ASSEMBLY
 		// defines how vertex data is perceived (topology)
@@ -90,19 +129,6 @@ protected:
 			viewportStateCreateInfo.scissorCount = 1;
 			viewportStateCreateInfo.pScissors = &scissor;
 		}
-
-		/*
-		// DYNAMIC STATES
-		// Dynamic states to enable
-		std::vector<VkDynamicState> dynamicStatesEnables;
-		dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);	// allows to change viewport on runtime using vkCmdSetViewport
-		dynamicStatesEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
-
-		VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {};
-		dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStatesEnables.size());
-		dynamicStateCreateInfo.pDynamicStates = dynamicStatesEnables.data();
-		*/
 
 		// RASTERIZER
 		VkPipelineRasterizationStateCreateInfo rastCreateInfo = {};
@@ -168,16 +194,16 @@ protected:
 			};
 
 			// Defines push constant values
-			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-			pushConstantRange.offset = 0;
-			pushConstantRange.size = sizeof(PushConstant);
+			//pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			//pushConstantRange.offset = 0;
+			//pushConstantRange.size = sizeof(PushConstant);
 
 			VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 			pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutCreateInfo.setLayoutCount = setLayouts.size();
 			pipelineLayoutCreateInfo.pSetLayouts = setLayouts.data();
-			pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-			pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+			pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+			pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
 			// Create Pipeline Layout
 			VkResult result = vkCreatePipelineLayout(context.logicalDevice, &pipelineLayoutCreateInfo, nullptr, &layout);
@@ -225,7 +251,6 @@ protected:
 		pipelineCreateInfo.layout = layout;							// Pipeline Layout pipeline should use
 		pipelineCreateInfo.renderPass = renderPass;							// Render pass description the pipeline is compatible with
 		pipelineCreateInfo.subpass = 0;							 			// Subpass of render pass to use with pipeline
-		pipelineCreateInfo.flags = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT;
 
 		// Pipeline Derivatives : Can create multiple pipelines that derive from one another for optimisation
 		pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;	// Existing pipeline to derive from...

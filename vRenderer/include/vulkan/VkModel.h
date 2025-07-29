@@ -20,7 +20,6 @@ class VkModel : IVkCoreResourceHolder
 {
 
 public:
-
 	const uint32_t id;
 
 	VkModel(uint32_t id, const Model& model, VkContext context, VkSamplerDescriptorSetCreateInfo createInfo);
@@ -28,8 +27,10 @@ public:
 
 	int getMeshCount() const;
 	int getMaterialCount() const;
+	int getMeshIndexCount(uint32_t meshIndex) const;
 
-	void draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials);
+	void cmdBindSubMesh(uint32_t imageIndex, uint32_t submeshIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials);
+	void cmdDraw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials);
 	void setTransform(glm::mat4 transform);
 
 private:

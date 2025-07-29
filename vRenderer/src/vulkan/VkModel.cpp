@@ -24,7 +24,29 @@ int VkModel::getMaterialCount() const
 	return materials.size();
 }
 
-void VkModel::draw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials)
+int VkModel::getMeshIndexCount(uint32_t meshIndex) const
+{
+	return meshes[meshIndex].indexCount;
+}
+
+void VkModel::cmdBindSubMesh(uint32_t imageIndex, uint32_t submeshIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials)
+{
+	if (submeshIndex >= meshes.size())
+		return;
+
+	const VkSubMesh& mesh = meshes[submeshIndex];
+
+	uint32_t indexCount = mesh.indexCount;
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &mesh.vertexBufferOffset);								// Command to bind vertex buffer before deawing with them
+	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, mesh.indexBufferOffset, VK_INDEX_TYPE_UINT32);
+
+	if (bindMaterials)
+	{
+		materials[mesh.materialIndex]->cmdBind(imageIndex, commandBuffer, pipelineLayout);
+	}
+}
+
+void VkModel::cmdDraw(uint32_t imageIndex, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, bool bindMaterials)
 {	
 	for (const VkSubMesh& mesh : meshes)
 	{

@@ -289,7 +289,8 @@ void Application::onSceneGraphAction(SceneGraphOp action, uint32_t instanceId)
 void Application::onInstanceTransformChanged(uint32_t id)
 {
 	const SceneGraphInstance& instance = sceneGraph->getInstance(id);
-	renderer->updateModelTransform(instance.id, instance.getTransformMat());
+	const ModelInstance& modelInstance = dynamic_cast<const ModelInstance&>(instance);
+	renderer->updateInstanceTransform(modelInstance.getTemplate().id, modelInstance.id, instance.getTransformMat());
 }
 
 void Application::imguiMenu()

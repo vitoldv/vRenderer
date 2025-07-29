@@ -162,6 +162,9 @@
     <ClCompile Include="vRenderer\src\vulkan\VkCubemapSamplerSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vRenderer\src\vulkan\VkModelBatch.cpp">
+      <Filter>Source Files\vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vRenderer\include\Mesh.h">
@@ -370,6 +373,12 @@
     </ClInclude>
     <ClInclude Include="vRenderer\include\vulkan\VkCubemapSamplerSet.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkModelBatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vRenderer\include\vulkan\VkBatchedPipeline.h">
+      <Filter>Header Files\vulkan\pipelines</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

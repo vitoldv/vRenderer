@@ -23,7 +23,7 @@ public:
 	virtual void setImguiCallback(std::function<void()> callback) = 0;
 
 	virtual void draw() = 0;
-	virtual bool updateModelTransform(int modelId, glm::mat4 newTransform) = 0;
+	virtual bool updateInstanceTransform(int templateId, int instanceId, glm::mat4 newTransform) = 0;
 
 	virtual bool addToRenderer(const Model& model, glm::vec3 color) = 0;
 	virtual bool addToRendererTextured(const ModelInstance& model) = 0;
