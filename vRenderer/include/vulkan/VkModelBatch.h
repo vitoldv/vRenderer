@@ -36,8 +36,8 @@ public:
 	
 private:
 
-	uint32_t instanceCount;
 	uint32_t capacity;
+	uint32_t instanceCount;
 	std::unique_ptr<VkModel> model;
 	InstanceData* pInstanceData = nullptr;
 	// intance id - instance data ptr

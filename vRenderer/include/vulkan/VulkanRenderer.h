@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <map>
 #include <functional>
+#include <utility>
 
 #include "display_settings.h"
 #include "error_handling.h"
@@ -50,6 +51,7 @@
 #include "VkOutlinePipeline.h"
 #include "VkMainPipeline.h"
 #include "VkSecondPassPipeline.h"
+#include "VkBatchedPipeline.h"
 
 // preferrable surface settings (selected if supported)
 #define SURFACE_COLOR_FORMAT		VK_FORMAT_R8G8B8A8_SRGB
@@ -97,6 +99,7 @@ private:
 	// Graphics pipeline
 	VkRenderPass renderPass;
 	std::unique_ptr<VkMainPipeline> mainPipeline;
+	std::unique_ptr<VkBatchedPipeline> batchedPipeline;
 	std::unique_ptr<VkSecondPassPipeline> secondPassPipeline;
 
 	std::unique_ptr<VkOutlinePipeline> outlinePipeline;
@@ -136,6 +139,8 @@ private:
 	std::vector<std::shared_ptr<Light>> lightSources;
 	UboLightArray uboLightArray;
 
+	std::unordered_map<modelId_t, VkModelBatch> modelBatches;
+
 	// Uniforms
 	std::unique_ptr<VkUniform<UboLightArray>> lightUniform;
 	std::unique_ptr<VkUniform<UboViewProjection>> vpUniform;
@@ -162,14 +167,13 @@ public:
 
 	int init(GLFWwindow* window);
 	void draw();
-	void applyLighting();
 
 	bool addToRenderer(const Model& model, glm::vec3 color);
 	bool addToRendererTextured(const ModelInstance& model);
 	bool removeFromRenderer(int modelId);
 	bool isModelInRenderer(uint32_t id);
 
-	bool updateModelTransform(int modelId, glm::mat4 newTransform);
+	bool updateInstanceTransform(int templateId, int instanceId, glm::mat4 newTransform);
 	void setCamera(const std::shared_ptr<BaseCamera> camera);
 	bool addLightSources(const std::shared_ptr<Light> light[], uint32_t count);
 	bool removeLightSources(uint32_t* ids, uint32_t count) override;
@@ -196,7 +200,7 @@ private:
 	void createDescriptorPools();
 	void createUniforms();
 	void createSubpassInputDescriptorSets();
-	void createGraphicsPipeline();
+	void createGraphicsPipelines();
 	
 	void createFramebuffers();
 	void createCommandPool();

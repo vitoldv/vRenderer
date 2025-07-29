@@ -73,19 +73,19 @@ protected:
 			attributes[8].binding = 1;
 			attributes[8].location = 8;
 			attributes[8].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			attributes[8].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 0;
+			attributes[8].offset = offsetof(VkModelBatch::InstanceData, normalMatrix) + sizeof(glm::vec4) * 0;
 			attributes[9].binding = 1;
 			attributes[9].location = 9;
 			attributes[9].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			attributes[9].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 1;
+			attributes[9].offset = offsetof(VkModelBatch::InstanceData, normalMatrix) + sizeof(glm::vec4) * 1;
 			attributes[10].binding = 1;
 			attributes[10].location = 10;
 			attributes[10].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			attributes[10].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 2;
+			attributes[10].offset = offsetof(VkModelBatch::InstanceData, normalMatrix) + sizeof(glm::vec4) * 2;
 			attributes[11].binding = 1;
 			attributes[11].location = 11;
 			attributes[11].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			attributes[11].offset = offsetof(VkModelBatch::InstanceData, normalMat) + sizeof(glm::vec4) * 3;
+			attributes[11].offset = offsetof(VkModelBatch::InstanceData, normalMatrix) + sizeof(glm::vec4) * 3;
 
 			std::array<VkVertexInputBindingDescription, 2> bindingDescriptions{
 				perVertexBindingDesc,
